@@ -7,6 +7,8 @@ import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.SyntaxExceptions;
 import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.nbt.CompoundTag;
+import net.forthecrown.nbt.paper.TagTranslators;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.HolderLookup.RegistryLookup;
@@ -38,6 +40,10 @@ public class InternalUtil {
       joiner.add(arg);
     }
     return new StringReader(joiner.toString());
+  }
+
+  public static CompoundTag fromVanillaTag(net.minecraft.nbt.CompoundTag tag) {
+    return tag == null ? null : TagTranslators.COMPOUND.toApiType(tag);
   }
 
   public static int execute(CommandSource source, StringReader reader) {
