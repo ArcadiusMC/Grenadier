@@ -2,7 +2,7 @@ package net.forthecrown.grenadier.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import java.util.Map;
-import net.forthecrown.grenadier.internal.types.ArgumentTypeProviderImpl;
+import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.types.RegistryArgument.UnknownFactory;
 import net.forthecrown.nbt.BinaryTag;
 import net.forthecrown.nbt.CompoundTag;
@@ -14,92 +14,118 @@ import org.bukkit.potion.PotionEffectType;
 public final class ArgumentTypes {
   private ArgumentTypes() {}
 
-  private static final ArgumentTypeProvider provider
-      = new ArgumentTypeProviderImpl();
-
-  public static ArgumentTypeProvider typeProvider() {
-    return provider;
-  }
-
   public static ItemArgument item() {
-    return typeProvider().getItemArgument();
+    return ItemArgumentImpl.INSTANCE;
   }
 
   public static ItemFilterArgument itemFilter() {
-    return typeProvider().getItemFilterArgument();
+    return ItemFilterArgumentImpl.INSTANCE;
   }
 
   public static ComponentArgument component() {
-    return typeProvider().getComponentArgument();
-  }
-
-  public static <E extends Enum<E>> EnumArgument<E> enumType(Class<E> enumType) {
-    return typeProvider().createEnumArgument(enumType);
-  }
-
-  public static <T> MapArgument<T> mapArgument(Map<String, T> values) {
-    return typeProvider().createMapArgument(values);
-  }
-
-  public static <T> ArrayArgument<T> array(ArgumentType<T> type) {
-    return typeProvider().createArrayArgument(type);
+    return ComponentArgumentImpl.INSTANCE;
   }
 
   public static KeyArgument key() {
-    return typeProvider().getKeyArgument();
+    return KeyArgumentImpl.INSTANCE;
   }
 
   public static WorldArgument world() {
-    return typeProvider().getWorldArgument();
-  }
-
-  public static RegistryArgument<Enchantment> enchantment() {
-    return typeProvider().getEnchantmentArgument();
-  }
-
-  public static RegistryArgument<PotionEffectType> potionType() {
-    return typeProvider().getPotionTypeArgument();
+    return WorldArgumentImpl.INSTANCE;
   }
 
   public static NbtArgument<BinaryTag> binaryTag() {
-    return typeProvider().getTagArgument();
+    return NbtArgumentImpl.BINARY_TAG;
   }
 
   public static NbtArgument<CompoundTag> compoundTag() {
-    return typeProvider().getCompoundTagArgument();
+    return NbtArgumentImpl.COMPOUND;
   }
 
   public static TagPathArgument tagPath() {
-    return typeProvider().getTagPathArgument();
+    return TagPathArgumentImpl.INSTANCE;
   }
 
   public static GameModeArgument gameMode() {
-    return typeProvider().getGameModeArgument();
+    return GameModeArgumentImpl.INSTANCE;
   }
 
   public static TimeArgument time() {
-    return typeProvider().getTimeArgument();
+    return TimeArgumentImpl.INSTANCE;
   }
 
   public static ObjectiveArgument objective() {
-    return typeProvider().getObjectiveArgument();
+    return ObjectiveArgumentImpl.INSTANCE;
   }
 
   public static TeamArgument team() {
-    return typeProvider().getTeamArgument();
+    return TeamArgumentImpl.INSTANCE;
+  }
+
+  public static LocalDateArgument localDate() {
+    return LocalDateArgumentImpl.INSTANCE;
+  }
+
+  public static BlockArgument block() {
+    return BlockArgumentImpl.INSTANCE;
+  }
+
+  public static BlockFilterArgument blockFilter() {
+    return BlockFilterArgumentImpl.INSTANCE;
+  }
+
+  public static EntityArgument entity() {
+    return EntityArgumentImpl.ENTITY;
+  }
+
+  public static EntityArgument entities() {
+    return EntityArgumentImpl.ENTITIES;
+  }
+
+  public static EntityArgument player() {
+    return EntityArgumentImpl.PLAYER;
+  }
+
+  public static EntityArgument players() {
+    return EntityArgumentImpl.PLAYERS;
+  }
+
+  public static RegistryArgument<Enchantment> enchantment() {
+    return registry(Registry.ENCHANTMENT, "enchantment");
+  }
+
+  public static RegistryArgument<PotionEffectType> potionType() {
+    return registry(Registry.POTION_EFFECT_TYPE, "potion_effect");
   }
 
   public static <T extends Keyed> RegistryArgument<T> registry(
       Registry<T> registry,
       UnknownFactory factory
   ) {
-    return typeProvider().createRegistryArgument(registry, factory);
+    return new RegistryArgumentImpl<>(registry, factory);
   }
 
   public static <T extends Keyed> RegistryArgument<T> registry(
       Registry<T> registry,
       String name
   ) {
-    return typeProvider().createRegistryArgument(registry, name);
+    return registry(
+        registry,
+        (reader, key) -> {
+          return Grenadier.exceptions().unknownResource(key, name, reader);
+        }
+    );
+  }
+
+  public static <E extends Enum<E>> EnumArgument<E> enumType(Class<E> enumType) {
+    return new EnumArgumentImpl<>(enumType);
+  }
+
+  public static <T> MapArgument<T> mapArgument(Map<String, T> values) {
+    return new MapArgumentImpl<>(values);
+  }
+
+  public static <T> ArrayArgument<T> array(ArgumentType<T> type) {
+    return new ArrayArgumentImpl<>(type);
   }
 }

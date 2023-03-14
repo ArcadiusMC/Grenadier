@@ -2,6 +2,7 @@ package net.forthecrown.grenadier;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -17,7 +18,6 @@ public interface GrenadierProvider {
   @NotNull
   CommandDispatcher<CommandSource> getDispatcher();
 
-  @NotNull
   Plugin getPlugin();
 
   void setPlugin(@NotNull Plugin plugin);
@@ -30,4 +30,6 @@ public interface GrenadierProvider {
   Message toMessage(Component component);
 
   CommandSource createSource(CommandSender sender);
+
+  SuggestionProvider<CommandSource> suggestAllCommands();
 }

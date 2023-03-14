@@ -216,4 +216,29 @@ public class ExceptionProviderImpl implements ExceptionProvider {
 
     return create("Only %ss can run this command", clazz.getSimpleName());
   }
+
+  @Override
+  public CommandSyntaxException selectorOnlyOnePlayer(StringReader reader) {
+    return translatableWithContext("argument.player.toomany", reader);
+  }
+
+  @Override
+  public CommandSyntaxException selectorOnlyOneEntity(StringReader reader) {
+    return translatableWithContext("argument.entity.toomany", reader);
+  }
+
+  @Override
+  public CommandSyntaxException selectorOnlyPlayersAllowed(StringReader reader) {
+    return translatableWithContext("argument.player.entities", reader);
+  }
+
+  @Override
+  public CommandSyntaxException noPlayerFound() {
+    return translatable("argument.entity.notfound.player");
+  }
+
+  @Override
+  public CommandSyntaxException noEntityFound() {
+    return translatable("argument.entity.notfound.entity");
+  }
 }

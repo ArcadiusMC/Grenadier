@@ -7,9 +7,10 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
+import org.bukkit.permissions.Permission;
 
 public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
 
@@ -40,14 +41,23 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
     return this;
   }
 
+  public GrenadierCommand withPermission(Permission permission) {
+    this.permission = permission == null ? null : permission.getName();
+    return this;
+  }
+
   public List<String> getAliases() {
     return aliases;
   }
 
-  public GrenadierCommand withAliases(String... aliases) {
+  public GrenadierCommand withAliases(Collection<String> aliases) {
     this.aliases.clear();
-    this.aliases.addAll(Arrays.asList(aliases));
+    this.aliases.addAll(aliases);
     return this;
+  }
+
+  public GrenadierCommand withAliases(String... aliases) {
+    return withAliases(List.of(aliases));
   }
 
   @Override
@@ -123,5 +133,11 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
     }
 
     return result;
+  }
+
+  public GrenadierCommandNode register() {
+    var built = build();
+    Grenadier.dispatcher().getRoot().addChild(built);
+    return built;
   }
 }

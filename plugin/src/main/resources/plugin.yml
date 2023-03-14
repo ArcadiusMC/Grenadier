@@ -1,0 +1,4 @@
+name: "Grenadier"
+main: "net.forthecrown.grenadier.GrenadierPlugin"
+version: "${version}"
+api-version: "1.19"

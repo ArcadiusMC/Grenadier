@@ -2,7 +2,8 @@ package net.forthecrown.grenadier;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Message;
-import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import java.util.Objects;
 import net.forthecrown.grenadier.internal.GrenadierProviderImpl;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
@@ -44,7 +45,7 @@ public final class Grenadier {
   }
 
   public static CommandSource createSource(CommandSender sender,
-                                           CommandNode<CommandSource> node
+                                           GrenadierCommandNode node
   ) {
     var source = getProvider().createSource(sender);
     source.setCurrentNode(node);
@@ -57,5 +58,20 @@ public final class Grenadier {
 
   public static Message toMessage(Component component) {
     return getProvider().toMessage(component);
+  }
+
+  public static String fallbackPrefix() {
+    return plugin() == null
+        ? "grenadier"
+        : plugin().getName().toLowerCase();
+  }
+
+  public static SuggestionProvider<CommandSource> suggestAllCommands() {
+    return getProvider().suggestAllCommands();
+  }
+
+  public static GrenadierCommand createCommand(String name) {
+    Objects.requireNonNull(name);
+    return new GrenadierCommand(name.toLowerCase());
   }
 }

@@ -2,15 +2,15 @@ package net.forthecrown.grenadier.internal;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.papermc.paper.brigadier.PaperBrigadier;
 import java.util.Objects;
 import lombok.Getter;
 import net.forthecrown.grenadier.CommandExceptionHandler;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierProvider;
-import net.forthecrown.grenadier.internal.types.ArgumentTypeProviderImpl;
-import net.forthecrown.grenadier.types.ArgumentTypeProvider;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_19_R2.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
@@ -27,6 +27,8 @@ public class GrenadierProviderImpl implements GrenadierProvider {
 
   private final ExceptionProviderImpl exceptionProvider
       = new ExceptionProviderImpl();
+
+  private CommandSyncListener syncListener;
 
   public GrenadierProviderImpl() {
     this.dispatcher = new CommandDispatcher<>(new GrenadierRootNode(this));
@@ -46,6 +48,11 @@ public class GrenadierProviderImpl implements GrenadierProvider {
   public void setPlugin(Plugin plugin) {
     Objects.requireNonNull(plugin);
     this.plugin = plugin;
+
+    if (syncListener == null) {
+      syncListener = new CommandSyncListener();
+      Bukkit.getPluginManager().registerEvents(syncListener, plugin);
+    }
   }
 
   @Override
@@ -65,5 +72,10 @@ public class GrenadierProviderImpl implements GrenadierProvider {
     return new CommandSourceImpl(
         VanillaCommandWrapper.getListener(sender)
     );
+  }
+
+  @Override
+  public SuggestionProvider<CommandSource> suggestAllCommands() {
+    return InternalUtil.SUGGEST_ALL_COMMANDS;
   }
 }

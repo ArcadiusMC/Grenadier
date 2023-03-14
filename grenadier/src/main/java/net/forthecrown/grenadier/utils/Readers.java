@@ -85,7 +85,53 @@ public class Readers {
     return reader;
   }
 
-  private static void skipIrrelevantInput(StringReader reader) {
+  public static int readPositiveInt(StringReader reader, int min, int max)
+      throws CommandSyntaxException
+  {
+    final int start = reader.getCursor();
+
+    while (reader.canRead() && isIntegerDigit(reader.peek())) {
+      reader.skip();
+    }
+
+    int end = reader.getCursor();
+    String str = reader.getString().substring(start, end);
+
+    if (str.isEmpty()) {
+      reader.setCursor(start);
+
+      throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
+          .readerExpectedInt()
+          .createWithContext(reader);
+    }
+
+    int i = Integer.parseInt(str);
+
+    if (i < min) {
+      reader.setCursor(start);
+
+      throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
+          .integerTooLow()
+          .createWithContext(reader, i, min);
+    }
+
+    if (i > max) {
+      reader.setCursor(start);
+
+
+      throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
+          .integerTooHigh()
+          .createWithContext(reader, i, min);
+    }
+
+    return i;
+  }
+
+  private static boolean isIntegerDigit(char c) {
+    return c >= '0' && c <= '9';
+  }
+
+  public static void skipIrrelevantInput(StringReader reader) {
     if (reader.canRead() && reader.peek() == '/') {
       reader.skip();
     }

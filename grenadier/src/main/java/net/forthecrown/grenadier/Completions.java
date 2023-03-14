@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import net.forthecrown.grenadier.types.CoordinateSuggestion;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
@@ -173,5 +174,13 @@ public final class Completions {
             .stream()
             .map(Team::getName)
     );
+  }
+
+  public static CompletableFuture<Suggestions> suggestCoordinates(
+      SuggestionsBuilder builder,
+      Collection<CoordinateSuggestion> suggestions
+  ) {
+    suggestions.forEach(s -> s.applySuggestions(builder));
+    return builder.buildFuture();
   }
 }

@@ -13,7 +13,9 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.utils.Readers;
 
@@ -54,6 +56,10 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
     return aliases;
   }
 
+  public void forEachLabel(Consumer<String> consumer) {
+    labels().forEachRemaining(consumer);
+  }
+
   public Iterator<String> labels() {
     return new Iterator<>() {
       final Iterator<String> aliasIterator = aliases.iterator();
@@ -62,7 +68,7 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
       @Override
       public boolean hasNext() {
         if (next != null) {
-          return false;
+          return true;
         }
 
         return aliasIterator.hasNext();
@@ -70,6 +76,10 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
 
       @Override
       public String next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+
         if (next != null) {
           var str = next;
           next = null;
@@ -81,7 +91,7 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
     };
   }
 
-  private int parse(StringReader reader) {
+  public int parse(StringReader reader) {
     var it = labels();
 
     while (it.hasNext()) {
@@ -129,6 +139,8 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
 
   @Override
   public synchronized boolean canUse(CommandSource source) {
+    source.setCurrentNode(this);
+
     if (permission != null && !source.hasPermission(permission)) {
       return false;
     }

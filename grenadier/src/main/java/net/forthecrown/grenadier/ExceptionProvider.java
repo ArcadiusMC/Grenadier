@@ -62,4 +62,14 @@ public interface ExceptionProvider extends CommandExceptionType {
   CommandSyntaxException unknownTeam(String word, StringReader reader);
 
   <T extends CommandSender> CommandSyntaxException sourceMustBe(Class<T> clazz);
+
+  CommandSyntaxException selectorOnlyOnePlayer(StringReader reader);
+
+  CommandSyntaxException selectorOnlyOneEntity(StringReader reader);
+
+  CommandSyntaxException selectorOnlyPlayersAllowed(StringReader reader);
+
+  CommandSyntaxException noPlayerFound();
+
+  CommandSyntaxException noEntityFound();
 }

@@ -2,7 +2,6 @@ package net.forthecrown.grenadier.internal;
 
 import com.mojang.brigadier.ResultConsumer;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.tree.CommandNode;
 import io.papermc.paper.entity.LookAnchor;
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -14,8 +13,10 @@ import lombok.Setter;
 import net.forthecrown.grenadier.CommandBroadcastEvent;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
+import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.PermissionLevel;
-import net.forthecrown.grenadier.types.position.CoordinateSuggestion;
+import net.forthecrown.grenadier.types.CoordinateSuggestion;
+import net.forthecrown.grenadier.types.CoordinateSuggestions;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.minecraft.commands.CommandSourceStack;
@@ -61,7 +62,7 @@ public class CommandSourceImpl implements CommandSource {
   private final CommandSourceStack stack;
 
   @Getter @Setter
-  private CommandNode<CommandSource> currentNode;
+  private GrenadierCommandNode currentNode;
 
   private ResultConsumer<CommandSource> consumer;
 
@@ -196,7 +197,22 @@ public class CommandSourceImpl implements CommandSource {
 
   @Override
   public @Nullable CoordinateSuggestion getRelevant3DCords() {
+    if (!isPlayer()) {
+      return null;
+    }
 
+    var target = asPlayerOrNull().rayTraceBlocks(5);
+
+    if (target == null) {
+      return null;
+    }
+
+    var hitPosition = target.getHitPosition();
+    double x = hitPosition.getX();
+    double y = hitPosition.getY();
+    double z = hitPosition.getZ();
+
+    return CoordinateSuggestions.create(x, y, z);
   }
 
   @Override
@@ -206,6 +222,12 @@ public class CommandSourceImpl implements CommandSource {
     if (relevant == null) {
       return null;
     }
+
+    return CoordinateSuggestions.create(
+        relevant.tooltip(),
+        relevant.x(),
+        relevant.z()
+    );
   }
 
   @Override
@@ -292,5 +314,10 @@ public class CommandSourceImpl implements CommandSource {
     }
 
     consumer.onCommandComplete(context, success, result);
+  }
+
+  @Override
+  public boolean overrideSelectorPermissions() {
+    return stack.bypassSelectorPermissions;
   }
 }

@@ -2,17 +2,18 @@ package net.forthecrown.grenadier;
 
 import com.mojang.brigadier.ResultConsumer;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.tree.CommandNode;
 import io.papermc.paper.entity.LookAnchor;
 import java.security.Permission;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import net.forthecrown.grenadier.types.position.CoordinateSuggestion;
+import java.util.stream.Stream;
+import net.forthecrown.grenadier.types.CoordinateSuggestion;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -272,6 +273,14 @@ public interface CommandSource
    */
   boolean isOp();
 
+  default boolean canSee(Entity entity) {
+    if (!isPlayer()) {
+      return true;
+    }
+
+    return asPlayerOrNull().canSee(entity);
+  }
+
   /**
    * Sends a message to the sender
    *
@@ -307,14 +316,14 @@ public interface CommandSource
    *
    * @return The command the sender is currently using
    */
-  CommandNode<CommandSource> getCurrentNode();
+  GrenadierCommandNode getCurrentNode();
 
   /**
    * Sets the current command the sender is using
    *
    * @param command The command the sender will be using
    */
-  void setCurrentNode(CommandNode<CommandSource> command);
+  void setCurrentNode(GrenadierCommandNode command);
 
   /**
    * Gets if the sender should broadcast admin messages
@@ -346,6 +355,13 @@ public interface CommandSource
    * @return The IDs of all entities this source is looking at.
    */
   Collection<String> getEntitySuggestions();
+
+  @SuppressWarnings("unchecked") // Literally nothing here is unchecked
+  default Stream<Player> getVisiblePlayers() {
+    return (Stream<Player>) Bukkit.getOnlinePlayers()
+        .stream()
+        .filter(this::canSee);
+  }
 
   /**
    * Checks if this source is 'silent', meaning it doesn't accept any messages
@@ -564,4 +580,10 @@ public interface CommandSource
    * @return A command source with the given consumer added to it.
    */
   CommandSource addCallback(ResultConsumer<CommandSource> consumer);
+
+  /**
+   * Tests if this source has selector permission overriding enabled
+   * @return {@code true}, if override enabled, {@code false} otherwise
+   */
+  boolean overrideSelectorPermissions();
 }

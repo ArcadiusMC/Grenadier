@@ -22,6 +22,10 @@ tasks {
   test {
     useJUnitPlatform()
   }
+
+  processResources {
+    expand("version" to version)
+  }
 }
 
 java {

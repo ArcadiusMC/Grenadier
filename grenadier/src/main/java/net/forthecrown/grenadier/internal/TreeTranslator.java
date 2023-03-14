@@ -1,12 +1,195 @@
 package net.forthecrown.grenadier.internal;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.ParseResults;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.tree.ArgumentCommandNode;
+import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import net.forthecrown.grenadier.internal.types.VanillaMappedArgument;
+import java.util.function.Predicate;
+import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.Grenadier;
+import net.forthecrown.grenadier.GrenadierCommandNode;
+import net.forthecrown.grenadier.utils.Readers;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 
 public class TreeTranslator {
+
+  public static final Command<CommandSourceStack> COMMAND = context -> {
+    StringReader input = Readers.createFiltered(context.getInput());
+    CommandSource source = InternalUtil.wrap(context.getSource());
+
+    return InternalUtil.execute(source, input);
+  };
+
+  public static final SuggestionProvider<CommandSourceStack> SUGGESTION_PROVIDER = (context, builder) -> {
+    CommandSource source = InternalUtil.wrap(context.getSource());
+    StringReader reader = Readers.createFiltered(context.getInput());
+
+    CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
+    ParseResults<CommandSource> parseResults = dispatcher.parse(reader, source);
+
+    return dispatcher.getCompletionSuggestions(parseResults);
+  };
+
+  public static List<CommandNode<CommandSourceStack>> translate(
+      CommandNode<CommandSource> node,
+      GrenadierCommandNode root
+  ) {
+    if (node instanceof GrenadierCommandNode grenadierNode) {
+      List<CommandNode<CommandSourceStack>> results = new ArrayList<>();
+
+      CommandNode<CommandSourceStack> translated
+          = translateLiteral(grenadierNode, root);
+
+      grenadierNode.forEachLabel(s -> {
+        results.add(GrenadierCommandData.withLabel(translated, s));
+      });
+
+      return results;
+    }
+
+    if (node instanceof LiteralCommandNode<CommandSource> literal) {
+      return Collections.singletonList(translateLiteral(literal, root));
+    }
+
+    if (node instanceof ArgumentCommandNode<CommandSource, ?> argument) {
+      return Collections.singletonList(translateRequired(argument, root));
+    }
+
+    throw new IllegalArgumentException("Unknown node type: " + node);
+  }
+
+  public static CommandNode<CommandSourceStack> translateLiteral(
+      LiteralCommandNode<CommandSource> node,
+      GrenadierCommandNode root
+  ) {
+    LiteralArgumentBuilder<CommandSourceStack> builder
+        = LiteralArgumentBuilder.literal(node.getLiteral());
+
+    return translateBase(builder, node, root);
+  }
+
+  public static CommandNode<CommandSourceStack> translateRequired(
+      ArgumentCommandNode<CommandSource, ?> node,
+      GrenadierCommandNode root
+  ) {
+    ArgumentType<?> type = translateType(node.getType());
+    boolean useVanillaSuggestions = useVanillaSuggestions(node.getType());
+
+    RequiredArgumentBuilder<CommandSourceStack, ?> builder
+        = RequiredArgumentBuilder.argument(node.getName(), type);
+
+    if (!useVanillaSuggestions) {
+      builder.suggests(translateSuggestions(node, root));
+    }
+
+    return translateBase(builder, node, root);
+  }
+
+  private static CommandNode<CommandSourceStack> translateBase(
+      ArgumentBuilder<CommandSourceStack, ?> result,
+      CommandNode<CommandSource> grenadierNode,
+      GrenadierCommandNode root
+  ) {
+    result.executes(translateCommand(grenadierNode.getCommand()))
+        .requires(translateTest(grenadierNode, root));
+
+    if (grenadierNode.getRedirect() != null) {
+      RequiredArgumentBuilder<CommandSourceStack, String> builder
+          = RequiredArgumentBuilder.argument(
+              grenadierNode.getName(),
+              StringArgumentType.greedyString()
+          );
+
+      builder.executes(COMMAND).suggests(SUGGESTION_PROVIDER);
+
+      return result.then(builder).build();
+    }
+
+    Collection<CommandNode<CommandSource>> children
+        = grenadierNode.getChildren();
+
+    for (var c: children) {
+      List<CommandNode<CommandSourceStack>> translated = translate(c, root);
+      translated.forEach(result::then);
+    }
+
+    return result.build();
+  }
+
+  private static Predicate<CommandSourceStack> translateTest(
+      CommandNode<CommandSource> node,
+      GrenadierCommandNode root
+  ) {
+    return stack -> {
+      CommandSource source = InternalUtil.wrap(stack);
+      source.setCurrentNode(root);
+      return node.canUse(source);
+    };
+  }
+
+  private static Command<CommandSourceStack> translateCommand(
+      Command<CommandSource> command
+  ) {
+    if (command == null) {
+      return null;
+    }
+
+    return COMMAND;
+  }
+
+  private static SuggestionProvider<CommandSourceStack> translateSuggestions(
+      ArgumentCommandNode<CommandSource, ?> grenadierNode,
+      GrenadierCommandNode root
+  ) {
+    return (context, builder) -> {
+      StringReader reader = Readers.createFiltered(context.getInput());
+      CommandSource source = InternalUtil.wrap(context.getSource());
+      source.setCurrentNode(root);
+
+      CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
+
+      ParseResults<CommandSource> parseResults
+          = dispatcher.parse(reader, source);
+
+      CommandContext<CommandSource> grenadierContext
+          = parseResults.getContext()
+          .build(context.getInput())
+          .getLastChild();
+
+      try {
+        return grenadierNode.listSuggestions(grenadierContext, builder);
+      } catch (CommandSyntaxException exc) {
+        return builder.buildFuture();
+      } catch (Throwable t) {
+        Grenadier.exceptionHandler()
+            .onSuggestionException(context.getInput(), t, source);
+
+        return Suggestions.empty();
+      }
+    };
+  }
+
+  /* --------------------- ARGUMENT TYPE TRANSLATION ---------------------- */
+
   private static boolean useVanillaSuggestions(ArgumentType<?> type) {
     if (type instanceof VanillaMappedArgument vanilla) {
       return vanilla.useVanillaSuggestions();

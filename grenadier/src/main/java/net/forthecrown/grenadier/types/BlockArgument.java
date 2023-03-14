@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.types.BlockArgument.Result;
 import net.forthecrown.nbt.CompoundTag;
@@ -30,7 +30,7 @@ public interface BlockArgument extends ArgumentType<Result> {
   interface Result {
 
     @NotNull
-    Set<String> getParsedProperties();
+    Map<String, String> getParsedProperties();
 
     @Nullable
     CompoundTag getTag();

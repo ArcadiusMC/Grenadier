@@ -1,8 +1,15 @@
 package net.forthecrown.grenadier.internal;
 
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.StringJoiner;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.SyntaxExceptions;
@@ -24,6 +31,19 @@ public class InternalUtil {
       FeatureFlags.DEFAULT_FLAGS
   );
 
+  public static final SuggestionProvider<CommandSource> SUGGEST_ALL_COMMANDS = (context, builder) -> {
+    StringReader reader = Readers.forSuggestions(builder);
+    CommandSourceStack stack = unwrap(context.getSource());
+
+    CommandDispatcher<CommandSourceStack> dispatcher
+        = DedicatedServer.getServer().getCommands().getDispatcher();
+
+    ParseResults<CommandSourceStack> parseResults
+        = dispatcher.parse(reader, stack);
+
+    return dispatcher.getCompletionSuggestions(parseResults);
+  };
+
   public static <T> RegistryLookup<T> lookup(ResourceKey<? extends Registry<T>> reg) {
     return DedicatedServer.getServer()
         .registryAccess()
@@ -34,12 +54,20 @@ public class InternalUtil {
     return new CommandSourceImpl(stack);
   }
 
+  public static CommandSourceStack unwrap(CommandSource source) {
+    return ((CommandSourceImpl) source).getStack();
+  }
+
   public static StringReader ofBukkit(String label, String[] args) {
     StringJoiner joiner = new StringJoiner(" ", label, "");
     for (String arg : args) {
       joiner.add(arg);
     }
     return new StringReader(joiner.toString());
+  }
+
+  public static <K, V> Collector<Entry<K, V>, ?, Map<K, V>> mapCollector() {
+    return Collectors.toMap(Entry::getKey, Entry::getValue);
   }
 
   public static CompoundTag fromVanillaTag(net.minecraft.nbt.CompoundTag tag) {

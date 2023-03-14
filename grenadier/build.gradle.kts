@@ -40,6 +40,11 @@ tasks {
     options.release.set(17)
   }
 
+  java {
+    withSourcesJar()
+    withJavadocJar()
+  }
+
   javadoc {
     options.encoding = Charsets.UTF_8.name()
   }
