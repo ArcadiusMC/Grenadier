@@ -90,6 +90,18 @@ public final class ArgumentTypes {
     return EntityArgumentImpl.PLAYERS;
   }
 
+  public static LootTableArgument lootTable() {
+    return LootTableArgumentImpl.INSTANCE;
+  }
+
+  public static ParticleArgument particle() {
+    return ParticleArgumentImpl.INSTANCE;
+  }
+
+  public static UuidArgument uuid() {
+    return UuidArgumentImpl.INSTANCE;
+  }
+
   public static RegistryArgument<Enchantment> enchantment() {
     return registry(Registry.ENCHANTMENT, "enchantment");
   }

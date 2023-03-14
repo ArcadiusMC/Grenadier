@@ -17,7 +17,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import net.forthecrown.grenadier.utils.Readers;
 
 public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
 

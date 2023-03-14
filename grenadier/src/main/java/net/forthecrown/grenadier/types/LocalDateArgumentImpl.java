@@ -13,7 +13,7 @@ import java.time.Year;
 import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.Completions;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
-import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.grenadier.Readers;
 import net.minecraft.commands.CommandBuildContext;
 
 class LocalDateArgumentImpl

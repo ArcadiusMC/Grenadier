@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.Completions;
 import net.forthecrown.grenadier.Suggester;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
-import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.grenadier.Readers;
 import net.minecraft.commands.CommandBuildContext;
 
 class ArrayArgumentImpl<T>

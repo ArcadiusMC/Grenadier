@@ -273,6 +273,16 @@ public interface CommandSource
    */
   boolean isOp();
 
+  /**
+   * Tests if this source can see the specified {@code entity}
+   * <p>
+   * If this source is not a player, this will return true, otherwise this
+   * method calls {@link Player#canSee(Entity)} to get the final result
+   *
+   * @param entity Entity to test
+   * @return {@code true}, if this source can see the entity,
+   *         {@code false} otherwise
+   */
   default boolean canSee(Entity entity) {
     if (!isPlayer()) {
       return true;
@@ -356,6 +366,14 @@ public interface CommandSource
    */
   Collection<String> getEntitySuggestions();
 
+  /**
+   * Gets all players visible to this source
+   * <p>
+   * 'visibility' is determined by the {@link #canSee(Entity)} method
+   *
+   * @return All players visible to this source
+   * @see #canSee(Entity)
+   */
   @SuppressWarnings("unchecked") // Literally nothing here is unchecked
   default Stream<Player> getVisiblePlayers() {
     return (Stream<Player>) Bukkit.getOnlinePlayers()

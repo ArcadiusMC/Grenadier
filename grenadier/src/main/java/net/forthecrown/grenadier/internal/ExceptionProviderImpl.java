@@ -241,4 +241,11 @@ public class ExceptionProviderImpl implements ExceptionProvider {
   public CommandSyntaxException noEntityFound() {
     return translatable("argument.entity.notfound.entity");
   }
+
+  @Override
+  public CommandSyntaxException unknownLootTable(NamespacedKey key,
+                                                 StringReader reader
+  ) {
+    return unknownResource(key, "LootTable", reader);
+  }
 }

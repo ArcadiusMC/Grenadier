@@ -1,4 +1,4 @@
-package net.forthecrown.grenadier.utils;
+package net.forthecrown.grenadier.internal;
 
 import com.mojang.brigadier.StringReader;
 import java.io.Reader;

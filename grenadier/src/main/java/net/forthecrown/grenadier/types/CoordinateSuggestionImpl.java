@@ -1,4 +1,4 @@
-package net.forthecrown.grenadier.internal;
+package net.forthecrown.grenadier.types;
 
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Collections;
@@ -14,7 +14,7 @@ import net.minecraft.commands.SharedSuggestionProvider.TextCoordinates;
 @Getter
 @Accessors(fluent = true)
 @RequiredArgsConstructor
-public class CoordinateSuggestionImpl implements CoordinateSuggestion {
+class CoordinateSuggestionImpl implements CoordinateSuggestion {
 
   private final Component tooltip;
   private final String x, y, z;

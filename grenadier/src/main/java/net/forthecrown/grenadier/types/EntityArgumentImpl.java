@@ -19,7 +19,7 @@ import net.forthecrown.grenadier.Completions;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.PermissionLevel;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
-import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.grenadier.Readers;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.server.level.ServerPlayer;
@@ -66,7 +66,7 @@ class EntityArgumentImpl implements EntityArgument, VanillaMappedArgument {
       throw exceptions.selectorOnlyPlayersAllowed(reader);
     }
 
-    return new ResultImpl(nms, Readers.clone(reader, start));
+    return new ResultImpl(nms, Readers.copy(reader, start));
   }
 
   @Override

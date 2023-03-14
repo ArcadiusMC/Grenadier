@@ -7,16 +7,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.concurrent.CompletableFuture;
-import org.bukkit.World;
+import org.bukkit.Particle;
 
-/**
- * Parses a world by its name or by its namespaced key. Examples of valid
- * inputs: {@code world, minecraft:overworld, world_nether}
- */
-public interface WorldArgument extends ArgumentType<World> {
+public interface ParticleArgument extends ArgumentType<Particle> {
 
   @Override
-  World parse(StringReader reader) throws CommandSyntaxException;
+  Particle parse(StringReader reader) throws CommandSyntaxException;
 
   @Override
   <S> CompletableFuture<Suggestions> listSuggestions(

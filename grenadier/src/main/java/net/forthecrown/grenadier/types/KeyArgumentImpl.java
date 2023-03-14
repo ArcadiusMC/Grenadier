@@ -18,13 +18,7 @@ class KeyArgumentImpl implements KeyArgument, VanillaMappedArgument {
       throws CommandSyntaxException
   {
     final int start = reader.getCursor();
-    StringBuilder builder = new StringBuilder();
-
-    while (reader.canRead() && allowedInKey(reader.peek())) {
-      builder.append(reader.read());
-    }
-
-    String name = builder.toString();
+    String name = readKeyString(reader);
 
     try {
       return NamespacedKey.fromString(name);
@@ -32,6 +26,17 @@ class KeyArgumentImpl implements KeyArgument, VanillaMappedArgument {
       reader.setCursor(start);
       throw Grenadier.exceptions().invalidKey(name, reader);
     }
+  }
+
+  public static String readKeyString(StringReader reader) {
+    final int start = reader.getCursor();
+    StringBuilder builder = new StringBuilder();
+
+    while (reader.canRead() && allowedInKey(reader.peek())) {
+      builder.append(reader.read());
+    }
+
+    return builder.toString();
   }
 
   public static boolean allowedInKey(char c) {

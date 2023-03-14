@@ -25,7 +25,7 @@ import java.util.function.Predicate;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
-import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.grenadier.Readers;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;

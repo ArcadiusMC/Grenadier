@@ -12,6 +12,15 @@ import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Methods to handle and format {@link CommandSyntaxException} instances.
+ *
+ * @see #formatExceptionContext(CommandSyntaxException)
+ * Exception formatting
+ *
+ * @see #handle(CommandSyntaxException, CommandSource)
+ * Exception handling
+ */
 public final class SyntaxExceptions {
   private SyntaxExceptions() {}
 

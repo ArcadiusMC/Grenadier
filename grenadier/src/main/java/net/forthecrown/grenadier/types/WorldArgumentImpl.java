@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.Completions;
 import net.forthecrown.grenadier.Grenadier;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 
 class WorldArgumentImpl implements WorldArgument {
@@ -18,8 +19,18 @@ class WorldArgumentImpl implements WorldArgument {
   @Override
   public World parse(StringReader reader) throws CommandSyntaxException {
     final int start = reader.getCursor();
-    String word = reader.readUnquotedString();
-    World world = Bukkit.getWorld(word);
+    String word = KeyArgumentImpl.readKeyString(reader);
+
+    World world;
+
+    if (word.contains(":")) {
+      reader.setCursor(start);
+      NamespacedKey key = ArgumentTypes.key().parse(reader);
+
+      world = Bukkit.getWorld(key);
+    } else {
+      world = Bukkit.getWorld(word);
+    }
 
     if (world == null) {
       reader.setCursor(start);

@@ -72,4 +72,6 @@ public interface ExceptionProvider extends CommandExceptionType {
   CommandSyntaxException noPlayerFound();
 
   CommandSyntaxException noEntityFound();
+
+  CommandSyntaxException unknownLootTable(NamespacedKey key, StringReader reader);
 }

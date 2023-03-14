@@ -5,7 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Map;
 import java.util.regex.Pattern;
 import net.forthecrown.grenadier.Grenadier;
-import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.grenadier.Readers;
 
 class MapArgumentImpl<T> implements MapArgument<T> {
 

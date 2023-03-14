@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.SyntaxExceptions;
-import net.forthecrown.grenadier.utils.Readers;
+import net.forthecrown.grenadier.Readers;
 import net.forthecrown.nbt.CompoundTag;
 import net.forthecrown.nbt.paper.TagTranslators;
 import net.minecraft.commands.CommandBuildContext;
@@ -75,7 +75,7 @@ public class InternalUtil {
   }
 
   public static int execute(CommandSource source, StringReader reader) {
-    final StringReader startReader = Readers.clone(reader);
+    final StringReader startReader = Readers.copy(reader);
 
     try {
       return Grenadier.dispatcher().execute(reader, source);

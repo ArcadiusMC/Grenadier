@@ -17,11 +17,6 @@ dependencies {
   compileOnly("org.projectlombok:lombok:1.18.22")
   annotationProcessor("org.projectlombok:lombok:1.18.22")
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
-  compileOnly("io.papermc.paper:paper-api:1.19.3-R0.1-SNAPSHOT")
-
-  compileOnly("io.papermc.paper:paper-api:1.19.3-R0.1-SNAPSHOT")
-  compileOnly("io.papermc.paper:paper-mojangapi:1.19.3-R0.1-SNAPSHOT")
   compileOnly("com.mojang:brigadier:1.0.18")
 
   compileOnly("net.forthecrown:nbt:1.2.1")
@@ -31,10 +26,6 @@ dependencies {
 }
 
 tasks {
-  test {
-    useJUnitPlatform()
-  }
-
   compileJava {
     options.encoding = Charsets.UTF_8.name()
     options.release.set(17)

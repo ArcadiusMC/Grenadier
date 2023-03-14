@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
-import net.forthecrown.grenadier.utils.StringReaderWrapper;
+import net.forthecrown.grenadier.internal.StringReaderWrapper;
 import net.forthecrown.nbt.BinaryTag;
 import net.forthecrown.nbt.CompoundTag;
 import net.forthecrown.nbt.string.Snbt;
