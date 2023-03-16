@@ -4,6 +4,7 @@ import com.mojang.brigadier.ImmutableStringReader;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.forthecrown.grenadier.types.options.ArgumentOption;
 import net.forthecrown.nbt.path.PathParseException;
 import net.forthecrown.nbt.string.TagParseException;
 import net.kyori.adventure.text.Component;
@@ -74,4 +75,16 @@ public interface ExceptionProvider extends CommandExceptionType {
   CommandSyntaxException noEntityFound();
 
   CommandSyntaxException unknownLootTable(NamespacedKey key, StringReader reader);
+
+  CommandSyntaxException posNotComplete(StringReader reader);
+
+  CommandSyntaxException mixedPosition(StringReader reader);
+
+  CommandSyntaxException unknownOption(StringReader reader, String usedLabel);
+
+  CommandSyntaxException optionAlreadySet(String word, StringReader reader);
+
+  CommandSyntaxException flagAlreadySet(String word, StringReader reader);
+
+  CommandSyntaxException missingOption(ArgumentOption<?> option);
 }

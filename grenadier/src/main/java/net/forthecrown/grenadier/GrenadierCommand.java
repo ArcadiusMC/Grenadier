@@ -20,7 +20,7 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
   private String permission;
 
   public GrenadierCommand(String literal) {
-    super(literal);
+    super(literal.toLowerCase());
   }
 
   public String getDescription() {

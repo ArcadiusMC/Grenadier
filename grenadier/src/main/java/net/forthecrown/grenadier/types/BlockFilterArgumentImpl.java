@@ -33,8 +33,8 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.craftbukkit.v1_19_R2.block.data.CraftBlockData;
-import org.bukkit.craftbukkit.v1_19_R2.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_19_R3.block.data.CraftBlockData;
+import org.bukkit.craftbukkit.v1_19_R3.util.CraftMagicNumbers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,6 +178,15 @@ class BlockFilterArgumentImpl
       }
 
       return true;
+    }
+
+    @Override
+    public String toString() {
+      return "Result{" +
+          "materials=" + materials +
+          ", properties=" + properties +
+          ", tag=" + tag +
+          '}';
     }
   }
 }

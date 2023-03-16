@@ -75,6 +75,7 @@ class ArrayArgumentImpl<T>
         suggestSeparator = false;
         lastSuggestionStart = reader.getCursor();
 
+        reader.skipWhitespace();
         T value = listType.parse(reader);
         list.add(value);
 
@@ -94,6 +95,7 @@ class ArrayArgumentImpl<T>
           }
 
           if (reader.peek() == ',') {
+            reader.skip();
             continue;
           }
 

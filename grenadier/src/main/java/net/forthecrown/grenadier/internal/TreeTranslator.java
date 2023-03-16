@@ -30,7 +30,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 
-public class TreeTranslator {
+class TreeTranslator {
 
   public static final Command<CommandSourceStack> COMMAND = context -> {
     StringReader input = Readers.createFiltered(context.getInput());
@@ -175,12 +175,21 @@ public class TreeTranslator {
           .build(context.getInput())
           .getLastChild();
 
+      for (var p: grenadierContext.getNodes()) {
+        var node = p.getNode();
+
+        if (!node.canUse(source)) {
+          return Suggestions.empty();
+        }
+      }
+
       try {
         return grenadierNode.listSuggestions(grenadierContext, builder);
       } catch (CommandSyntaxException exc) {
         return builder.buildFuture();
       } catch (Throwable t) {
-        Grenadier.exceptionHandler()
+        Grenadier.getProvider()
+            .getExceptionHandler()
             .onSuggestionException(context.getInput(), t, source);
 
         return Suggestions.empty();

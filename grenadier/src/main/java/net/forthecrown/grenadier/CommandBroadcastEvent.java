@@ -35,26 +35,55 @@ public class CommandBroadcastEvent extends Event implements Cancellable {
     this.viewers = viewers;
   }
 
+  /**
+   * Gets the source of the broadcast
+   * @return broadcast source
+   */
   public CommandSource getSource() {
     return source;
   }
 
+  /**
+   * Gets the message of the announcement
+   * @return Announcement message
+   */
   public Component getMessage() {
     return message;
   }
 
+  /**
+   * Sets the announcement message
+   * @param message new message
+   */
   public void setMessage(Component message) {
     this.message = Objects.requireNonNull(message);
   }
 
+  /**
+   * Gets a mutable set of broadcast viewers.
+   * <p>
+   * Unless manually added, this set will not contain the player the
+   * {@link #getSource()} represents, or, in the case the source is the console,
+   * this set will not contain the console sender
+   *
+   * @return Viewers
+   */
   public Set<Audience> getViewers() {
     return viewers;
   }
 
+  /**
+   * Gets the broadcast message formatter
+   * @return Broadcast formatter
+   */
   public Formatter getFormatter() {
     return formatter;
   }
 
+  /**
+   * Sets the broadcast message formatter
+   * @param formatter message formatter
+   */
   public void setFormatter(Formatter formatter) {
     this.formatter = Objects.requireNonNull(formatter);
   }
@@ -78,19 +107,33 @@ public class CommandBroadcastEvent extends Event implements Cancellable {
     return handlerList;
   }
 
+  /**
+   * Formatter for a command broadcast
+   */
   public interface Formatter {
+    /**
+     * Default broadcast formatter
+     * <p>
+     * Message example: <pre>
+     * [Source: Message]
+     * </pre>
+     */
     Formatter DEFAULT = (audience, message, source) -> {
-      if (Objects.equals(audience, source.asBukkit())) {
-        source.sendMessage(message);
-      }
-
       return translatable("chat.type.admin", source.displayName(), message)
           .color(NamedTextColor.GRAY)
           .decorate(TextDecoration.ITALIC);
     };
 
+    /**
+     * Formats a broadcast message
+     *
+     * @param viewer Message viewer
+     * @param message Base message
+     * @param source Source that send the message
+     * @return Formatted message
+     */
     @NotNull
-    Component formatMessage(Audience audience,
+    Component formatMessage(Audience viewer,
                             Component message,
                             CommandSource source
     );

@@ -106,5 +106,13 @@ class BlockArgumentImpl implements BlockArgument, VanillaMappedArgument {
         PaperNbt.loadBlockEntity(tile, tag);
       }
     }
+
+    @Override
+    public String toString() {
+      return "Result{" +
+          "tag=" + tag +
+          ", state=" + data +
+          '}';
+    }
   }
 }

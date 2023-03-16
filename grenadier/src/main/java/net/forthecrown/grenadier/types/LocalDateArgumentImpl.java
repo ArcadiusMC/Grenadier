@@ -63,25 +63,18 @@ class LocalDateArgumentImpl
     }
 
     public void parse() throws CommandSyntaxException {
-      final int start = reader.getCursor();
-
-      day = Readers.readPositiveInt(reader, 1, 31);
-      separator();
-      month = Readers.readPositiveInt(reader, 1, 12);
-      separator();
       year = Readers.readPositiveInt(reader, Year.MIN_VALUE, Year.MAX_VALUE);
+      separator();
 
       Year yearObj = Year.of(year);
+
+      month = Readers.readPositiveInt(reader, 1, 12);
+      separator();
+
       Month monthObj = Month.of(month);
       int monthLength = monthObj.length(yearObj.isLeap());
 
-      if (day > monthLength) {
-        reader.setCursor(start);
-
-        throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
-            .integerTooHigh()
-            .createWithContext(reader, day, monthLength);
-      }
+      day = Readers.readPositiveInt(reader, 1, monthLength);
     }
 
     private LocalDate toLocalDate() {

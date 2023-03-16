@@ -20,16 +20,23 @@ class KeyArgumentImpl implements KeyArgument, VanillaMappedArgument {
     final int start = reader.getCursor();
     String name = readKeyString(reader);
 
+    NamespacedKey key;
+
     try {
-      return NamespacedKey.fromString(name);
+      key = NamespacedKey.fromString(name);
     } catch (IllegalArgumentException exc) {
+      key = null;
+    }
+
+    if (key == null) {
       reader.setCursor(start);
       throw Grenadier.exceptions().invalidKey(name, reader);
     }
+
+    return key;
   }
 
   public static String readKeyString(StringReader reader) {
-    final int start = reader.getCursor();
     StringBuilder builder = new StringBuilder();
 
     while (reader.canRead() && allowedInKey(reader.peek())) {
@@ -52,10 +59,5 @@ class KeyArgumentImpl implements KeyArgument, VanillaMappedArgument {
   @Override
   public ArgumentType<?> getVanillaType(CommandBuildContext context) {
     return ResourceLocationArgument.id();
-  }
-
-  @Override
-  public boolean useVanillaSuggestions() {
-    return false;
   }
 }

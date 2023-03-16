@@ -1,10 +1,14 @@
 package net.forthecrown.grenadier;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 import org.bukkit.permissions.Permission;
 
 public abstract class AbstractCommand
-    implements CommandTreeBuilder, Predicate<CommandSource> {
+    extends Nodes
+    implements CommandTreeBuilder, Predicate<CommandSource>
+{
 
   private final GrenadierCommand command;
   private boolean registered;
@@ -54,6 +58,20 @@ public abstract class AbstractCommand
 
   public AbstractCommand setPermission(Permission permission) {
     command.withPermission(permission);
+    return this;
+  }
+
+  public List<String> getAliases() {
+    return command.getAliases();
+  }
+
+  public AbstractCommand setAliases(String... strings) {
+    command.withAliases(strings);
+    return this;
+  }
+
+  public AbstractCommand setAliases(Collection<String> strings) {
+    command.withAliases(strings);
     return this;
   }
 }

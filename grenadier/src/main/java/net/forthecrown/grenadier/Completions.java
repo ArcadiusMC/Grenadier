@@ -150,6 +150,11 @@ public final class Completions {
     );
   }
 
+  /**
+   * Suggests scoreboard objectives
+   * @param builder Builder to suggest to
+   * @return suggestions
+   */
   public static CompletableFuture<Suggestions> suggestObjectives(
       SuggestionsBuilder builder
   ) {
@@ -163,6 +168,11 @@ public final class Completions {
     );
   }
 
+  /**
+   * Suggests scoreboard team names
+   * @param builder Builder to suggest to
+   * @return suggestions
+   */
   public static CompletableFuture<Suggestions> suggestTeams(
       SuggestionsBuilder builder
   ) {
@@ -176,6 +186,12 @@ public final class Completions {
     );
   }
 
+  /**
+   * Suggests a collection of coordinate suggestions
+   * @param builder Builder to suggest to
+   * @param suggestions Suggestions
+   * @return suggestions
+   */
   public static CompletableFuture<Suggestions> suggestCoordinates(
       SuggestionsBuilder builder,
       Collection<CoordinateSuggestion> suggestions

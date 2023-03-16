@@ -44,7 +44,7 @@ public final class SyntaxExceptions {
       = Style.style(NamedTextColor.RED, TextDecoration.UNDERLINED);
 
   /**
-   * The style of the <--[HERE] pointer, italic red by default
+   * The style of the {@code <--[HERE]} pointer, italic red by default
    */
   public static Style HERE_POINTER_STYLE
       = Style.style(NamedTextColor.RED, TextDecoration.ITALIC);

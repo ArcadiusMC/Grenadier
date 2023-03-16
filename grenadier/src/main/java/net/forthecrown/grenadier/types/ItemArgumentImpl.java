@@ -2,7 +2,11 @@ package net.forthecrown.grenadier.types;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.nbt.BinaryTags;
@@ -11,7 +15,7 @@ import net.forthecrown.nbt.paper.PaperNbt;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.item.ItemParser;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_19_R2.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_19_R3.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
 
 class ItemArgumentImpl
@@ -26,6 +30,13 @@ class ItemArgumentImpl
     ItemParser.ItemResult result = ItemParser.parseForItem(holderLookup, reader);
 
     return new ItemResult(result);
+  }
+
+  @Override
+  public <S> CompletableFuture<Suggestions> listSuggestions(
+      CommandContext<S> context, SuggestionsBuilder builder
+  ) {
+    return ItemParser.fillSuggestions(holderLookup, builder, false);
   }
 
   @Override
@@ -62,6 +73,14 @@ class ItemArgumentImpl
       }
 
       return PaperNbt.loadItem(itemTag);
+    }
+
+    @Override
+    public String toString() {
+      return "Result{" +
+          "material=" + material +
+          ", tag=" + tag +
+          '}';
     }
   }
 }

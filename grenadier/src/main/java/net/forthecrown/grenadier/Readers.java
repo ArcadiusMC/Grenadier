@@ -12,7 +12,7 @@ public class Readers {
   private Readers() {}
 
   public static final Pattern WORD_PATTERN
-      = Pattern.compile("[a-zA-Z0-9,.+-]+");
+      = Pattern.compile("[a-zA-Z0-9_.+-]+");
 
   /** An empty input string reader */
   public static final StringReader EMPTY = new StringReader("");
@@ -160,7 +160,7 @@ public class Readers {
 
       throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
           .integerTooHigh()
-          .createWithContext(reader, i, min);
+          .createWithContext(reader, i, max);
     }
 
     return i;

@@ -8,42 +8,97 @@ import net.forthecrown.grenadier.internal.GrenadierProviderImpl;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Grenadier singleton access
+ */
 public final class Grenadier {
   private Grenadier() {}
 
   private static GrenadierProvider provider;
 
+  /**
+   * Gets or creates the grenadier provider
+   * @return Grenadier API
+   */
   public static GrenadierProvider getProvider() {
     return provider == null
         ? (provider = new GrenadierProviderImpl())
         : provider;
   }
 
+  /**
+   * Gets the command dispatcher.
+   * <p>
+   * This dispatcher has a restriction on the nodes registered into it, only
+   * command nodes created by {@link GrenadierCommand} instances can be
+   * registered into this dispatcher. More specifically, only
+   * {@link GrenadierCommandNode}s can be registered into this dispatcher
+   *
+   * @return Grenadier dispatcher
+   */
   public static CommandDispatcher<CommandSource> dispatcher() {
     return getProvider().getDispatcher();
   }
 
-  public static CommandExceptionHandler exceptionHandler() {
-    return getProvider().getExceptionHandler();
-  }
-
+  /**
+   * Gets the plugin using grenadier.
+   * <p>
+   * If the grenadier singleton was created by a plugin class loader, then this
+   * will return the plugin that loaded the Grenadier class.
+   * <p>
+   * A plugin is required to register an internal event listener that ensures
+   * clients that connect to the MC server receive correct command trees,
+   * otherwise the default bukkit command tree is sent to clients. The
+   * difference between the two is mostly in the color of the text typed in
+   * chat
+   *
+   * @return Grenadier plugin, {@code null}, if no plugin created the grenadier
+   *         instance
+   */
   public static Plugin plugin() {
     return getProvider().getPlugin();
   }
 
-  public static void plugin(Plugin plugin) {
+  /**
+   * Sets the plugin using grenadier
+   * @param plugin Plugin
+   */
+  public static void plugin(@NotNull Plugin plugin) {
     getProvider().setPlugin(plugin);
   }
 
+  /**
+   * Gets the exception factory
+   * <p>
+   * Most, if not all, exceptions created by the returned factory are
+   * translatable
+   *
+   * @return Exception factory
+   */
   public static ExceptionProvider exceptions() {
     return getProvider().getExceptionProvider();
   }
 
+  /**
+   * Creates a command source for the specified {@code sender}
+   * @param sender Sender to wrap
+   * @return Created source
+   */
   public static CommandSource createSource(CommandSender sender) {
     return getProvider().createSource(sender);
   }
 
+  /**
+   * Creates a command source for the specified {@code sender} and then calls
+   * {@link CommandSource#setCurrentNode(GrenadierCommandNode)} with the
+   * specified {@code node}
+   *
+   * @param sender Sender to wrap
+   * @param node Current command node
+   * @return Created source
+   */
   public static CommandSource createSource(CommandSender sender,
                                            GrenadierCommandNode node
   ) {
@@ -52,26 +107,70 @@ public final class Grenadier {
     return source;
   }
 
+  /**
+   * Converts a Brigadier message to a component.
+   * <p>
+   * This is preferable to using {@link Message#getString()} because the vanilla
+   * implementation of the chat component system also implements {@link Message}.
+   * So the supplied message may be a {@link com.mojang.brigadier.LiteralMessage}
+   * or a vanilla component.
+   *
+   * @param message Message to convert
+   * @return Component
+   */
   public static Component fromMessage(Message message) {
     return getProvider().fromMessage(message);
   }
 
+  /**
+   * Converts the adventure component to a message.
+   * <p>
+   * Internally this turns the Adventure API chat component to a vanilla chat
+   * component
+   *
+   * @param component Component to convert
+   * @return Message
+   */
   public static Message toMessage(Component component) {
     return getProvider().toMessage(component);
   }
 
+  /**
+   * Gets the command fallback prefix, this is prepended onto command labels to
+   * prevent commands from overriding eachother.
+   * <p>
+   * Example: <pre>
+   * Without prefix: command_label
+   * With prefix:    fallback:command_label
+   * </pre>
+   * @return
+   */
   public static String fallbackPrefix() {
     return plugin() == null
         ? "grenadier"
         : plugin().getName().toLowerCase();
   }
 
+  /**
+   * Gets a suggestion provider that suggests all commands currently registered
+   * on the server.
+   * <p>
+   * The returned suggestion provider not only suggests command labels, but
+   * also gets suggestions specific to each command
+   *
+   * @return suggestion provider
+   */
   public static SuggestionProvider<CommandSource> suggestAllCommands() {
     return getProvider().suggestAllCommands();
   }
 
-  public static GrenadierCommand createCommand(String name) {
+  /**
+   * Creates a grenadier command builder
+   * @param name Name of the command
+   * @return Created command
+   */
+  public static GrenadierCommand createCommand(@NotNull String name) {
     Objects.requireNonNull(name);
-    return new GrenadierCommand(name.toLowerCase());
+    return new GrenadierCommand(name);
   }
 }

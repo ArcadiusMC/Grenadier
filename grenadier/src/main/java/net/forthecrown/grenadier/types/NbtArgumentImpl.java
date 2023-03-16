@@ -36,6 +36,7 @@ class NbtArgumentImpl<T extends BinaryTag>
     try {
       return function.apply(new StringReaderWrapper(reader));
     } catch (TagParseException exc) {
+      exc.setContext(null);
       reader.setCursor(exc.getParseOffset());
 
       throw Grenadier.exceptions()

@@ -5,8 +5,8 @@
  * to. Grenadier does also feature several argument types that have no vanilla
  * counterpart and have more general use cases.
  *
- * <h1>General use argument types</h1>
  * <table>
+ * <caption>General use argument types</caption>
  * <thead>
  *   <tr><th>Argument type</th><th>Description</th><th>Example</th></tr>
  * </thead>
@@ -40,8 +40,8 @@
  * </table>
  * <p>
  *
- * <h1>Minecraft argument types</h1>
  * <table>
+ *   <caption>Minecraft argument types</caption>
  *   <thead>
  *     <tr><th>Argument type</th><th>Description</th><th>Example</th></tr>
  *   </thead>

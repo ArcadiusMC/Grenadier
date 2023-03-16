@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import net.forthecrown.grenadier.CommandBroadcastEvent;
+import net.forthecrown.grenadier.CommandBroadcastEvent.Formatter;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
@@ -28,14 +29,14 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.craftbukkit.v1_19_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_19_R2.command.VanillaCommandWrapper;
-import org.bukkit.craftbukkit.v1_19_R2.util.CraftVector;
+import org.bukkit.craftbukkit.v1_19_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_19_R3.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_19_R3.util.CraftVector;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
-public class CommandSourceImpl implements CommandSource {
+class CommandSourceImpl implements CommandSource {
 
   private static final Field silentField;
 
@@ -166,6 +167,10 @@ public class CommandSourceImpl implements CommandSource {
             return false;
           }
 
+          if (player.getName().equals(textName())) {
+            return false;
+          }
+
           return currentNode == null
               || currentNode.canUse(Grenadier.createSource(player));
         })
@@ -182,9 +187,11 @@ public class CommandSourceImpl implements CommandSource {
       return;
     }
 
+    final Formatter formatter = event.getFormatter();
+
     event.getViewers().forEach(audience -> {
-      Component formatted = event.getFormatter()
-          .formatMessage(audience, event.getMessage(), this);
+      Component formatted
+          = formatter.formatMessage(audience, event.getMessage(), this);
 
       audience.sendMessage(formatted);
     });

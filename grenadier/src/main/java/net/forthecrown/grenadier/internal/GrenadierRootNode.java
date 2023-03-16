@@ -11,7 +11,7 @@ import java.util.Map;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 
-public class GrenadierRootNode extends RootCommandNode<CommandSource> {
+class GrenadierRootNode extends RootCommandNode<CommandSource> {
 
   private final GrenadierProviderImpl provider;
 
@@ -79,7 +79,6 @@ public class GrenadierRootNode extends RootCommandNode<CommandSource> {
       StringReader input
   ) {
     List<GrenadierCommandNode> nodes = new ArrayList<>();
-
     final int start = input.getCursor();
 
     for (var c: getChildren()) {

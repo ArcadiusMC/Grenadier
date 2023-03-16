@@ -1,11 +1,22 @@
 package net.forthecrown.grenadier.types;
 
-import net.forthecrown.grenadier.internal.CoordinateSuggestionImpl;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 
 public final class CoordinateSuggestions {
   private CoordinateSuggestions() {}
+
+  public static final CoordinateSuggestion DEFAULT_LOCAL_3
+      = create("^", "^", "^");
+
+  public static final CoordinateSuggestion DEFAULT_LOCAL_2
+      = create("^", "^");
+
+  public static final CoordinateSuggestion DEFAULT_WORLD_3
+      = create("~", "~", "~");
+
+  public static final CoordinateSuggestion DEFAULT_WORLD_2
+      = create("~", "~");
 
   public static CoordinateSuggestion create(String x, String y, String z) {
     return create(null, x, y, z);

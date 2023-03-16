@@ -12,14 +12,16 @@ import net.forthecrown.grenadier.GrenadierProvider;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_19_R2.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_19_R3.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
+import org.jetbrains.annotations.NotNull;
 
 @Getter
 public class GrenadierProviderImpl implements GrenadierProvider {
 
-  private CommandExceptionHandler exceptionHandler;
+  private CommandExceptionHandler exceptionHandler
+      = new DefaultExceptionHandler();
 
   private Plugin plugin;
 
@@ -35,7 +37,11 @@ public class GrenadierProviderImpl implements GrenadierProvider {
 
     var loader = getClass().getClassLoader();
     if (loader instanceof PluginClassLoader pluginLoader) {
-      setPlugin(pluginLoader.getPlugin());
+      var plugin = pluginLoader.getPlugin();
+
+      if (plugin != null) {
+        setPlugin(plugin);
+      }
     }
   }
 
@@ -45,7 +51,7 @@ public class GrenadierProviderImpl implements GrenadierProvider {
   }
 
   @Override
-  public void setPlugin(Plugin plugin) {
+  public void setPlugin(@NotNull Plugin plugin) {
     Objects.requireNonNull(plugin);
     this.plugin = plugin;
 

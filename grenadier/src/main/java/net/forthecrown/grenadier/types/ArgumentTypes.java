@@ -1,14 +1,22 @@
 package net.forthecrown.grenadier.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.types.RegistryArgument.UnknownFactory;
 import net.forthecrown.nbt.BinaryTag;
 import net.forthecrown.nbt.CompoundTag;
+import net.kyori.adventure.util.Ticks;
 import org.bukkit.Keyed;
 import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 public final class ArgumentTypes {
@@ -54,6 +62,18 @@ public final class ArgumentTypes {
     return TimeArgumentImpl.INSTANCE;
   }
 
+  public static Duration getDuration(CommandContext<?> context, String argument) {
+    return context.getArgument(argument, Duration.class);
+  }
+
+  public static long getMillis(CommandContext<?> context, String argument) {
+    return getDuration(context, argument).toMillis();
+  }
+
+  public static long getTicks(CommandContext<?> context, String argument) {
+    return getMillis(context, argument) / Ticks.SINGLE_TICK_DURATION_MS;
+  }
+
   public static ObjectiveArgument objective() {
     return ObjectiveArgumentImpl.INSTANCE;
   }
@@ -78,16 +98,50 @@ public final class ArgumentTypes {
     return EntityArgumentImpl.ENTITY;
   }
 
+  public static EntitySelector getSelector(CommandContext<?> context,
+                                           String argument
+  ) {
+    return context.getArgument(argument, EntitySelector.class);
+  }
+
+  public static Entity getEntity(CommandContext<CommandSource> context,
+                                 String argument
+  ) throws CommandSyntaxException {
+    return getSelector(context, argument)
+        .findEntity(context.getSource());
+  }
+
   public static EntityArgument entities() {
     return EntityArgumentImpl.ENTITIES;
+  }
+
+  public static List<Entity> getEntities(CommandContext<CommandSource> context,
+                                         String argument
+  ) throws CommandSyntaxException {
+    return getSelector(context, argument)
+        .findEntities(context.getSource());
   }
 
   public static EntityArgument player() {
     return EntityArgumentImpl.PLAYER;
   }
 
+  public static Player getPlayer(CommandContext<CommandSource> context,
+                                 String argument
+  ) throws CommandSyntaxException {
+    return getSelector(context, argument)
+        .findPlayer(context.getSource());
+  }
+
   public static EntityArgument players() {
     return EntityArgumentImpl.PLAYERS;
+  }
+
+  public static List<Player> getPlayers(CommandContext<CommandSource> context,
+                                        String argument
+  ) throws CommandSyntaxException {
+    return getSelector(context, argument)
+        .findPlayers(context.getSource());
   }
 
   public static LootTableArgument lootTable() {

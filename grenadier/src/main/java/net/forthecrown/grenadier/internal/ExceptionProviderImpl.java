@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import net.forthecrown.grenadier.ExceptionProvider;
 import net.forthecrown.grenadier.Grenadier;
+import net.forthecrown.grenadier.types.options.ArgumentOption;
 import net.forthecrown.nbt.path.PathParseException;
 import net.forthecrown.nbt.string.TagParseException;
 import net.kyori.adventure.text.Component;
@@ -20,7 +21,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-public class ExceptionProviderImpl implements ExceptionProvider {
+class ExceptionProviderImpl implements ExceptionProvider {
 
   private static final LegacyComponentSerializer LEGACY
       = LegacyComponentSerializer.builder()
@@ -247,5 +248,47 @@ public class ExceptionProviderImpl implements ExceptionProvider {
                                                  StringReader reader
   ) {
     return unknownResource(key, "LootTable", reader);
+  }
+
+  @Override
+  public CommandSyntaxException posNotComplete(StringReader reader) {
+    return translatableWithContext("argument.pos3d.incomplete", reader);
+  }
+
+  @Override
+  public CommandSyntaxException mixedPosition(StringReader reader) {
+    return translatableWithContext("argument.pos.mixed", reader);
+  }
+
+  @Override
+  public CommandSyntaxException unknownOption(StringReader reader,
+                                              String usedLabel
+  ) {
+    return translatableWithContext("argument.entity.options.unknown",
+        reader, usedLabel
+    );
+  }
+
+  @Override
+  public CommandSyntaxException optionAlreadySet(String word,
+                                                 StringReader reader
+  ) {
+    return translatableWithContext(
+        "argument.entity.options.inapplicable",
+        reader,
+        word
+    );
+  }
+
+  @Override
+  public CommandSyntaxException flagAlreadySet(String word,
+                                               StringReader reader
+  ) {
+    return optionAlreadySet(word, reader);
+  }
+
+  @Override
+  public CommandSyntaxException missingOption(ArgumentOption<?> option) {
+    return create("Missing option '%s'", option.getLabels().iterator().next());
   }
 }

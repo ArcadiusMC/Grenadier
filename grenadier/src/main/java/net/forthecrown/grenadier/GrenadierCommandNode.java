@@ -97,7 +97,9 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
       var label = it.next();
 
       if (Readers.startsWithIgnoreCase(reader, label)) {
-        return reader.getCursor() + label.length();
+        int end = reader.getCursor() + label.length();
+        reader.setCursor(end);
+        return end;
       }
     }
 
@@ -112,7 +114,6 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
     final int end = parse(reader);
 
     if (end > -1) {
-      reader.setCursor(end);
       contextBuilder.withNode(this, StringRange.between(start, end));
       return;
     }

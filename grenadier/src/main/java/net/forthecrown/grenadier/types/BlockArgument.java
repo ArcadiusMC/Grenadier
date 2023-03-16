@@ -16,6 +16,16 @@ import org.bukkit.block.data.BlockData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Parses a {@link BlockData} instance along with optional NBT data
+ * <p>
+ * Input examples: <pre>
+ * minecraft:stone
+ * minecraft:stone_brick_slab[type=bottom]
+ * minecraft:chest{Items:[]}
+ * minecraft:chest[facing=west]{Items:[]}
+ * </pre>
+ */
 public interface BlockArgument extends ArgumentType<Result> {
 
   @Override
@@ -59,7 +69,8 @@ public interface BlockArgument extends ArgumentType<Result> {
           location.getWorld(),
           location.getBlockX(),
           location.getBlockY(),
-          location.getBlockZ()
+          location.getBlockZ(),
+          true
       );
     }
   }

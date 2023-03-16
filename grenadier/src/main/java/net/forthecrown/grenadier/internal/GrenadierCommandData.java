@@ -14,7 +14,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 
 @Getter
-public class GrenadierCommandData {
+class GrenadierCommandData {
 
   private final GrenadierCommandNode node;
   private final GrenadierBukkitWrapper bukkitWrapper;
@@ -33,7 +33,7 @@ public class GrenadierCommandData {
 
   public void register() {
     registerBukkit();
-    registerVanilla();
+    //registerVanilla();
   }
 
   public void registerVanilla() {

@@ -1,7 +1,10 @@
 # Grenadier
 Command engine based off of Mojang's Brigadier made for PaperMC
 
-# Progress
+# Todo
+1. [ ] Grenadier commands usable in `execute` command
+2. [ ] Complete Documentation in argument types
+
 ### Arguments
 1.  [x] Array
 2.  [x] Component
@@ -9,25 +12,25 @@ Command engine based off of Mojang's Brigadier made for PaperMC
 4.  [x] Enum
 5.  [x] Game mode
 6.  [x] NamespacedKey
-7.  [ ] LootTable
+7.  [x] LootTable
 8.  [x] Map
-9.  [ ] Particle
+9.  [x] Particle
 10. [x] PotionEffect, merged with `RegistryArgument`
 11. [x] Registry
 12. [x] Time
-13. [ ] UUID
+13. [x] UUID
 14. [x] World
-15. [ ] OptionsArgument
-    1. [ ] Support for flags like `-p`
-    2. [ ] Support for arguments like `key=value`
+15. [x] OptionsArgument
+    1. [x] Support for flags like `-p`
+    2. [x] Support for arguments like `key=value`
 16. [x] Block
 17. [x] Block Filter
 18. [x] Item
 19. [x] Item Filter
-20. [ ] Position
-    1. [ ] 2d and 3d support
-    2. [ ] integer and double coordinate support
-    3. [ ] World relative `~`, and local relative `^` support
+20. [x] Position
+    1. [x] 2d and 3d support
+    2. [x] integer and double coordinate support
+    3. [x] World relative `~`, and local relative `^` support
 21. [x] Scoreboard Objective
 22. [x] Scoreboard Team
 23. [x] Entity Selector

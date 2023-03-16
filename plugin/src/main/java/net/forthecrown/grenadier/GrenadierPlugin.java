@@ -6,7 +6,8 @@ public class GrenadierPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    Grenadier.getProvider().setPlugin(this);
+    Grenadier.plugin(this);
+    new TestCommand();
   }
 
   @Override

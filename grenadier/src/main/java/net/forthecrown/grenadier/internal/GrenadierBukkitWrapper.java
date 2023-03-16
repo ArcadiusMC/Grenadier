@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GrenadierBukkitWrapper extends Command {
+class GrenadierBukkitWrapper extends Command {
 
   private final GrenadierCommandNode treeRoot;
   private final GrenadierCommandData data;

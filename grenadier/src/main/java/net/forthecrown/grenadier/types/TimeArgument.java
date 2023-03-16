@@ -16,6 +16,21 @@ import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import net.kyori.adventure.util.Ticks;
 
+/**
+ * Parses a duration
+ * <p>
+ * Input examples: <pre>
+ * 1.02s
+ * 1.45seconds
+ * 1minute
+ * 12min
+ * 1.5m
+ * 11mo
+ * 14months
+ * 12months
+ * 1000, no time unit given, treated as milliseconds
+ * </pre>
+ */
 public interface TimeArgument extends ArgumentType<Duration> {
 
   @Override
@@ -27,6 +42,9 @@ public interface TimeArgument extends ArgumentType<Duration> {
       SuggestionsBuilder builder
   );
 
+  /**
+   * All supported time units that can be parsed
+   */
   @Getter
   enum Unit {
     YEARS (

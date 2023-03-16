@@ -59,7 +59,7 @@ public class InternalUtil {
   }
 
   public static StringReader ofBukkit(String label, String[] args) {
-    StringJoiner joiner = new StringJoiner(" ", label, "");
+    StringJoiner joiner = new StringJoiner(" ", label + " ", "");
     for (String arg : args) {
       joiner.add(arg);
     }
@@ -83,7 +83,8 @@ public class InternalUtil {
       SyntaxExceptions.handle(exc, source);
       return 1;
     } catch (Throwable t) {
-      Grenadier.exceptionHandler()
+      Grenadier.getProvider()
+          .getExceptionHandler()
           .onCommandException(startReader, t, source);
 
       return 1;

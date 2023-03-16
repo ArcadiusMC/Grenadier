@@ -10,8 +10,14 @@ import java.util.concurrent.CompletableFuture;
 import org.bukkit.World;
 
 /**
- * Parses a world by its name or by its namespaced key. Examples of valid
- * inputs: {@code world, minecraft:overworld, world_nether}
+ * Parses a world by its name or by its namespaced key.
+ * <p>
+ * Input examples: <pre>
+ * world
+ * world_the_end
+ * minecraft:overworld
+ * minecraft:nether
+ * </pre>
  */
 public interface WorldArgument extends ArgumentType<World> {
 

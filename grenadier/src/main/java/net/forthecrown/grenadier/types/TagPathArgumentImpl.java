@@ -25,6 +25,8 @@ class TagPathArgumentImpl
       return TagPath.parse(wrapper);
     } catch (PathParseException exc) {
       reader.setCursor(exc.getPosition());
+      exc.setContext(null);
+
       throw Grenadier.exceptions()
           .pathParseException(exc, reader);
     }
