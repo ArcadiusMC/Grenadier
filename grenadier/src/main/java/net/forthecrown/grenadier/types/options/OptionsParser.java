@@ -1,7 +1,6 @@
 package net.forthecrown.grenadier.types.options;
 
 import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -94,7 +93,7 @@ class OptionsParser implements Suggester<CommandSource> {
       reader.expect('=');
       reader.skipWhitespace();
 
-      suggest(reader.getCursor(), arg.getArgumentType());
+      suggest(reader.getCursor(), arg);
 
       if (options.has(arg)) {
         reader.setCursor(start);
@@ -138,13 +137,13 @@ class OptionsParser implements Suggester<CommandSource> {
     return suggester.getSuggestions(context, builder);
   }
 
-  private void suggest(int cursor, ArgumentType<?> type) {
+  private void suggest(int cursor, ArgumentOption<?> type) {
     this.suggester = (context, builder) -> {
       if (cursor != builder.getStart()) {
         builder = builder.createOffset(cursor);
       }
 
-      return type.listSuggestions(context, builder);
+      return type.getSuggestions(context, builder);
     };
   }
 

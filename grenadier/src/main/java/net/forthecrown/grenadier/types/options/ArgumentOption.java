@@ -1,67 +1,99 @@
 package net.forthecrown.grenadier.types.options;
 
 import com.mojang.brigadier.arguments.ArgumentType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Predicate;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.CommandSource;
-import net.kyori.adventure.text.Component;
+import net.forthecrown.grenadier.Suggester;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@Getter
-public final class ArgumentOption<T> implements Option {
-  private final List<String> labels;
+/**
+ * An option that requires an argument value
+ * <p>
+ * Input example: {@code key=value}
+ * @param <T> Value type
+ */
+public interface ArgumentOption<T> extends Option, Suggester<CommandSource> {
 
-  private final ArgumentType<T> argumentType;
+  /**
+   * Gets the option's argument type.
+   * <p>
+   * This type is used to parse a value and also to suggest values
+   *
+   * @return Argument type
+   */
+  @NotNull
+  ArgumentType<T> getArgumentType();
 
-  private final T defaultValue;
+  /**
+   * Gets the option's default value.
+   * <p>
+   * This value will be returned when {@link ParsedOptions} can't find the
+   * parsed value of this option. In that case, the {@link #getCondition()}
+   * result is ignored and this value will be returned.
+   *
+   * @return Default value, {@code null}, if no value was set
+   */
+  @Nullable
+  T getDefaultValue();
 
-  private final Predicate<CommandSource> condition;
+  /**
+   * Gets the suggestion provider for this option.
+   * <p>
+   * Determines the value suggestions for this option, if not set, uses the
+   * suggestions provided by {@link #getArgumentType()}
+   *
+   * @return Suggestion provider, or {@code null}, if no suggestion provider
+   *         was set
+   */
+  @Nullable
+  Suggester<CommandSource> getSuggester();
 
-  private final Component tooltip;
+  @Override
+  default CompletableFuture<Suggestions> getSuggestions(
+      CommandContext<CommandSource> context,
+      SuggestionsBuilder builder
+  ) {
+    var suggester = getSuggester();
 
-  public ArgumentOption(Builder<T> builder) {
-    this.labels = List.copyOf(builder.getLabels());
-    this.argumentType = Objects.requireNonNull(builder.getArgumentType());
-    this.defaultValue = builder.getDefaultValue();
-    this.condition = Objects.requireNonNull(builder.getCondition());
-    this.tooltip = builder.getTooltip();
-
-    Option.validateLabels(labels);
-  }
-
-  public static <T> Builder<T> builder() {
-    return new Builder<>();
-  }
-
-  public static <T> Builder<T> builder(ArgumentType<T> type) {
-    return ArgumentOption.<T>builder().setArgumentType(type);
-  }
-
-  public static <T> ArgumentOption<T> of(String name, ArgumentType<T> type) {
-    return builder(type).addLabel(name).build();
-  }
-
-  @Getter
-  @Setter
-  @Accessors(chain = true)
-  public static class Builder<T> implements OptionBuilder<Builder<T>> {
-
-    private final List<String> labels = new ArrayList<>();
-
-    private T defaultValue;
-
-    private ArgumentType<T> argumentType;
-
-    private Predicate<CommandSource> condition = source -> true;
-
-    private Component tooltip;
-
-    public ArgumentOption<T> build() {
-      return new ArgumentOption<>(this);
+    if (suggester == null) {
+      return getArgumentType().listSuggestions(context, builder);
     }
+
+    return suggester.getSuggestions(context ,builder);
+  }
+
+  /**
+   * Argument option builder
+   * @param <T> Argument type
+   */
+  interface Builder<T> extends OptionBuilder<Builder<T>> {
+
+    /**
+     * Sets the default value of the option
+     * @param defaultValue default value
+     * @return this
+     * @see #getDefaultValue()
+     */
+    Builder<T> setDefaultValue(@Nullable T defaultValue);
+
+    /**
+     * Sets the suggestion provider. This will override the suggestions
+     * returned by {@link #getArgumentType()}
+     *
+     * @param suggester Suggestion provider
+     * @return this
+     */
+    Builder<T> setSuggester(@Nullable Suggester<CommandSource> suggester);
+
+    /**
+     * Creates the argument option
+     * @return Created option
+     * @throws IllegalArgumentException If no labels were specified
+     */
+    ArgumentOption<T> build() throws IllegalArgumentException;
   }
 }

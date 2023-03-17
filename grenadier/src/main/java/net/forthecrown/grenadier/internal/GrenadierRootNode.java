@@ -6,14 +6,30 @@ import com.mojang.brigadier.tree.RootCommandNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierCommandNode;
+import net.minecraft.server.MinecraftServer;
 
 class GrenadierRootNode extends RootCommandNode<CommandSource> {
 
   private final GrenadierProviderImpl provider;
+
+  /**
+   * Determines if {@link MinecraftServer#vanillaCommandDispatcher} has become a
+   * separate instance from {@link MinecraftServer#getCommands()}. If it has,
+   * then we can register our commands into the vanillaCommandDispatcher as we
+   * wish without fear of Bukkit taking our vanilla Command trees and wrapping
+   * them, which causes a whole host of issues
+   * <p>
+   * I don't know why those getCommands() and vanillaCommandDispatcher are
+   * separated, but it prevents Bukkit commands from being used in the
+   * execute command, so we have to sync to that dispatcher separately
+   */
+  private boolean vanillaSeparated = false;
 
   private final Map<String, GrenadierCommandData> dataMap = new HashMap<>();
 
@@ -27,6 +43,16 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
 
   public GrenadierCommandData getData(String label) {
     return dataMap.get(label);
+  }
+
+  public void syncVanilla() {
+    if (vanillaSeparated) {
+      return;
+    }
+
+    Set<GrenadierCommandData> unique = new HashSet<>(dataMap.values());
+    unique.forEach(GrenadierCommandData::registerVanilla);
+    vanillaSeparated = true;
   }
 
   @Override
@@ -72,6 +98,10 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
     grenadierNode.forEachLabel(s -> dataMap.putIfAbsent(s, data));
 
     data.register();
+
+    if (vanillaSeparated) {
+      data.registerVanilla();
+    }
   }
 
   @Override

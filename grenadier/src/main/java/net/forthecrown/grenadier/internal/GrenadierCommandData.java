@@ -31,11 +31,6 @@ class GrenadierCommandData {
     this.fallback = Grenadier.fallbackPrefix();
   }
 
-  public void register() {
-    registerBukkit();
-    //registerVanilla();
-  }
-
   public void registerVanilla() {
     MinecraftServer server = DedicatedServer.getServer();
     var vanilla = server.vanillaCommandDispatcher;
@@ -72,7 +67,7 @@ class GrenadierCommandData {
     });
   }
 
-  public void registerBukkit() {
+  public void register() {
     CommandMap map = Bukkit.getCommandMap();
     map.register(fallback, bukkitWrapper);
   }

@@ -15,6 +15,7 @@ import net.forthecrown.grenadier.types.ItemArgument;
 import net.forthecrown.grenadier.types.ItemFilterArgument;
 import net.forthecrown.grenadier.types.options.ArgumentOption;
 import net.forthecrown.grenadier.types.options.FlagOption;
+import net.forthecrown.grenadier.types.options.Options;
 import net.forthecrown.grenadier.types.options.OptionsArgument;
 import net.forthecrown.grenadier.types.options.ParsedOptions;
 import net.forthecrown.nbt.BinaryTag;
@@ -33,17 +34,23 @@ public class TestCommand extends AbstractCommand {
       = ArgumentTypes.array(ArgumentTypes.item());
 
   public static final ArgumentOption<Integer> integerArgument
-      = ArgumentOption.builder(IntegerArgumentType.integer())
+      = Options.argument(IntegerArgumentType.integer())
       .addLabel("an_integer")
+      .setSuggester((context, builder) -> {
+        return Completions.suggest(builder, "1", "2", "13");
+      })
       .build();
 
   public static final ArgumentOption<String> stringArgument
-      = ArgumentOption.builder(StringArgumentType.word())
+      = Options.argument(StringArgumentType.word())
       .addLabel("a_string")
       .addLabel("string_2")
+      .setSuggester((context, builder) -> {
+        return Completions.suggest(builder, "word", "world", "thing");
+      })
       .build();
 
-  public static final FlagOption flag = FlagOption.builder()
+  public static final FlagOption flag = Options.flag()
       .addLabel("flag")
       .build();
 

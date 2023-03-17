@@ -56,7 +56,7 @@ public class GrenadierProviderImpl implements GrenadierProvider {
     this.plugin = plugin;
 
     if (syncListener == null) {
-      syncListener = new CommandSyncListener();
+      syncListener = new CommandSyncListener(this);
       Bukkit.getPluginManager().registerEvents(syncListener, plugin);
     }
   }

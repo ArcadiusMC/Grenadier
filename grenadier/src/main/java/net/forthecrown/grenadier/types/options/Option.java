@@ -1,84 +1,120 @@
 package net.forthecrown.grenadier.types.options;
 
-import com.google.common.base.Preconditions;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.CommandSource;
-import net.forthecrown.grenadier.Readers;
 import net.kyori.adventure.text.Component;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public sealed interface Option
-    extends Predicate<CommandSource>
-    permits ArgumentOption, FlagOption
-{
-  List<String> getLabels();
+/**
+ * An option within an {@link OptionsArgument}
+ */
+public interface Option extends Predicate<CommandSource> {
 
+  /**
+   * Gets labels that can be used to parse this option
+   * @return Option labels
+   */
+  @NotNull
+  Set<String> getLabels();
+
+  /**
+   * Gets the condition that must be passed in order to use this option and to
+   * later access it in {@link ParsedOptions}
+   * @return Use condition
+   * @see ParsedOptions#getValue(ArgumentOption, CommandSource)
+   */
+  @NotNull
   Predicate<CommandSource> getCondition();
 
+  /**
+   * Gets the tooltip shown when hovering over the option's labels in command
+   * suggestions
+   *
+   * @return Suggestion tooltip
+   */
   Component getTooltip();
 
+  /**
+   * Tests if the {@code source} passes the {@link #getCondition()} test
+   *
+   * @param source the input argument
+   * @return {@code true} if {@link #getCondition()} returns true, {@code false}
+   *         otherwise
+   */
   @Override
   default boolean test(CommandSource source) {
     return getCondition().test(source);
   }
 
-  static boolean isValidLabel(String s) {
-    return Readers.WORD_PATTERN.matcher(s).matches();
-  }
-
-  static void validateLabels(Collection<String> labels) {
-    Preconditions.checkArgument(
-        !labels.isEmpty(),
-        "Empty labels, expected at least 1 label"
-    );
-
-    labels.forEach(s -> {
-      Preconditions.checkArgument(
-          isValidLabel(s),
-          "Invalid label '%s', must match pattern %s",
-          s, Readers.WORD_PATTERN.pattern()
-      );
-    });
-  }
-
+  /**
+   * Option builder
+   * @param <T> Options builder type
+   */
   interface OptionBuilder<T extends OptionBuilder<T>> {
 
-    List<String> getLabels();
+    /**
+     * Adds a label
+     * @param labels Labels to add
+     * @return this
+     *
+     * @throws IllegalArgumentException If any of the labels failed the
+     *                                  {@link Options#validateLabel(String)}
+     *                                  check
+     */
+    T addLabel(String... labels) throws IllegalArgumentException;
 
-    Predicate<CommandSource> getCondition();
+    /**
+     * Sets this option's labels
+     * @param labels Option labels
+     * @return this
+     * @throws IllegalArgumentException If any of the labels failed the
+     *                                  {@link Options#validateLabel(String)}
+     *                                  check
+     */
+    T setLabels(String... labels) throws IllegalArgumentException;
 
-    T setCondition(@NotNull Predicate<CommandSource> predicate);
+    /**
+     * Sets the option's use condition
+     * @param condition Use condition
+     * @return this
+     */
+    T setCondition(@NotNull Predicate<CommandSource> condition);
 
-    Component getTooltip();
-
-    T setTooltip(Component component);
-
-    default T setLabels(String... labels) {
-      Preconditions.checkArgument(labels.length > 1,
-          "Expected 1 or more labels, found 0"
-      );
-
-      getLabels().clear();
-      getLabels().addAll(Arrays.asList(labels));
-
-      return (T) this;
-    }
-
-    default T addLabel(String label) {
-      getLabels().add(label);
-      return (T) this;
-    }
-
-    default T setPermission(Permission permission) {
+    /**
+     * Sets the option's use condition to be a permission check for the
+     * specified {@code permission}
+     *
+     * @param permission Permission to check for
+     * @return this
+     */
+    default T setPermission(@NotNull String permission) {
+      Objects.requireNonNull(permission, "Null Permission");
       return setCondition(source -> source.hasPermission(permission));
     }
 
-    default T setPermission(String permission) {
+    /**
+     * Sets the option's use condition to be a permission check for the
+     * specified {@code permission}
+     *
+     * @param permission Permission to check for
+     * @return this
+     */
+    default T setPermission(@NotNull Permission permission) {
+      Objects.requireNonNull(permission, "Null Permission");
       return setCondition(source -> source.hasPermission(permission));
     }
+
+    /**
+     * Sets the tooltip shown when hovering over the option's name in
+     * suggestions
+     *
+     * @param tooltip Suggestion tooltip
+     * @return this
+     */
+    T setTooltip(@Nullable Component tooltip);
   }
 }
