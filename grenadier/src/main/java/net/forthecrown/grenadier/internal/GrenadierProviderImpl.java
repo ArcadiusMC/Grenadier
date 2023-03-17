@@ -45,7 +45,7 @@ public class GrenadierProviderImpl implements GrenadierProvider {
     }
   }
 
-  public void setExceptionHandler(CommandExceptionHandler exceptionHandler) {
+  public void setExceptionHandler(@NotNull CommandExceptionHandler exceptionHandler) {
     Objects.requireNonNull(exceptionHandler);
     this.exceptionHandler = exceptionHandler;
   }

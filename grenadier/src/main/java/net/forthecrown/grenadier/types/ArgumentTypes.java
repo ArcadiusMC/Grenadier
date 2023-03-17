@@ -187,7 +187,7 @@ public final class ArgumentTypes {
     return new EnumArgumentImpl<>(enumType);
   }
 
-  public static <T> MapArgument<T> mapArgument(Map<String, T> values) {
+  public static <T> MapArgument<T> map(Map<String, T> values) {
     return new MapArgumentImpl<>(values);
   }
 

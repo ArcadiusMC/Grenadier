@@ -52,7 +52,8 @@ public final class Grenadier {
    * clients that connect to the MC server receive correct command trees,
    * otherwise the default bukkit command tree is sent to clients. The
    * difference between the two is mostly in the color of the text typed in
-   * chat
+   * chat. This listener also ensures that Grenadier is able to register
+   * commands into the same dispatcher that the {@code /executes} command uses.
    *
    * @return Grenadier plugin, {@code null}, if no plugin created the grenadier
    *         instance
@@ -143,7 +144,7 @@ public final class Grenadier {
    * Without prefix: command_label
    * With prefix:    fallback:command_label
    * </pre>
-   * @return
+   * @return Grenadier fallback prefix
    */
   public static String fallbackPrefix() {
     return plugin() == null

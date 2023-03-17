@@ -37,7 +37,7 @@ class EnumArgumentImpl<E extends Enum<E>>
     final int cursor = reader.getCursor();
 
     String word = reader.readUnquotedString();
-    E value = lookupMap.get(word.toUpperCase());
+    E value = lookupMap.get(word.toLowerCase());
 
     if (value == null) {
       reader.setCursor(cursor);

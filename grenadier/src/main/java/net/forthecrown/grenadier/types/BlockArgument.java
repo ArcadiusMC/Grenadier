@@ -37,23 +37,65 @@ public interface BlockArgument extends ArgumentType<Result> {
       SuggestionsBuilder builder
   );
 
+  /**
+   * Parsed block state result
+   */
   interface Result {
 
+    /**
+     * Gets a name to value map of all block properties that were explicitly
+     * parsed.
+     *
+     * @return Parsed properties
+     */
     @NotNull
     Map<String, String> getParsedProperties();
 
+    /**
+     * Gets the NBT tag that was parsed
+     * @return Parsed NBT, or {@code null}, if no NBT was given in the input
+     */
     @Nullable
     CompoundTag getTag();
 
+    /**
+     * Gets the parsed block state
+     * @return Parsed block data
+     */
     @NotNull
     BlockData getParsedState();
 
+    /**
+     * Places the parsed block in the specified {@code world} at the
+     * {@code x, y, z} coordinates and optionally sets any NBT that was parsed,
+     * if, the parsed block type is a tile entity.
+     *
+     * @param world World to place the block in
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @param updatePhysics {@code true} to update the placed block and any
+     *                      surrounding blocks, {@code false} otherwise
+     */
     void place(World world, int x, int y, int z, boolean updatePhysics);
 
+    /**
+     * Delegate for {@link #place(World, int, int, int, boolean)} with the
+     * 'updatePhysics' parameter set to {@code true}
+     * @see #place(World, int, int, int, boolean)
+     */
     default void place(World world, int x, int y, int z) {
       place(world, x, y, z, true);
     }
 
+    /**
+     * Delegate for {@link #place(World, int, int, int, boolean)} where the
+     * world and coordinates are gotten from the specified {@code location}
+     *
+     * @param location Location to place the block at
+     * @param updatePhysics {@code true} to update the placed block and any
+     *                      surrounding blocks, {@code false} otherwise
+     */
     default void place(Location location, boolean updatePhysics) {
       place(
           location.getWorld(),
@@ -64,6 +106,13 @@ public interface BlockArgument extends ArgumentType<Result> {
       );
     }
 
+    /**
+     * Delegate for {@link #place(World, int, int, int, boolean)} where the
+     * world and coordinates are gotten from the specified {@code location} and
+     * where the 'updatePhysics' parameter is set to {@code true}
+     *
+     * @see #place(World, int, int, int, boolean)
+     */
     default void place(Location location) {
       place(
           location.getWorld(),
