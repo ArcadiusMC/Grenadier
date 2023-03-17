@@ -8,7 +8,7 @@ with Bukkit's command system
 
 ## Documentation and guides:
 Documentation and guides on how to use Grenadier are available
-in the grenadier javadoc, located [here](link lmao)
+in the grenadier javadoc, located [here](https://www.javadoc.io/doc/net.forthecrown/grenadier/latest/index.html)
 
 ## Dependency info
 ```kotlin
