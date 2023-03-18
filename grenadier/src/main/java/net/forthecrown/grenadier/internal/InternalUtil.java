@@ -23,8 +23,12 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.world.flag.FeatureFlags;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
-public class InternalUtil {
+@Internal
+public final class InternalUtil {
+  private InternalUtil() {}
+
   public static final CommandBuildContext CONTEXT
       = CommandBuildContext.simple(
       DedicatedServer.getServer().registryAccess(),

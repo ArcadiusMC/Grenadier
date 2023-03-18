@@ -27,6 +27,19 @@ class PositionArgumentImpl implements PositionArgument, VanillaMappedArgument {
 
   static final byte FLAG_2D = 0x1;
   static final byte FLAG_BLOCK = 0x2;
+  static final byte NO_FLAGS = 0;
+
+  static final PositionArgument BLOCK_POSITION
+      = new PositionArgumentImpl(FLAG_BLOCK);
+
+  static final PositionArgument POSITION
+      = new PositionArgumentImpl(NO_FLAGS);
+
+  static final PositionArgument BLOCK_POSITION_2D
+      = new PositionArgumentImpl((byte) (FLAG_BLOCK | FLAG_2D));
+
+  static final PositionArgument POSITION_2D
+      = new PositionArgumentImpl(FLAG_2D);
 
   final byte flags;
   final ArgumentType<?> vanillaType;

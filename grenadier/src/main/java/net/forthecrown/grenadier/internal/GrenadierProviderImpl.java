@@ -15,9 +15,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_19_R3.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
+@Internal
 public class GrenadierProviderImpl implements GrenadierProvider {
 
   private CommandExceptionHandler exceptionHandler

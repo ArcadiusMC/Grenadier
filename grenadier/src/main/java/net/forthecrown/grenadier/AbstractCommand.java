@@ -75,6 +75,10 @@ public abstract class AbstractCommand
     this.command = Grenadier.createCommand(name);
   }
 
+  public String getName() {
+    return command.getLiteral();
+  }
+
   public final void register() {
     if (registered) {
       return;

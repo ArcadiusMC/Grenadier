@@ -75,10 +75,10 @@ public interface CommandSource
    * @return The sender as the type
    * @throws CommandSyntaxException If the sender is not of the specified type
    */
-  default  <T extends CommandSender> T as(Class<T> clazz)
+  default <T extends CommandSender> T as(Class<T> clazz)
       throws CommandSyntaxException
   {
-    return castOptional(clazz)
+    return optionalAs(clazz)
         .orElseThrow(() -> Grenadier.exceptions().sourceMustBe(clazz));
   }
 
@@ -93,7 +93,7 @@ public interface CommandSource
    * type
    */
   default @Nullable <T extends CommandSender> T asOrNull(Class<T> clazz) {
-    return castOptional(clazz).orElse(null);
+    return optionalAs(clazz).orElse(null);
   }
 
   /**
@@ -107,7 +107,7 @@ public interface CommandSource
    * @return The created optional, empty if sender isn't an instance of the
    * given class, otherwise, contains the sender cast to that type.
    */
-  default @NotNull <T extends CommandSender> Optional<T> castOptional(
+  default @NotNull <T extends CommandSender> Optional<T> optionalAs(
       Class<T> clazz
   ) {
     return is(clazz)
@@ -267,6 +267,12 @@ public interface CommandSource
   }
 
   /**
+   * Gets the source's permission level
+   * @return Permission level
+   */
+  PermissionLevel getPermissionLevel();
+
+  /**
    * Checks if the sender is opped
    *
    * @return Whether the sender is opped or not
@@ -314,7 +320,9 @@ public interface CommandSource
   }
 
   /**
-   * Broadcasts the message to other admins
+   * Broadcasts a message to other admins. The specified {@code message} won't
+   * be sent to this source, or the underlying console/player sender of this
+   * source
    *
    * @param message The message to broadcast
    */
@@ -326,14 +334,14 @@ public interface CommandSource
    *
    * @return The command the sender is currently using
    */
-  GrenadierCommandNode getCurrentNode();
+  @Nullable GrenadierCommandNode getCurrentNode();
 
   /**
    * Sets the current command the sender is using
    *
    * @param command The command the sender will be using
    */
-  void setCurrentNode(GrenadierCommandNode command);
+  void setCurrentNode(@Nullable GrenadierCommandNode command);
 
   /**
    * Gets if the sender should broadcast admin messages
@@ -541,6 +549,28 @@ public interface CommandSource
    * @return A command sender with the given sender
    */
   CommandSource withOutput(CommandSender sender);
+
+  /**
+   * Creates a copy of this command source that has the specified {@code level}
+   * @param level new permission level
+   * @return Copied command source with the specified level
+   */
+  CommandSource withPermissionLevel(PermissionLevel level);
+
+  /**
+   * Returns either a new source with the specified permission level, or this
+   * source, if it already has the specified {@code level}
+   * @param level Permission level
+   * @return This, or a new source, if {@link #hasPermission(PermissionLevel)}
+   *         failed
+   */
+  default CommandSource withMaximumLevel(PermissionLevel level) {
+    if (hasPermission(level))  {
+      return this;
+    }
+
+    return withPermissionLevel(level);
+  }
 
   /**
    * Creates a command source facing the given location.

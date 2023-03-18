@@ -12,6 +12,11 @@
  * </thead>
  * <tbody>
  * <tr>
+ *   <td>{@link net.forthecrown.grenadier.types.options.OptionsArgument}</td>
+ *   <td>Parse a list of pre-set options and flags</td>
+ *   <td><code>key=value -flag</code></td>
+ * </tr>
+ * <tr>
  *   <td>{@link net.forthecrown.grenadier.types.MapArgument}</td>
  *   <td>Takes a string 2 object map and parses a map value via its string key</td>
  *   <td><code>a_value</code></td>
@@ -146,8 +151,25 @@
  *   </tbody>
  * </table>
  *
+ * <h2>Using argument types</h2>
+ * Argument types can be used very simply, as an example, let's assume we have
+ * a {@link net.forthecrown.grenadier.GrenadierCommand} named 'command' that
+ * we're building, we would use argument types like so:
+ * <pre><code>
+ * command.then(argument("local date", ArgumentTypes.localDate())
+ *   .executes(context -> {
+ *     LocalDate date = context.getArgument("local date", LocalDate.class);
+ *
+ *     context.getSource().sendMessage(date.toString());
+ *     return 0;
+ *   }
+ * );
+ * </code></pre>
+ *
  * @see net.forthecrown.grenadier.types.ArgumentTypes
  * Accessing and creating argument type
  *
+ * @see net.forthecrown.grenadier.types.options
+ * Options arguments
  */
 package net.forthecrown.grenadier.types;

@@ -39,24 +39,41 @@ import org.jetbrains.annotations.Nullable;
 class CommandSourceImpl implements CommandSource {
 
   private static final Field silentField;
+  private static final Field permissionLevel;
 
   static {
     Class<CommandSourceStack> stackClass = CommandSourceStack.class;
     Field silent = null;
+    Field permission = null;
 
     for (var f: stackClass.getDeclaredFields()) {
-      if (f.getType() != Boolean.class && f.getType() != Boolean.TYPE) {
-        continue;
+      if (f.getType() == Boolean.class
+          || f.getType() == Boolean.TYPE
+          || f.getName().equalsIgnoreCase("silent")
+      ) {
+        silent = f;
       }
 
-      silent = f;
-      break;
+      if (f.getType() == Integer.class
+          || f.getType() == Integer.TYPE
+          || f.getName().equalsIgnoreCase("permissionLevel")
+      ) {
+        permission = f;
+      }
+
+      if (permission != null && silent != null) {
+        break;
+      }
     }
 
     Objects.requireNonNull(silent, "Silent field not found");
+    Objects.requireNonNull(permission, "permissionLevel field not found");
 
     silentField = silent;
     silentField.setAccessible(true);
+
+    permissionLevel = permission;
+    permissionLevel.setAccessible(true);
   }
 
   @Getter
@@ -143,7 +160,19 @@ class CommandSourceImpl implements CommandSource {
 
   @Override
   public boolean hasPermission(PermissionLevel level) {
-    return stack.hasPermission(level.ordinal());
+    int l = level.ordinal();
+    int ourLevel = getPermissionLevel().ordinal();
+    return ourLevel >= l;
+  }
+
+  @Override
+  public PermissionLevel getPermissionLevel() {
+    try {
+      int level = permissionLevel.getInt(stack);
+      return PermissionLevel.values()[level];
+    } catch (ReflectiveOperationException exc) {
+      return PermissionLevel.ALL;
+    }
   }
 
   @Override
@@ -293,6 +322,11 @@ class CommandSourceImpl implements CommandSource {
             VanillaCommandWrapper.getListener(sender).source
         )
     );
+  }
+
+  @Override
+  public CommandSource withPermissionLevel(PermissionLevel level) {
+    return with(stack.withPermission(level.ordinal()));
   }
 
   @Override

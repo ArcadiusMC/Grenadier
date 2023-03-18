@@ -49,6 +49,40 @@
  *
  * </code></pre>
  *
+ * <h3>Option use conditions</h3>
+ * Each option can have a specific use condition that command source objects
+ * must pass in order to use the option. For example, if we wanted to limit a
+ * specific option to a single world, (for example, the 'command_world' world),
+ * we could do so like this: <pre><code>
+ * static final ArgumentOption&lt;Integer> integerOption
+ *     = Options.argument(IntegerArgumentType.integer())
+ *     .addLabel("integerOption")
+ *
+ *     .setCondition(source -> {
+ *       World world = source.getWorld();
+ *       return world.getName().equals("command_world");
+ *     })
+ *
+ *     .build()
+ * </code></pre>
+ * That option won't be suggested or accessible if you're not in the
+ * 'command_world' world
+ *
+ * <h3>Custom suggestions for argument options</h3>
+ * Most of the time, {@link net.forthecrown.grenadier.types.options.ArgumentOption}s
+ * will use the suggestions provided by their argument type, this behaviour can
+ * be overridden, like so: <pre><code>
+ * final ArgumentOption&lt;Integer> integerOption
+ *     = Options.argument(IntegerArgumentType.integer())
+ *     .addLabel("integerOption")
+ *
+ *     .setSuggester((context, builder) -> {
+ *       return Completions.suggest(builder, "1", "2", "3");
+ *     })
+ *
+ *     .build();
+ * </code></pre>
+ *
  * @see net.forthecrown.grenadier.types.options.OptionsArgument
  * Options argument
  *

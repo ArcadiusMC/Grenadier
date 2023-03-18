@@ -3,8 +3,10 @@ package net.forthecrown.grenadier.internal;
 import com.mojang.brigadier.StringReader;
 import java.io.Reader;
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public class StringReaderWrapper extends Reader {
 
   private final StringReader reader;

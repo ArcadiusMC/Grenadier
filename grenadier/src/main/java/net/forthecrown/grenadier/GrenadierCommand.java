@@ -12,6 +12,79 @@ import java.util.List;
 import java.util.function.Predicate;
 import org.bukkit.permissions.Permission;
 
+/**
+ * Grenadier command builder
+ *
+ * <h2>Examples</h2>
+ * Let's create a simple command that says "Hello, world" to the sender, here's
+ * how that would look like: <pre><code>
+ * Grenadier.createCommand("hello_world")
+ *     // Set parameters, like aliases, description and permission
+ *     .withAliases("helloworld")
+ *     .withDescription("Says hello world")
+ *     .withPermission("permission.example")
+ *
+ *     .executes(context -> {
+ *       context.getSource().sendMessage("Hello, world!");
+ *       return 0;
+ *     })
+ *
+ *     // Registers the command so it can be used ingame
+ *     .register();
+ * </code></pre>
+ *
+ * <h3>Using literals</h3>
+ * Literals require the player to input a specific text to use the node, as an
+ * example, we'll make a command that'll accept the following inputs:
+ * <pre>
+ * /command
+ * /command literal_1
+ * </pre>
+ *
+ * Command tree:
+ * <pre><code>
+ * Grenadier.createCommand("command")
+ *     .executes(context -> {
+ *       context.getSource().sendMessage("You entered /command");
+ *       return 0;
+ *     })
+ *
+ *     .then(literal("literal_1)
+ *       .executes(context -> {
+ *         context.getSource().sendMessage("You used the literal");
+ *         return 0;
+ *       })
+ *     )
+ *     .register();
+ * </code></pre>
+ *
+ * <h3>Using arguments</h3>
+ * Arguments require the player to input a type of value, as an example, we'll
+ * make a command that takes in a string and then sends it back to the player.
+ * <p>
+ * The command will accept these inputs: <pre>
+ * /command &lt;string value>
+ * </pre>
+ *
+ * Command tree:
+ * <pre><code>
+ * Grenadier.createCommand("command")
+ *
+ *     .then(argument("string value", StringArgumentType.word())
+ *       .executes(context -> {
+ *         String value = context.getArgument("string value", String.class);
+ *
+ *         context.getSource().sendMessage("You entered: '" + value + "'");
+ *         return 0;
+ *       })
+ *     )
+ *
+ *     .register();
+ * </code></pre>
+ * <p>
+ * For an example about a larger and more complex command structure, see
+ * <a href="https://github.com/ForTheCrown/FTC/blob/main/src/main/java/net/forthecrown/commands/admin/CommandInvStore.java">this command, from the FTC server plugin</a>
+ */
 public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
 
   private final List<String> aliases = new ArrayList<>();

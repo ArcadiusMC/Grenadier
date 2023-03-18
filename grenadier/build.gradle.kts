@@ -1,6 +1,10 @@
 plugins {
   `java-library`
   id("io.papermc.paperweight.userdev") version "1.5.2"
+
+  // Maven publishing
+  id("maven-publish")
+  id("signing")
 }
 
 group = "net.forthecrown"
@@ -46,9 +50,9 @@ tasks {
     options.encoding = Charsets.UTF_8.name()
 
     val docOptions: StandardJavadocDocletOptions
-        = options as StandardJavadocDocletOptions;
+        = options as StandardJavadocDocletOptions
 
-    val links = docOptions.links!!;
+    val links = docOptions.links!!
     links.add("https://jd.papermc.io/paper/1.19/")
     links.add("https://jd.advntr.dev/api/4.13.0/")
     links.add("https://repo.karuslabs.com/repository/brigadier/")
@@ -62,4 +66,59 @@ tasks {
 
 java {
   toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
+publishing {
+  publications {
+    create<MavenPublication>("maven") {
+      from(components["java"])
+
+      pom {
+        name.set("grenadier")
+        description.set("Command engine made with Mojang's Brigadier for PaperMC")
+        url.set("https://github.com/ForTheCrown/Grenadier")
+
+        // For some reason the normal jar file gets forgotten lol,
+        // so gotta do this to include it
+        val jarPath = buildDir.path + "/libs/${project.name}-${project.version}.jar"
+        val jarFile = file(jarPath)
+        artifact(jarFile)
+
+        licenses {
+          license {
+            name.set("MIT License")
+            url.set("https://raw.githubusercontent.com/ForTheCrown/Grenadier/main/LICENSE")
+          }
+        }
+
+        developers {
+          developer {
+            name.set("JulieWoolie")
+            id.set("JulieWoolie")
+          }
+        }
+
+        scm {
+          connection.set("scm:git:git:github.com/ForTheCrown/Grenadier/.git")
+          developerConnection.set("scm:git:ssh://github.com/ForTheCrown/Grenadier/.git")
+          url.set("https://github.com/ForTheCrown/Grenadier")
+        }
+      }
+    }
+  }
+
+  repositories {
+    maven {
+      name = "OSSRH"
+      url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+      credentials {
+        username = project.properties["ossrhUsername"].toString()
+        password = project.properties["ossrhPassword"].toString()
+      }
+    }
+  }
+}
+
+signing {
+  sign(publishing.publications["maven"])
 }
