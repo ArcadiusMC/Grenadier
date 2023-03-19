@@ -40,7 +40,7 @@ class GrenadierBukkitWrapper extends Command {
 
   @Override
   public @NotNull List<String> getAliases() {
-    return treeRoot.getAliases();
+    return new ArrayList<>(treeRoot.getAliases());
   }
 
   @Override

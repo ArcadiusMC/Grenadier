@@ -22,6 +22,7 @@ import net.forthecrown.nbt.BinaryTag;
 import net.forthecrown.nbt.paper.PaperNbt;
 import net.forthecrown.nbt.path.TagPath;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
@@ -71,6 +72,53 @@ public class TestCommand extends AbstractCommand {
         .withAliases("test_alias_1", "test_alias_2")
         .withDescription("A command description")
         .withPermission("grenadier.commands.test")
+
+        .executes(context -> {
+          context.getSource().sendMessage("Hello, world!");
+          return 0;
+        })
+
+        .then(literal("positions")
+            .then(literal("vec2d")
+                .then(argument("p", ArgumentTypes.position2d())
+                    .executes(c -> {
+                      Location location = ArgumentTypes.getLocation(c, "p");
+                      c.getSource().sendMessage(location.toString());
+                      return 0;
+                    })
+                )
+            )
+
+            .then(literal("vec2i")
+                .then(argument("p", ArgumentTypes.blockPosition2d())
+                    .executes(c -> {
+                      Location location = ArgumentTypes.getLocation(c, "p");
+                      c.getSource().sendMessage(location.toString());
+                      return 0;
+                    })
+                )
+            )
+
+            .then(literal("vec3d")
+                .then(argument("p", ArgumentTypes.position())
+                    .executes(c -> {
+                      Location location = ArgumentTypes.getLocation(c, "p");
+                      c.getSource().sendMessage(location.toString());
+                      return 0;
+                    })
+                )
+            )
+
+            .then(literal("vec3i")
+                .then(argument("p", ArgumentTypes.blockPosition())
+                    .executes(c -> {
+                      Location location = ArgumentTypes.getLocation(c, "p");
+                      c.getSource().sendMessage(location.toString());
+                      return 0;
+                    })
+                )
+            )
+        )
 
         .then(literal("options")
             .then(argument("args", options)

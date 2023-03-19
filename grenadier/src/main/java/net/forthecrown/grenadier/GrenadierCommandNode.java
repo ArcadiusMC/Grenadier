@@ -134,7 +134,7 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
   @Override
   public boolean isValidInput(String input) {
     return aliases.contains(input.toLowerCase())
-        && getLiteral().equalsIgnoreCase(input);
+        || getLiteral().equalsIgnoreCase(input);
   }
 
   @Override

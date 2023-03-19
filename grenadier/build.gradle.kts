@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.0.1"
+version = "2.0.4"
 
 repositories {
   mavenCentral()
@@ -18,6 +18,8 @@ repositories {
 }
 
 dependencies {
+  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+
   // As a general rule, lombok is only used in implementation
   // classes, not in the API.
   compileOnly("org.projectlombok:lombok:1.18.22")
@@ -26,7 +28,7 @@ dependencies {
   api("com.mojang:brigadier:1.0.18")
 
   api("net.forthecrown:nbt:1.2.1")
-  api("net.forthecrown:paper-nbt:1.2.2")
+  api("net.forthecrown:paper-nbt:latest.release")
 
   paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT")
 }
@@ -44,6 +46,10 @@ tasks {
   java {
     withSourcesJar()
     withJavadocJar()
+  }
+
+  test {
+    useJUnitPlatform()
   }
 
   javadoc {

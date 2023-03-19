@@ -19,7 +19,7 @@ class MapArgumentImpl<T> implements MapArgument<T> {
   }
 
   static void validateKey(String name) {
-    if (VALID_KEY_PATTERN.pattern().matches(name)) {
+    if (VALID_KEY_PATTERN.matcher(name).matches()) {
       return;
     }
 

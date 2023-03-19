@@ -2,6 +2,7 @@ package net.forthecrown.grenadier.types.options;
 
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.Optional;
 import net.forthecrown.grenadier.CommandSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,14 @@ public interface ParsedOptions {
   }
 
   /**
+   * Delegate for {@link #getValue(ArgumentOption)} that wraps the result
+   * in an optional
+   */
+  default <T> Optional<T> getValueOptional(ArgumentOption<T> option) {
+    return Optional.ofNullable(getValue(option));
+  }
+
+  /**
    * Gets an argument option's parsed value and tests if the specified
    * {@code source} is allowed to access its value.
    * <p>
@@ -102,6 +111,16 @@ public interface ParsedOptions {
 
     parsedValue.checkAccess(source);
     return parsedValue.value();
+  }
+
+  /**
+   * Delegate for {@link #getValue(ArgumentOption, CommandSource)} that wraps
+   * the result in an optional
+   */
+  default <T> Optional<T> getValueOptional(ArgumentOption<T> option,
+                                           CommandSource source
+  ) throws CommandSyntaxException {
+    return Optional.ofNullable(getValue(option, source));
   }
 
   /**

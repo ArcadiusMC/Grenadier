@@ -1,19 +1,22 @@
 package net.forthecrown.grenadier.internal;
 
+import com.google.common.base.Joiner;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.StringJoiner;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
-import net.forthecrown.grenadier.SyntaxExceptions;
 import net.forthecrown.grenadier.Readers;
+import net.forthecrown.grenadier.SyntaxExceptions;
 import net.forthecrown.nbt.CompoundTag;
 import net.forthecrown.nbt.paper.TagTranslators;
 import net.minecraft.commands.CommandBuildContext;
@@ -63,11 +66,10 @@ public final class InternalUtil {
   }
 
   public static StringReader ofBukkit(String label, String[] args) {
-    StringJoiner joiner = new StringJoiner(" ", label + " ", "");
-    for (String arg : args) {
-      joiner.add(arg);
-    }
-    return new StringReader(joiner.toString());
+    List<String> arguments = new ArrayList<>(args.length + 1);
+    arguments.add(label);
+    arguments.addAll(Arrays.asList(args));
+    return new StringReader(Joiner.on(' ').join(arguments));
   }
 
   public static <K, V> Collector<Entry<K, V>, ?, Map<K, V>> mapCollector() {
