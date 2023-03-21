@@ -93,6 +93,9 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
   public int parse(StringReader reader) {
     var it = labels();
 
+    // Input may contain fallback prefix, especially if executed from Bukkit
+    Readers.skipIrrelevantInput(reader);
+
     while (it.hasNext()) {
       var label = it.next();
 
@@ -133,8 +136,7 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
 
   @Override
   public boolean isValidInput(String input) {
-    return aliases.contains(input.toLowerCase())
-        || getLiteral().equalsIgnoreCase(input);
+    return parse(new StringReader(input)) > -1;
   }
 
   @Override
