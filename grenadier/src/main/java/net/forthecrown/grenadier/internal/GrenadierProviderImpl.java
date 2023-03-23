@@ -37,6 +37,10 @@ public class GrenadierProviderImpl implements GrenadierProvider {
   public GrenadierProviderImpl() {
     this.dispatcher = new CommandDispatcher<>(new GrenadierRootNode(this));
 
+    dispatcher.setConsumer((context, success, result) -> {
+      context.getSource().onCommandComplete(context, success, result);
+    });
+
     var loader = getClass().getClassLoader();
     if (loader instanceof PluginClassLoader pluginLoader) {
       var plugin = pluginLoader.getPlugin();
