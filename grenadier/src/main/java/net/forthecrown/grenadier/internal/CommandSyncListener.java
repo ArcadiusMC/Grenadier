@@ -23,6 +23,8 @@ class CommandSyncListener implements Listener {
       return;
     }
 
+    event.setRawCommand(true);
+
     GrenadierCommandData data = wrapper.getData();
 
     LiteralCommandNode<CommandSourceStack> tree

@@ -148,6 +148,18 @@
  *     <td><code>world, world_the_end</code></td>
  *   </tr>
  *
+ *   <tr>
+ *     <td>{@link net.forthecrown.grenadier.types.DoubleRangeArgument}</td>
+ *     <td>Parses an inclusive range of double values</td>
+ *     <td><code>1..2, 1.., ..3</code></td>
+ *   </tr>
+ *
+ *   <tr>
+ *     <td>{@link net.forthecrown.grenadier.types.IntRangeArgument}</td>
+ *     <td>Parses an inclusive range of integer values</td>
+ *     <td><code>1..2, 1.., ..3</code></td>
+ *   </tr>
+ *
  *   </tbody>
  * </table>
  *

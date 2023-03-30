@@ -13,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
 public interface ParsedOptions {
 
   /**
+   * Parsed options instance with no options
+   */
+  ParsedOptions EMPTY = new EmptyOptions();
+
+  /**
    * Gets a parsed option
    * @param option Option to get the parsed representation of
    * @return Parsed option, or {@code null}, if the option was not parsed

@@ -23,7 +23,7 @@ class DefaultExceptionHandler implements CommandExceptionHandler {
                                  Throwable throwable,
                                  CommandSource source
   ) {
-    LOGGER.error("Error running command '{}'", input, throwable);
+    LOGGER.error("Error running command '{}'", input.getString(), throwable);
 
     TranslatableComponent.Builder builder = translatable()
         .key("command.failed")

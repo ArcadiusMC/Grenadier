@@ -45,8 +45,7 @@ class EntityArgumentImpl implements EntityArgument, VanillaMappedArgument {
   {
     final int start = reader.getCursor();
 
-    EntitySelectorParser parser
-        = new EntitySelectorParser(reader, overridePermissions, false);
+    EntitySelectorParser parser = new EntitySelectorParser(reader);
 
     var nms = parser.parse(overridePermissions);
     var exceptions = Grenadier.exceptions();
@@ -61,7 +60,7 @@ class EntityArgumentImpl implements EntityArgument, VanillaMappedArgument {
       }
     }
 
-    if (!includesEntities && nms.includesEntities() && nms.isSelfSelector()) {
+    if (!includesEntities && nms.includesEntities() && !nms.isSelfSelector()) {
       reader.setCursor(start);
       throw exceptions.selectorOnlyPlayersAllowed(reader);
     }

@@ -41,9 +41,9 @@ public interface GameModeArgument extends ArgumentType<GameMode> {
       entry("a",          GameMode.ADVENTURE),
       entry("adventure",  GameMode.ADVENTURE),
 
-      entry("3",          GameMode.ADVENTURE),
-      entry("sp",         GameMode.ADVENTURE),
-      entry("spectator",  GameMode.ADVENTURE)
+      entry("3",          GameMode.SPECTATOR),
+      entry("sp",         GameMode.SPECTATOR),
+      entry("spectator",  GameMode.SPECTATOR)
   );
 
   @Override

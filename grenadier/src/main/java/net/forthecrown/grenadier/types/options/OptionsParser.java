@@ -147,15 +147,13 @@ class OptionsParser implements Suggester<CommandSource> {
     };
   }
 
-  private void suggest(int cursor, SuggestionConsumer... consumers) {
+  private void suggest(int cursor, SuggestionConsumer consumer) {
     this.suggester = (context, builder) -> {
       if (builder.getStart() != cursor) {
         builder = builder.createOffset(cursor);
       }
 
-      for (var c: consumers) {
-        c.apply(builder, context.getSource());
-      }
+      consumer.apply(builder, context.getSource());
 
       return builder.buildFuture();
     };

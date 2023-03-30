@@ -1,8 +1,10 @@
 package net.forthecrown.grenadier;
 
+import com.google.common.base.Strings;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
+import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 
 /**
@@ -69,25 +71,96 @@ public abstract class AbstractCommand
 {
 
   private final GrenadierCommand command;
-  private boolean registered;
 
+  private boolean registered;
+  private GrenadierCommandNode builtNode;
+
+  /**
+   * Creates a new abstract command instance.
+   * <p>
+   * Initializes the {@link #getCommand()} by calling
+   * {@link Grenadier#createCommand(String)}
+   *
+   * @param name Command name
+   */
   public AbstractCommand(String name) {
     this.command = Grenadier.createCommand(name);
   }
 
+  /**
+   * Gets the command's name.
+   * @return Command name
+   */
   public String getName() {
     return command.getLiteral();
   }
 
+  /**
+   * Builds the command tree using {@link #createCommand(GrenadierCommand)} and
+   * then registers it.
+   * <p>
+   * If this has already been called then nothing happens
+   */
   public final void register() {
     if (registered) {
       return;
     }
 
     createCommand(command);
-    command.requires(this).register();
 
+    builtNode = command.requires(this).register();
     registered = true;
+  }
+
+  /**
+   * Gets the built grenadier command node.
+   * @return Built node, or {@code null}, if {@link #register()} has not
+   *         been called
+   */
+  public final GrenadierCommandNode getBuiltNode() {
+    return builtNode;
+  }
+
+  /**
+   * Tests if the specified {@code source} can use this command.
+   * <p>
+   * For this function to return {@code true}, the source must first pass a
+   * permission check, if a permission is set, and then pass the
+   * {@link #test(CommandSource)} method, which can be overridden by subclasses
+   * of this class.
+   *
+   * @param source Source to test
+   * @return {@code true} if the source can use this command,
+   *         {@code false} otherwise
+   */
+  public final boolean canUse(CommandSource source) {
+    if (builtNode != null) {
+      return builtNode.canUse(source);
+    }
+
+    var permission = command.getPermission();
+
+    if (!Strings.isNullOrEmpty(permission)
+        && !source.hasPermission(permission)
+    ) {
+      return false;
+    }
+
+    return test(source);
+  }
+
+  /**
+   * Delegate for {@link #canUse(CommandSource)}. Calls the delegate method by
+   * converting the specified {@code sender} to a {@link CommandSource} by
+   * calling {@link Grenadier#createSource(CommandSender, GrenadierCommandNode)}
+   *
+   * @param sender Sender to test
+   * @return {@code true} if the source can use this command,
+   *         {@code false} otherwise
+   */
+  public final boolean canUse(CommandSender sender) {
+    CommandSource source = Grenadier.createSource(sender, builtNode);
+    return canUse(source);
   }
 
   @Override

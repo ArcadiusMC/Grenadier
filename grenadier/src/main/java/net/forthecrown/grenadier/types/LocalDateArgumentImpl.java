@@ -10,10 +10,12 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.Year;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.Completions;
-import net.forthecrown.grenadier.internal.VanillaMappedArgument;
 import net.forthecrown.grenadier.Readers;
+import net.forthecrown.grenadier.internal.VanillaMappedArgument;
 import net.minecraft.commands.CommandBuildContext;
 
 class LocalDateArgumentImpl
@@ -87,20 +89,29 @@ class LocalDateArgumentImpl
 
     public CompletableFuture<Suggestions> suggest(SuggestionsBuilder builder) {
       LocalDate now = LocalDate.now();
+      List<LocalDate> suggestions = new ArrayList<>();
 
       if (day > 0) {
+        suggestions.add(now);
         now = now.withDayOfMonth(day);
       }
 
       if (month > 0) {
+        suggestions.add(now);
         now = now.withMonth(month);
       }
 
       if (year != 0) {
+        suggestions.add(now);
         now = now.withYear(year);
       }
 
-      return Completions.suggest(builder, now.toString());
+      suggestions.add(now);
+
+      return Completions.suggest(
+          builder,
+          suggestions.stream().map(LocalDate::toString)
+      );
     }
   }
 }

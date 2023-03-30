@@ -51,9 +51,7 @@ public class TestCommand extends AbstractCommand {
       })
       .build();
 
-  public static final FlagOption flag = Options.flag()
-      .addLabel("flag")
-      .build();
+  public static final FlagOption flag = Options.flag("flag");
 
   public static final OptionsArgument options = OptionsArgument.builder()
       .addOptional(stringArgument)

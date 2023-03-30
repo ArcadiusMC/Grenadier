@@ -1,5 +1,6 @@
 package net.forthecrown.grenadier.internal;
 
+import com.google.common.base.Strings;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
@@ -35,7 +36,7 @@ class GrenadierBukkitWrapper extends Command {
 
   @Override
   public @NotNull String getDescription() {
-    return treeRoot.getDescription();
+    return Strings.nullToEmpty(treeRoot.getDescription());
   }
 
   @Override

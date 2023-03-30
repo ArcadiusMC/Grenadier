@@ -87,4 +87,8 @@ public interface ExceptionProvider extends CommandExceptionType {
   CommandSyntaxException flagAlreadySet(String word, StringReader reader);
 
   CommandSyntaxException missingOption(ArgumentOption<?> option);
+
+  CommandSyntaxException rangeEmpty(StringReader reader);
+
+  CommandSyntaxException rangeInverted(StringReader reader);
 }

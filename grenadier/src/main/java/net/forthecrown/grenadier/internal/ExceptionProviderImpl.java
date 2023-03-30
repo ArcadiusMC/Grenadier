@@ -291,4 +291,14 @@ class ExceptionProviderImpl implements ExceptionProvider {
   public CommandSyntaxException missingOption(ArgumentOption<?> option) {
     return create("Missing option '%s'", option.getLabels().iterator().next());
   }
+
+  @Override
+  public CommandSyntaxException rangeEmpty(StringReader reader) {
+    return translatableWithContext("argument.range.empty", reader);
+  }
+
+  @Override
+  public CommandSyntaxException rangeInverted(StringReader reader) {
+    return translatableWithContext("argument.range.swapped", reader);
+  }
 }

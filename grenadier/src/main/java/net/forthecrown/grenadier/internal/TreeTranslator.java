@@ -54,16 +54,7 @@ class TreeTranslator {
       GrenadierCommandNode root
   ) {
     if (node instanceof GrenadierCommandNode grenadierNode) {
-      List<CommandNode<CommandSourceStack>> results = new ArrayList<>();
-
-      CommandNode<CommandSourceStack> translated
-          = translateLiteral(grenadierNode, root);
-
-      grenadierNode.forEachLabel(s -> {
-        results.add(GrenadierCommandData.withLabel(translated, s));
-      });
-
-      return results;
+      return translateGrenadier(grenadierNode, root);
     }
 
     if (node instanceof LiteralCommandNode<CommandSource> literal) {
@@ -77,14 +68,31 @@ class TreeTranslator {
     throw new IllegalArgumentException("Unknown node type: " + node);
   }
 
-  public static CommandNode<CommandSourceStack> translateLiteral(
+  public static List<CommandNode<CommandSourceStack>> translateGrenadier(
+      GrenadierCommandNode grenadierNode,
+      GrenadierCommandNode root
+  ) {
+    List<CommandNode<CommandSourceStack>> results = new ArrayList<>();
+
+    LiteralCommandNode<CommandSourceStack> translated
+        = translateLiteral(grenadierNode, root);
+
+    grenadierNode.forEachLabel(s -> {
+      results.add(GrenadierCommandData.withLabel(translated, s));
+    });
+
+    return results;
+  }
+
+  public static LiteralCommandNode<CommandSourceStack> translateLiteral(
       LiteralCommandNode<CommandSource> node,
       GrenadierCommandNode root
   ) {
     LiteralArgumentBuilder<CommandSourceStack> builder
         = LiteralArgumentBuilder.literal(node.getLiteral());
 
-    return translateBase(builder, node, root);
+    return (LiteralCommandNode<CommandSourceStack>)
+        translateBase(builder, node, root);
   }
 
   public static CommandNode<CommandSourceStack> translateRequired(

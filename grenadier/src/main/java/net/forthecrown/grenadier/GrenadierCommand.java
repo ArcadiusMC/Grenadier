@@ -19,6 +19,7 @@ import org.bukkit.permissions.Permission;
  * Let's create a simple command that says "Hello, world" to the sender, here's
  * how that would look like: <pre><code>
  * Grenadier.createCommand("hello_world")
+ *
  *     // Set parameters, like aliases, description and permission
  *     .withAliases("helloworld")
  *     .withDescription("Says hello world")
@@ -94,6 +95,7 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
 
   public GrenadierCommand(String literal) {
     super(literal.toLowerCase());
+    Grenadier.ensureValidLabel(literal);
   }
 
   public String getDescription() {
@@ -124,6 +126,8 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
   }
 
   public GrenadierCommand withAliases(Collection<String> aliases) {
+    aliases.forEach(Grenadier::ensureValidLabel);
+
     this.aliases.clear();
     this.aliases.addAll(aliases);
     return this;
@@ -182,7 +186,8 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
   @Override
   public GrenadierCommand forward(
       CommandNode<CommandSource> target,
-      RedirectModifier<CommandSource> modifier, boolean fork
+      RedirectModifier<CommandSource> modifier,
+      boolean fork
   ) {
     return (GrenadierCommand) super.forward(target, modifier, fork);
   }

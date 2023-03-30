@@ -1,7 +1,8 @@
 package net.forthecrown.grenadier.internal;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.Getter;
 import net.forthecrown.grenadier.Grenadier;
@@ -25,8 +26,7 @@ class GrenadierCommandData {
     this.node = node;
     this.bukkitWrapper = new GrenadierBukkitWrapper(this);
 
-    this.vanillaTree = (LiteralCommandNode<CommandSourceStack>)
-        TreeTranslator.translateLiteral(node, node);
+    this.vanillaTree = TreeTranslator.translateLiteral(node, node);
 
     this.fallback = Grenadier.fallbackPrefix();
   }
@@ -35,13 +35,18 @@ class GrenadierCommandData {
     MinecraftServer server = DedicatedServer.getServer();
     var vanilla = server.vanillaCommandDispatcher;
 
-    unregisterFrom(vanilla);
+    registerIntoVanilla(vanilla);
+    //registerIntoVanilla(server.getCommands());
+  }
 
-    var root = vanilla.getDispatcher().getRoot();
+  private void registerIntoVanilla(Commands commands) {
+    unregisterFrom(commands);
+
+    var root = commands.getDispatcher().getRoot();
 
     node.forEachLabel(s -> {
-      root.addChild(nmsTreeWith(s));
-      root.addChild(nmsTreeWith(fallback + ":" + s));
+      root.addChild(createSimpleTree(s));
+      root.addChild(createSimpleTree(fallback + ":" + s));
     });
   }
 
@@ -76,8 +81,26 @@ class GrenadierCommandData {
     return withLabel(vanillaTree, label);
   }
 
+  public LiteralCommandNode<CommandSourceStack> createSimpleTree(
+      String label
+  ) {
+    LiteralArgumentBuilder<CommandSourceStack> literal
+        = LiteralArgumentBuilder.literal(label);
+
+    literal.executes(vanillaTree.getCommand())
+        .requires(vanillaTree.getRequirement());
+
+    RequiredArgumentBuilder<CommandSourceStack, String> req
+        = RequiredArgumentBuilder.argument("args", StringArgumentType.greedyString());
+
+    req.suggests(TreeTranslator.SUGGESTION_PROVIDER)
+        .executes(TreeTranslator.COMMAND);
+
+    return literal.then(req).build();
+  }
+
   public static LiteralCommandNode<CommandSourceStack> withLabel(
-      CommandNode<CommandSourceStack> original,
+      LiteralCommandNode<CommandSourceStack> original,
       String label
   ) {
     LiteralArgumentBuilder<CommandSourceStack> literal

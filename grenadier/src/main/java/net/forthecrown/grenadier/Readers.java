@@ -50,6 +50,28 @@ public class Readers {
   }
 
   /**
+   * Similar to {@link #startsWithIgnoreCase(StringReader, String)}, except that
+   * this method requires the specified {@code literal} be followed either by
+   * the end of the input, or a whitespace character
+   *
+   * @param reader Reader to test
+   * @param literal Literal the reader must start with
+   * @return {@code true}, if the specified {@code reader} starts with the
+   *         specified {@code literal} and is then followed by a whitespace or
+   *         end-of-input
+   */
+  public static boolean startsWithArgument(StringReader reader, String literal) {
+    if (!startsWithIgnoreCase(reader, literal)) {
+      return false;
+    }
+
+    StringReader copied = copy(reader);
+    copied.setCursor(copied.getCursor() + literal.length());
+
+    return !copied.canRead() || Character.isWhitespace(copied.peek());
+  }
+
+  /**
    * Creates a new {@link StringReader} with the specified input and offset
    * @param input Input
    * @param cursor Offset

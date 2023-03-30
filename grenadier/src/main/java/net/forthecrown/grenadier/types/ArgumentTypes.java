@@ -24,6 +24,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
+/**
+ * Static factory and instance provider methods for argument types
+ */
 public final class ArgumentTypes {
   private ArgumentTypes() {}
 
@@ -342,6 +345,42 @@ public final class ArgumentTypes {
    */
   public static UuidArgument uuid() {
     return UuidArgumentImpl.INSTANCE;
+  }
+
+  /**
+   * Gets the double range argument.
+   * <p>
+   * Argument type that returns a range between 2 double values. The range
+   * parsed by this argument type is inclusive on both ends.
+   * <p>
+   * Input examples:
+   * <pre>
+   * 1..2  = Between 1 and 2
+   * ..2.5 = At most 2.5
+   * 3.1.. = At least 3.1
+   * </pre>
+   * @return Double range argument
+   */
+  public static DoubleRangeArgument doubleRange() {
+    return DoubleRangeArgumentImpl.DOUBLE_RANGE;
+  }
+
+  /**
+   * Gets the double range argument.
+   * <p>
+   * Argument type that returns a range between 2 integer values. The range
+   * parsed by this argument type is inclusive on both ends.
+   * <p>
+   * Input examples:
+   * <pre>
+   * 15..35 = Between 15 and 35
+   * ..17   = At most 17
+   * 7..    = At least 7
+   * </pre>
+   * @return Int range argument
+   */
+  public static IntRangeArgument intRange() {
+    return IntRangeArgumentImpl.INT_RANGE;
   }
 
   /**

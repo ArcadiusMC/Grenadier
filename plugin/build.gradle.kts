@@ -17,6 +17,7 @@ dependencies {
 
   compileOnly("com.mojang:brigadier:1.0.18")
   implementation(project(":grenadier", "reobf"))
+  implementation(project(":annotations"))
 
   compileOnly("net.forthecrown:nbt:1.2.1")
   compileOnly("net.forthecrown:paper-nbt:1.2.2")

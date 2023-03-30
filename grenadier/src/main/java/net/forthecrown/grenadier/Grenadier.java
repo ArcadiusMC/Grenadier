@@ -1,5 +1,6 @@
 package net.forthecrown.grenadier;
 
+import com.google.common.base.Preconditions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -12,10 +13,19 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Grenadier singleton access
+ * <p>
+ * Note: When {@link #getProvider()} is called for the first time, the
+ * provider will attempt to determine the plugin that loaded it. If a plugin is
+ * found, then it is set as Grenadier's plugin and will be returned in
+ * {@link #plugin()}.
+ * <p>
+ * If no plugin could be determined then there will be issues. See
+ * {@link #plugin()} for why Grenadier requires a plugin
  */
 public final class Grenadier {
   private Grenadier() {}
 
+  // API provider, lazily initialized
   private static GrenadierProvider provider;
 
   /**
@@ -49,14 +59,28 @@ public final class Grenadier {
    * will return the plugin that loaded the Grenadier class.
    * <p>
    * A plugin is required to register an internal event listener that ensures
-   * clients that connect to the MC server receive correct command trees,
-   * otherwise the default bukkit command tree is sent to clients. The
-   * difference between the two is mostly in the color of the text typed in
-   * chat. This listener also ensures that Grenadier is able to register
+   * clients that connect to the server receive correct command trees, otherwise
+   * the default bukkit command tree is sent to clients. The difference between
+   * the two is mostly in the color of the text typed in chat.
+   * <p>
+   * Secondly, the listener also ensures that Grenadier is able to register
    * commands into the same dispatcher that the {@code /executes} command uses.
+   * <p>
+   * Thirdly, if no plugin is found, then there is a chance suggestions will not
+   * function properly, this is mostly in the case of argument types like
+   * {@link net.forthecrown.grenadier.types.options.OptionsArgument} that must
+   * offset suggestions in a way the base Bukkit system cannot handle
+   * <p>
+   * If you're encountering any of the above-mentioned issues, place the
+   * following in your plugin's {@code onEnable} method
+   * <pre><code>
+   * &#064;Override
+   * public void onEnable() {
+   *   Grenadier.plugin(this);
+   * }
+   * </code></pre>
    *
-   * @return Grenadier plugin, {@code null}, if no plugin created the grenadier
-   *         instance
+   * @return Grenadier plugin, {@code null}, if no plugin is set
    */
   public static Plugin plugin() {
     return getProvider().getPlugin();
@@ -65,6 +89,7 @@ public final class Grenadier {
   /**
    * Sets the plugin using grenadier
    * @param plugin Plugin
+   * @see #plugin(Plugin)
    */
   public static void plugin(@NotNull Plugin plugin) {
     getProvider().setPlugin(plugin);
@@ -171,7 +196,24 @@ public final class Grenadier {
    * @return Created command
    */
   public static GrenadierCommand createCommand(@NotNull String name) {
-    Objects.requireNonNull(name);
     return new GrenadierCommand(name);
+  }
+
+  /**
+   * Ensures a specified command {@code label} is valid. For a command label to
+   * be valid it must be non-null and not empty
+   *
+   * @param label Label to test
+   * @throws IllegalArgumentException If the label was empty, or blank
+   * @throws NullPointerException If the label was null
+   */
+  public static void ensureValidLabel(String label)
+      throws IllegalArgumentException, NullPointerException
+  {
+    Objects.requireNonNull(label, "Null command label");
+
+    Preconditions.checkArgument(!label.isBlank(),
+        "Command label cannot be blank"
+    );
   }
 }

@@ -99,7 +99,7 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
     while (it.hasNext()) {
       var label = it.next();
 
-      if (Readers.startsWithIgnoreCase(reader, label)) {
+      if (Readers.startsWithArgument(reader, label)) {
         int end = reader.getCursor() + label.length();
         reader.setCursor(end);
         return end;
