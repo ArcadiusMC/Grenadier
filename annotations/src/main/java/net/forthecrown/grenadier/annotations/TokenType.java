@@ -18,6 +18,7 @@ public enum TokenType {
   REQUIRES        ("requires"),
   LITERAL         ("literal"),
   ARGUMENT        ("argument"),
+  TYPE_MAP        ("map_type"),
 
   TRUE            ("true"),  // Currently unused
   FALSE           ("false"), // Currently unused
@@ -27,6 +28,7 @@ public enum TokenType {
   COMMA           (','),
   DOT             ('.'),
   WALL            ('|'),
+  HASHTAG         ('#'),
 
   // Brackets
   SCOPE_BEGIN     ('{'),

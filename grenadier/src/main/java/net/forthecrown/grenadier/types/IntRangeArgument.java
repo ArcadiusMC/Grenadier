@@ -96,27 +96,7 @@ public interface IntRangeArgument extends ArgumentType<IntRange> {
      * Translates this parsed range into a Guava range
      * @return Range
      */
-    default Range<Integer> toRange() {
-      var min = min();
-      var max = max();
-
-      if (min.isEmpty() && max.isEmpty()) {
-        return Range.all();
-      }
-
-      if (max.isPresent() && min.isPresent()) {
-        int minValue = min.getAsInt();
-        int maxValue = max.getAsInt();
-
-        return Range.closed(minValue, maxValue);
-      }
-
-      if (min.isPresent()) {
-        return Range.atLeast(min.getAsInt());
-      } else {
-        return Range.atMost(max.getAsInt());
-      }
-    }
+    Range<Integer> toRange();
 
     /**
      * Converts this range into a parse-able string

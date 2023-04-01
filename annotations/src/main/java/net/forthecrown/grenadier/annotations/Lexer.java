@@ -3,14 +3,9 @@ package net.forthecrown.grenadier.annotations;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Iterator;
-import java.util.Locale;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.Readers;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.kyori.adventure.translation.GlobalTranslator;
 
 @RequiredArgsConstructor
 class Lexer implements Iterator<Token> {
@@ -63,12 +58,7 @@ class Lexer implements Iterator<Token> {
       lastStart = token.position();
       return token;
     } catch (CommandSyntaxException exc) {
-      Component msg = Grenadier.fromMessage(exc.getRawMessage());
-      Component rendered = GlobalTranslator.render(msg, Locale.ENGLISH);
-      String stringMessage = PlainTextComponentSerializer.plainText()
-          .serialize(rendered);
-
-      throw factory.create(reader.getCursor(), stringMessage);
+      throw factory.wrap(exc);
     }
   }
 
@@ -106,7 +96,7 @@ class Lexer implements Iterator<Token> {
       return TokenType.QUOTED_STRING.token(p, quoted);
     }
 
-    String word = reader.readUnquotedString();
+    String word = readWord();
 
     if (word.isEmpty()) {
       throw factory.create(p, "Unknown token '%s'", c);
@@ -119,6 +109,20 @@ class Lexer implements Iterator<Token> {
     }
 
     return keyword.token(p);
+  }
+
+  private String readWord() {
+    final int start = reader.getCursor();
+
+    while (reader.canRead() && isWordChar(reader.peek())) {
+      reader.skip();
+    }
+
+    return reader.getString().substring(start, reader.getCursor());
+  }
+
+  public static boolean isWordChar(char c) {
+    return Character.isJavaIdentifierPart(c);
   }
 
   private void skipWhitespace() {

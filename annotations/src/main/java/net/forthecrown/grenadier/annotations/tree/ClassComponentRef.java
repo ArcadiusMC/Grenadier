@@ -1,19 +1,11 @@
 package net.forthecrown.grenadier.annotations.tree;
 
 import com.google.common.base.Preconditions;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.Pair;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
-import net.forthecrown.grenadier.CommandContexts;
-import net.forthecrown.grenadier.CommandSource;
-import net.forthecrown.grenadier.annotations.Argument;
-import net.forthecrown.grenadier.annotations.Utils;
+import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,109 +57,6 @@ public record ClassComponentRef(
       Utils.sneakyThrow(exc);
       return null;
     }
-  }
-
-  public int runAsExecutes(Object object,
-                           CommandContext<CommandSource> context
-  ) {
-    Preconditions.checkState(next == null, "next() node present");
-
-    Map<String, ParsedArgument<CommandSource, ?>> arguments
-        = CommandContexts.getArguments(context);
-
-    Class<?> objectClass = object.getClass();
-
-    var methods = Arrays.stream(objectClass.getMethods())
-        .filter(method -> method.getName().equals(this.name))
-        .toList();
-
-    Preconditions.checkState(
-        !methods.isEmpty(),
-        "No executes method named '%s' found in %s",
-        name, object
-    );
-
-    Preconditions.checkState(
-        methods.size() < 2,
-        "Found more than 1 method named '%s' in %s",
-        name, object
-    );
-
-    Method m = methods.iterator().next();
-    Parameter[] params = m.getParameters();
-
-    int contextIndex = -1;
-    Object[] invocationParameters = new Object[params.length];
-
-    for (int i = 0; i < params.length; i++) {
-      var p = params[i];
-
-      if (p.getType() == CommandContext.class) {
-        Preconditions.checkState(
-            contextIndex == -1,
-            "Cannot have more than 1 CommandContext parameter"
-        );
-
-        contextIndex = i;
-        invocationParameters[i] = context;
-
-        continue;
-      }
-
-      String argumentName;
-      boolean optional;
-
-      if (p.isAnnotationPresent(Argument.class)) {
-        var arg = p.getAnnotation(Argument.class);
-        argumentName = arg.value();
-        optional = arg.optional();
-      } else {
-        argumentName = p.getName();
-        optional = false;
-      }
-
-      ParsedArgument<CommandSource, ?> argument = arguments.get(argumentName);
-
-      if (argument == null) {
-        if (optional) {
-          invocationParameters[i] = null;
-          continue;
-        }
-
-        throw new NullPointerException(String.format(
-            "No argument named '%s' in command",
-            argumentName
-        ));
-      }
-
-      Class<?> parameterType = CommandContexts.PRIMITIVE_TO_WRAPPER
-          .getOrDefault(p.getType(), p.getType());
-
-      Preconditions.checkState(
-          parameterType.isAssignableFrom(argument.getResult().getClass()),
-          "Argument '%s' is defined as %s not %s",
-          argumentName,
-          argument.getResult().getClass(),
-          parameterType
-      );
-
-      invocationParameters[i] = argument.getResult();
-    }
-
-    Object result;
-
-    try {
-      result = m.invoke(object, invocationParameters);
-    } catch (ReflectiveOperationException exc) {
-      Utils.sneakyThrow(exc);
-      return 1;
-    }
-
-    if (result instanceof Integer integer) {
-      return integer;
-    }
-
-    return 0;
   }
 
   public <R, I> @NotNull R execute(

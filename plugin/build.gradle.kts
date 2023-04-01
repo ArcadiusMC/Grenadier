@@ -15,7 +15,7 @@ repositories {
 dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
 
-  compileOnly("com.mojang:brigadier:1.0.18")
+  compileOnly("com.mojang:brigadier:1.0.500")
   implementation(project(":grenadier", "reobf"))
   implementation(project(":annotations"))
 

@@ -48,6 +48,17 @@ class ParsedOptionsImpl implements ParsedOptions {
   }
 
   @Override
+  public ParsedOptions checkAccess(CommandSource source)
+      throws CommandSyntaxException
+  {
+    for (var parsed: options.values()) {
+      parsed.checkAccess(source);
+    }
+
+    return this;
+  }
+
+  @Override
   public @Nullable ParsedOption getParsedOption(@NotNull Option option) {
     return options.get(option);
   }

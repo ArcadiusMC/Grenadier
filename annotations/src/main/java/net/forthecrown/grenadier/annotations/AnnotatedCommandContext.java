@@ -2,6 +2,7 @@ package net.forthecrown.grenadier.annotations;
 
 import java.util.Map;
 import net.forthecrown.grenadier.GrenadierCommandNode;
+import net.forthecrown.grenadier.annotations.compiler.CommandCompilationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -103,17 +104,25 @@ public interface AnnotatedCommandContext {
   void setTypeRegistry(@NotNull TypeRegistry typeRegistry);
 
   /**
+   * Loaders are in charge of loading command data annotations that use a
+   * 'file = &lt;path&gt;' value
+   *
+   * @param loader Command data file loader
+   */
+  void addLoader(CommandDataLoader loader);
+
+  /**
    * Registers the specified {@code command}
    * @param command Command to register
    * @return Registered command node
    *
    * @throws CommandParseException If the command data couldn't be parsed
-   * @throws IllegalStateException If the command couldn't be compiled
+   * @throws CommandCompilationException If the command couldn't be compiled
    *
    * @see #registerCommand(Object, ClassLoader)
    */
   default GrenadierCommandNode registerCommand(Object command)
-      throws CommandParseException, IllegalStateException
+      throws CommandParseException, CommandCompilationException
   {
     Class<?> type = command.getClass();
     return registerCommand(command, type.getClassLoader());
@@ -129,14 +138,14 @@ public interface AnnotatedCommandContext {
    * @return Registered command node
    *
    * @throws CommandParseException If the command data couldn't be parsed
-   * @throws IllegalStateException If the command couldn't be compiled
+   * @throws CommandCompilationException If the command couldn't be compiled
    *
    * @see #registerCommand(Object, ClassLoader)
    */
   GrenadierCommandNode registerCommand(
       Object command,
       ClassLoader loader
-  ) throws CommandParseException, IllegalStateException;
+  ) throws CommandParseException, CommandCompilationException;
 
   /**
    * Defines the rule for the {@link #getDefaultExecutes()} method being used

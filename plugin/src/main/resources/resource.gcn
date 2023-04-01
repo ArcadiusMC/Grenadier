@@ -1,0 +1,9 @@
+name = 'resource_test'
+
+literal('literal') = run1()
+literal('other_literal') = run2()
+
+argument(@pos_arg, vec3i) {
+  map_type(@pos_arg) = result.apply()
+  executes = runPos()
+}

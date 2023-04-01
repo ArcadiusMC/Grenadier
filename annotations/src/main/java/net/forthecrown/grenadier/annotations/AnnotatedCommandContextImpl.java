@@ -3,9 +3,14 @@ package net.forthecrown.grenadier.annotations;
 import com.google.common.base.Preconditions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import lombok.Getter;
@@ -13,7 +18,13 @@ import lombok.Setter;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
+import net.forthecrown.grenadier.Readers;
+import net.forthecrown.grenadier.annotations.compiler.CommandCompilationException;
+import net.forthecrown.grenadier.annotations.compiler.CommandCompiler;
+import net.forthecrown.grenadier.annotations.compiler.CompileContext;
+import net.forthecrown.grenadier.annotations.compiler.CompileErrors;
 import net.forthecrown.grenadier.annotations.tree.RootTree;
+import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
 final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
@@ -33,7 +44,19 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
   @Getter
   private TypeRegistry typeRegistry = TypeRegistry.global();
 
+  private final List<CommandDataLoader> loaders = new ArrayList<>();
+
   AnnotatedCommandContextImpl() {
+    CommandDataLoader defaultLoader
+        = CommandDataLoader.resources(getClass().getClassLoader());
+
+    addLoader(defaultLoader);
+  }
+
+  @Override
+  public void addLoader(CommandDataLoader loader) {
+    Objects.requireNonNull(loader);
+    loaders.add(loader);
   }
 
   @Override
@@ -45,12 +68,58 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     this.defaultRule = Objects.requireNonNull(defaultRule);
   }
 
+  private StringReader getReader(String value) {
+    StringReader reader = new StringReader(value);
+
+    if (!Readers.startsWith(reader, "file")) {
+      return reader;
+    }
+
+    ParseExceptions exceptions = ParseExceptions.factory(reader);
+
+    reader.setCursor(reader.getCursor() + "file".length());
+    reader.skipWhitespace();
+
+    try {
+      reader.expect('=');
+    } catch (CommandSyntaxException e) {
+      throw exceptions.wrap(e);
+    }
+
+    reader.skipWhitespace();
+
+    String path;
+
+    try {
+      path = reader.readString();
+    } catch (CommandSyntaxException exc) {
+      throw exceptions.wrap(exc);
+    }
+
+    for (var l: loaders) {
+      String inputString;
+
+      try {
+        inputString = l.getString(path);
+      } catch (IOException exc) {
+        exc.printStackTrace(System.err);
+        continue;
+      }
+
+      StringReader inReader = new StringReader(inputString);
+      return inReader;
+    }
+
+    throw exceptions.create("No valid loader path '%s' found", path);
+  }
+
   @Override
   public GrenadierCommandNode registerCommand(Object command,
                                               ClassLoader loader
-  ) throws CommandParseException, IllegalStateException {
+  ) throws CommandParseException, CommandCompilationException {
     CommandData data = findData(command);
-    StringReader reader = new StringReader(data.value());
+    String value = data.value();
+    StringReader reader = getReader(value);
 
     ParseExceptions exceptions = ParseExceptions.factory(reader);
 
@@ -62,17 +131,25 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     variables.putAll(this.variables);
     variables.putAll(initializeLocalVariables(command));
 
-    CompilationContext context = new CompilationContext(
-        typeRegistry,
+    CompileErrors errors = new CompileErrors();
+
+    CompileContext context = new CompileContext(
         variables,
         loader,
+        typeRegistry,
         command,
         defaultPermissionFormat,
-        exceptions
+        errors,
+        new Stack<>(),
+        new HashMap<>()
     );
 
     GrenadierCommandNode node = (GrenadierCommandNode)
         tree.accept(CommandCompiler.COMPILER, context);
+
+    if (!errors.getErrors().isEmpty()) {
+      throw new CommandCompilationException(errors.getErrors(), reader);
+    }
 
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
     dispatcher.getRoot().addChild(node);

@@ -8,6 +8,11 @@ import org.jetbrains.annotations.Nullable;
 class EmptyOptions implements ParsedOptions {
 
   @Override
+  public ParsedOptions checkAccess(CommandSource source) {
+    return this;
+  }
+
+  @Override
   public @Nullable ParsedOption getParsedOption(@NotNull Option option) {
     return null;
   }

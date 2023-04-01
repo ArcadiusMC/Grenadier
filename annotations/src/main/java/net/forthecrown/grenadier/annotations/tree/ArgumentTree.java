@@ -12,6 +12,8 @@ public class ArgumentTree extends ChildCommandTree {
 
   private SuggestsTree suggests;
 
+  public ArgumentMapperTree mapper;
+
   @Override
   public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
     return visitor.visitArgument(this, context);

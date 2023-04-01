@@ -1,8 +1,8 @@
 package net.forthecrown.grenadier.annotations.tree;
 
 import java.util.Map;
-import net.forthecrown.grenadier.annotations.ParseExceptions;
 import net.forthecrown.grenadier.annotations.Token;
+import net.forthecrown.grenadier.annotations.util.Result;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
@@ -13,17 +13,16 @@ public interface ArgumentTypeRef extends Tree {
       implements ArgumentTypeRef
   {
 
-    public Token getOrThrow(String optionName, ParseExceptions exceptions) {
-      var token = options.get(optionName);
+    public Result<Token> getOption(String optionName) {
+      Token value = options.get(optionName);
 
-      if (token == null) {
-        throw exceptions.create(
-            "Missing '%s' option from '%s' argument type info",
+      if (value == null) {
+        return Result.fail("Missing '%s' option from '%s' argument type info",
             optionName, name
         );
       }
 
-      return token;
+      return Result.success(value);
     }
 
     @Override

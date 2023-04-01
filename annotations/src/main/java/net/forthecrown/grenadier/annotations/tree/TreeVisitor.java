@@ -1,5 +1,8 @@
 package net.forthecrown.grenadier.annotations.tree;
 
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.InvokeResultMethod;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.RefMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.VariableMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRef;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
@@ -46,4 +49,10 @@ public interface TreeVisitor<R, C> {
   R visitVariableName(VariableName tree, C c);
 
   R visitDirectName(DirectName tree, C c);
+
+  R visitVarModifier(VariableMapper tree, C c);
+
+  R visitRefModifier(RefMapper tree, C c);
+
+  R visitResultInvokeModifier(InvokeResultMethod tree, C c);
 }

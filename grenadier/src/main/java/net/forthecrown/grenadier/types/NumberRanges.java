@@ -1,5 +1,6 @@
 package net.forthecrown.grenadier.types;
 
+import com.google.common.collect.Range;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Objects;
@@ -37,7 +38,7 @@ final class NumberRanges {
     );
   }
 
-  private static <T extends NumericRange<N>, N extends Number> T parse(
+  private static <T extends NumericRange<N>, N extends Comparable<N>> T parse(
       NumberParser<N> numberParser,
       RangeFactory<T, N> factory,
       T unlimited,
@@ -63,7 +64,10 @@ final class NumberRanges {
         return unlimited;
       }
 
-      if (min != null && max != null && min.doubleValue() > max.doubleValue()) {
+      // Java Comparables make no sense, what does 1 mean
+      // why can't I just 'min > max'
+
+      if (min != null && max != null && min.compareTo(max) >= 1) {
         reader.setCursor(start);
         throw Grenadier.exceptions().rangeInverted(reader);
       }
@@ -161,17 +165,43 @@ final class NumberRanges {
     N read(StringReader reader) throws CommandSyntaxException;
   }
 
-  public interface RangeFactory<T extends NumericRange<N>, N> {
+  public interface RangeFactory<T extends NumericRange<N>, N extends Comparable<N>> {
     T create(N min, N max);
   }
 
   @RequiredArgsConstructor
-  static abstract class NumericRange<N> {
+  static abstract class NumericRange<N extends Comparable<N>> {
     protected final N min;
     protected final N max;
 
     public boolean isExact() {
       return min != null && max != null && Objects.equals(min, max);
+    }
+
+    public boolean isUnlimited() {
+      return min == null && max == null;
+    }
+
+    public boolean isMinLimited() {
+      return min != null;
+    }
+
+    public boolean isMaxLimited() {
+      return max != null;
+    }
+
+    public Range<N> toRange() {
+      if (min == null && max == null) {
+        return Range.all();
+      }
+
+      if (max != null && min != null) {
+        return Range.closed(min, max);
+      }
+
+      return min == null
+          ? Range.atMost(max)
+          : Range.atLeast(min);
     }
 
     @Override

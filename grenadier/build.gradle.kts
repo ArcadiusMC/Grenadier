@@ -1,6 +1,6 @@
 plugins {
   `java-library`
-  id("io.papermc.paperweight.userdev") version "1.5.2"
+  id("io.papermc.paperweight.userdev") version "1.5.3"
 
   // Maven publishing
   id("maven-publish")
@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.0.6"
+version = "2.0.7"
 
 repositories {
   mavenCentral()

@@ -3,6 +3,7 @@ package net.forthecrown.grenadier.annotations;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import java.util.Arrays;
+import net.forthecrown.grenadier.annotations.util.Result;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 /**
@@ -39,11 +40,15 @@ public record Token(String value, TokenType type, int position) {
   public void expect(ParseExceptions exceptions, TokenType... types)
       throws CommandParseException
   {
+    parseExpect(types).orThrow(exceptions);
+  }
+
+  public Result<Token> parseExpect(TokenType... types) {
     if (is(types)) {
-      return;
+      return Result.success(this);
     }
 
-    throw exceptions.create(position,
+    return Result.fail(position,
         "Expected %s, found %s",
         typesToString(types),
         type().toString()

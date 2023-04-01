@@ -117,8 +117,10 @@ public final class SyntaxExceptions {
     final int cursor = Math.min(e.getInput().length(), e.getCursor());
 
     //Either start of input or cursor - 10
-    final int start = Math.max(0,
-        cursor - CommandSyntaxException.CONTEXT_AMOUNT);
+    final int start = Math.max(
+        0,
+        cursor - CommandSyntaxException.CONTEXT_AMOUNT
+    );
 
     //Context too long, add dots
     if (start != 0) {
@@ -147,7 +149,7 @@ public final class SyntaxExceptions {
 
             .append(
                 text(grayContext, GRAY_CONTEXT_STYLE),
-                text(redContext, RED_CONTEXT_STYLE)
+                text(redContext,  RED_CONTEXT_STYLE)
             )
 
             .append(translatable("command.context.here", HERE_POINTER_STYLE))

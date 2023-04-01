@@ -12,7 +12,11 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import jdk.jfr.Event;
 import net.forthecrown.grenadier.annotations.TypeRegistry.TypeParser;
+import net.forthecrown.grenadier.annotations.compiler.CompileContext;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
+import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.types.ArgumentTypes;
 import net.forthecrown.grenadier.types.ArrayArgument;
 import net.forthecrown.grenadier.types.EnumArgument;
@@ -21,48 +25,56 @@ import net.forthecrown.grenadier.types.MapArgument;
 final class BuiltInTypeParsers {
   private BuiltInTypeParsers() {}
 
-  static final TypeParser<ArrayArgument<?>> ARRAY = (info, context, factory) -> {
-    var token = info.getOrThrow("values", factory);
-    token.expect(factory, VARIABLE);
-
-    String label = token.value();
-
-    ArgumentType<?> type = context.getOrThrow(label, ArgumentType.class);
-    return ArgumentTypes.array(type);
+  @SuppressWarnings("unchecked")
+  static final TypeParser<ArrayArgument<?>> ARRAY = (info, ctx) -> {
+    return info.getOption("values")
+        .flatMap(token -> token.parseExpect(VARIABLE))
+        .flatMap(token -> ctx.getVariable(token.value(), ArgumentType.class))
+        .map(ArgumentTypes::array);
   };
 
-  static final TypeParser<MapArgument<?>> MAP = (info, context, factory) -> {
-    var token = info.getOrThrow("values", factory);
-    token.expect(factory, VARIABLE);
-
-    String label = token.value();
-
-    Map<String, ?> values = context.getOrThrow(label, Map.class);
-    return ArgumentTypes.map(values);
+  @SuppressWarnings("unchecked")
+  static final TypeParser<MapArgument<?>> MAP = (info, ctx) -> {
+    return info.getOption("values")
+        .flatMap(token -> token.parseExpect(VARIABLE))
+        .flatMap(token -> ctx.getVariable(token.value(), Map.class))
+        .map(map -> ArgumentTypes.map(map));
   };
 
-  static final TypeParser<EnumArgument<?>> ENUM = (info, context, factory) -> {
-    var token = info.getOrThrow("type", factory);
-    token.expect(factory, IDENTIFIER, QUOTED_STRING, VARIABLE);
+  static final TypeParser<EnumArgument<?>> ENUM = (info, context) -> {
+    return info.getOption("type")
+        .flatMap(token -> {
+          return token.parseExpect(IDENTIFIER, QUOTED_STRING, VARIABLE);
+        })
 
-    Class<?> enumType;
+        .flatMap(token -> parseEnumToken(token, context, info));
+  };
+
+  @SuppressWarnings("unchecked")
+  private static Result<EnumArgument<?>> parseEnumToken(
+      Token token,
+      CompileContext context,
+      TypeInfoTree info
+  ) {
+    Result<Class<?>> enumType;
 
     if (!token.is(IDENTIFIER, QUOTED_STRING)) {
-      Object value = context.variables().get(token.value());
+      Object value = context.getVariables().get(token.value());
 
       if (value == null) {
-        throw factory.create(
+        return Result.fail(token.position(),
             "Option '%s' is undefined for argument type '%s'",
             token.value(), info.name()
         );
       }
 
       if (value instanceof Class<?> enumClass) {
-        enumType = enumClass;
+        enumType = Result.success(enumClass);
       } else if (value instanceof String string) {
-        enumType = readClassName(string, context.loader(), factory);
+        enumType = readClassName(string, context.getLoader());
       } else {
-        throw factory.create(
+        return Result.fail(token.position(),
+
             "Variable '%s' must be either an enum class or enum class "
                 + "name for argument type '%s'",
 
@@ -71,31 +83,31 @@ final class BuiltInTypeParsers {
         );
       }
     } else {
-      enumType = readClassName(token.value(), context.loader(), factory);
+      enumType = readClassName(token.value(), context.getLoader());
     }
 
-    if (!Enum.class.isAssignableFrom(enumType)) {
-      throw factory.create(
-          "Class '%s' is not an enum class", enumType.getName()
+    return enumType.flatMap(aClass -> {
+      if (Event.class.isAssignableFrom(aClass)) {
+        return Result.success(aClass);
+      }
+
+      return Result.fail(token.position(),
+          "Class '%s' is not an enum class", aClass.getName()
       );
-    }
+    }).map(aClass -> {
+      Class<? extends Enum> enumClass = (Class<? extends Enum>) aClass;
+      return ArgumentTypes.enumType(enumClass);
+    });
+  }
 
-    @SuppressWarnings("unchecked") // We literally checked it above
-    Class<? extends Enum> enumClass = (Class<? extends Enum>) enumType;
-
-    return ArgumentTypes.enumType(enumClass);
-  };
-
-  private static Class<?> readClassName(String className,
-                                        ClassLoader loader,
-                                        ParseExceptions exceptions
+  private static Result<Class<?>> readClassName(
+      String className,
+      ClassLoader loader
   ) {
     try {
-      return Class.forName(className, true, loader);
+      return Result.success(Class.forName(className, true, loader));
     } catch (ClassNotFoundException exc) {
-      throw exceptions.create(
-          "Unknown enum class '%s', not found", className
-      );
+      return Result.fail("Unknown enum class '%s', not found", className);
     }
   }
 
@@ -127,13 +139,14 @@ final class BuiltInTypeParsers {
       LongArgumentType::longArg
   );
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   static <N extends Number, T extends ArgumentType<N>> TypeParser<T> numberType(
       N minValue,
       N maxValue,
       Function<String, N> parser,
       BiFunction<N, N, T> factory
   ) {
-    return (info, context, exceptions) -> {
+    return (info, context) -> {
       N min = minValue;
       N max = maxValue;
 
@@ -141,16 +154,26 @@ final class BuiltInTypeParsers {
       Token maxToken = info.options().get("max");
 
       if (minToken != null) {
-        minToken.expect(exceptions, IDENTIFIER);
+        Result res = minToken.parseExpect(IDENTIFIER);
+
+        if (res.isError()) {
+          return res;
+        }
+
         min = parser.apply(minToken.value());
       }
 
       if (maxToken != null) {
-        maxToken.expect(exceptions, IDENTIFIER);
+        Result res = maxToken.parseExpect(IDENTIFIER);
+
+        if (res.isError()) {
+          return res;
+        }
+
         max = parser.apply(maxToken.value());
       }
 
-      return factory.apply(min, max);
+      return Result.success(factory.apply(min, max));
     };
   }
 }

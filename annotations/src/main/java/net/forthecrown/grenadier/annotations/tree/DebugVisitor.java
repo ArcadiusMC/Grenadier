@@ -3,6 +3,9 @@ package net.forthecrown.grenadier.annotations.tree;
 import com.google.common.base.Joiner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.InvokeResultMethod;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.RefMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.VariableMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRef;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
@@ -162,6 +165,12 @@ public class DebugVisitor implements TreeVisitor<Void, Void> {
       builder.append(NL);
     }
 
+    if (tree.getMapper() != null) {
+      appendIndent();
+      tree.getMapper().accept(this, unused);
+      builder.append(NL);
+    }
+
     genericVisit(tree);
 
     --indent;
@@ -256,6 +265,41 @@ public class DebugVisitor implements TreeVisitor<Void, Void> {
   public Void visitVariableName(VariableName tree, Void unused) {
     appendVar(tree);
     return null;
+  }
+
+  @Override
+  public Void visitVarModifier(VariableMapper tree, Void unused) {
+    appendModifierPrefix(tree);
+    appendVar(tree);
+
+    return null;
+  }
+
+  @Override
+  public Void visitRefModifier(RefMapper tree, Void unused) {
+    appendModifierPrefix(tree);
+    tree.ref().appendTo(builder);
+    return null;
+  }
+
+  @Override
+  public Void visitResultInvokeModifier(InvokeResultMethod tree, Void unused) {
+    appendModifierPrefix(tree);
+    builder.append("result.");
+    tree.ref().appendTo(builder);
+    return null;
+  }
+
+  private void appendModifierPrefix(ArgumentMapperTree tree) {
+    builder.append("map_type");
+
+    if (tree.argumentName() != null) {
+      builder.append("(");
+      tree.argumentName().accept(this, null);
+      builder.append(")");
+    }
+
+    builder.append(" = ");
   }
 
   private void appendIndent() {

@@ -1,0 +1,27 @@
+// Command metadata
+name = 'signedit'
+aliases = signs | sign
+permission = 'admin.commands.{command}'
+
+argument('pos', vec3i) {
+  literal('clear') = clearSign()
+
+  literal('copy') = copySign()
+  literal('paste') = pasteSign()
+
+  literal('type') {
+    argument('sign_type', map(values=@type_map)) = setType()
+  }
+
+  literal('glowing') {
+    argument('glow_state', bool) = setGlowing()
+  }
+
+  argument('line', int(min=1, max=4)) {
+    literal('set') {
+      argument('text', greedy_string) = setLineText()
+    }
+
+    literal('clear') = clearLineText()
+  }
+}

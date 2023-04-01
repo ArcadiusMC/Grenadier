@@ -9,7 +9,9 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.util.Map;
 import java.util.function.Supplier;
+import net.forthecrown.grenadier.annotations.compiler.CompileContext;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
+import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.types.ArgumentTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -402,7 +404,7 @@ public interface TypeRegistry {
       String name,
       Supplier<T> supplier
   ) throws IllegalArgumentException {
-    register(name, (info, context, factory) -> supplier.get());
+    register(name, (info, context) -> Result.success(supplier.get()));
   }
 
   /**
@@ -419,15 +421,9 @@ public interface TypeRegistry {
      *
      * @param info    Argument type info
      * @param context Command compilation context
-     * @param factory Exception factory
      *
      * @return Parsed argument type
-     * @throws CommandParseException If the argument type couldn't be parsed
      */
-    @NotNull T parse(
-        TypeInfoTree info,
-        CompilationContext context,
-        ParseExceptions factory
-    ) throws CommandParseException;
+    @NotNull Result<T> parse(TypeInfoTree info, CompileContext context);
   }
 }

@@ -20,6 +20,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.SCOPE_END;
 import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_CLOSE;
 import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_OPEN;
 import static net.forthecrown.grenadier.annotations.TokenType.SUGGESTS;
+import static net.forthecrown.grenadier.annotations.TokenType.TYPE_MAP;
 import static net.forthecrown.grenadier.annotations.TokenType.VARIABLE;
 import static net.forthecrown.grenadier.annotations.TokenType.WALL;
 
@@ -32,6 +33,10 @@ import java.util.Map;
 import lombok.Getter;
 import net.forthecrown.grenadier.annotations.AnnotatedCommandContext.DefaultExecutionRule;
 import net.forthecrown.grenadier.annotations.tree.AbstractCmdTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.InvokeResultMethod;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.RefMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.VariableMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
@@ -54,9 +59,13 @@ import net.forthecrown.grenadier.annotations.tree.SuggestsTree;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.ComponentRefSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Getter
 class Parser {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger("Parser");
 
   static final int CONTEXT_OFFSET = 25;
 
@@ -197,7 +206,9 @@ class Parser {
         return;
       }
 
-      if (lexer.peek().is(SUGGESTS)) {
+      var peek = lexer.peek();
+
+      if (peek.is(SUGGESTS)) {
         ensureCanSet(tree.getSuggests(), "suggests", tree);
 
         lexer.expect(SUGGESTS);
@@ -208,7 +219,15 @@ class Parser {
         return;
       }
 
-      lexer.expect(EXECUTES, SUGGESTS, REQUIRES, ARGUMENT, LITERAL);
+      if (peek.is(TYPE_MAP)) {
+        ensureCanSet(tree.getMapper(), "map_type", tree);
+
+        var modifier = parseArgumentMapper();
+        tree.setMapper(modifier);
+        return;
+      }
+
+      lexer.expect(EXECUTES, SUGGESTS, REQUIRES, ARGUMENT, LITERAL, TYPE_MAP);
     });
 
     return tree;
@@ -381,6 +400,47 @@ class Parser {
 
     ClassComponentRef ref = parseComponentRef();
     return new RefExecution(ref);
+  }
+
+  public ArgumentMapperTree parseArgumentMapper() {
+    lexer.expect(TYPE_MAP);
+
+    Name name;
+
+    if (lexer.peek().is(BRACKET_OPEN)) {
+      lexer.expect(BRACKET_OPEN);
+
+      if (lexer.peek().is(QUOTED_STRING, VARIABLE)) {
+        name = parseName(false);
+      } else {
+        name = null;
+      }
+
+      lexer.expect(BRACKET_CLOSE);
+    } else {
+      name = null;
+    }
+
+    lexer.expect(ASSIGN);
+
+    if (lexer.peek().is(VARIABLE)) {
+      var variableName = lexer.next().value();
+      return new VariableMapper(name, variableName);
+    }
+
+    var peek = lexer.peek();
+    LOGGER.debug("peek={}", peek);
+
+    if (peek.is(IDENTIFIER) && peek.value().equals("result")) {
+      lexer.next();
+      lexer.expect(DOT);
+
+      var ref = parseComponentRef();
+      return new InvokeResultMethod(name, ref);
+    }
+
+    ClassComponentRef ref = parseComponentRef();
+    return new RefMapper(name, ref);
   }
 
   private Name parseName(boolean allowId) {

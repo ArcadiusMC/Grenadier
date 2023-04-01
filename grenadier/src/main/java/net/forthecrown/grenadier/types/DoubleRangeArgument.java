@@ -97,27 +97,7 @@ public interface DoubleRangeArgument extends ArgumentType<DoubleRange> {
      * Translates this parsed range into a Guava range
      * @return Range
      */
-    default Range<Double> toRange() {
-      var min = min();
-      var max = max();
-
-      if (min.isEmpty() && max.isEmpty()) {
-        return Range.all();
-      }
-
-      if (max.isPresent() && min.isPresent()) {
-        double minValue = min.getAsDouble();
-        double maxValue = max.getAsDouble();
-
-        return Range.closed(minValue, maxValue);
-      }
-
-      if (min.isPresent()) {
-        return Range.atLeast(min.getAsDouble());
-      } else {
-        return Range.atMost(max.getAsDouble());
-      }
-    }
+    Range<Double> toRange();
 
     /**
      * Converts this range into a parse-able string

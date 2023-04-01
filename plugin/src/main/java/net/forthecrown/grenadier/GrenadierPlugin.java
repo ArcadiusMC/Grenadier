@@ -41,6 +41,8 @@ public class GrenadierPlugin extends JavaPlugin {
     ctx.registerCommand(new TestCommand2());
     ctx.registerCommand(new TestCommand3());
     ctx.registerCommand(new DefaultExecutesTest());
+    ctx.registerCommand(new AnnotationMapperTest());
+    ctx.registerCommand(new ResourcedCommandTest());
   }
 
   @Override

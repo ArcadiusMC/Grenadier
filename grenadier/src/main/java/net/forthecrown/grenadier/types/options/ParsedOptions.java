@@ -18,6 +18,20 @@ public interface ParsedOptions {
   ParsedOptions EMPTY = new EmptyOptions();
 
   /**
+   * Ensures that all parsed options can be access by the specified
+   * {@code source}.
+   * <p>
+   * Calls {@link ParsedOption#checkAccess(CommandSource)} on all parsed options
+   *
+   * @param source Source to use for validation
+   * @return This
+   *
+   * @throws CommandSyntaxException If the specified {@code source} was not
+   *                                allowed to access any of the parsed options
+   */
+  ParsedOptions checkAccess(CommandSource source) throws CommandSyntaxException;
+
+  /**
    * Gets a parsed option
    * @param option Option to get the parsed representation of
    * @return Parsed option, or {@code null}, if the option was not parsed
