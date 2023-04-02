@@ -265,6 +265,25 @@
  * // Variable must be a SuggestionProvider
  * suggests = @suggestion_variable
  * </pre>
+ * Just like the <a href="syn-exec">Executes</a> field, the 'suggests' field
+ * is flexible when it comes to a method reference. Any of the following method
+ * parameters are automatically filled by the system:
+ * <ol>
+ *   <li>
+ *     Any parameter with the {@link net.forthecrown.grenadier.CommandSource}
+ *     type is set to the current command's command source
+ *   </li>
+ *   <li>
+ *     Any parameter with the {@link com.mojang.brigadier.context.CommandContext}
+ *     type is set to the current command context
+ *   </li>
+ *   <li>
+ *     Any parameter with the {@link com.mojang.brigadier.suggestion.SuggestionsBuilder}
+ *     type is set to the suggestions builder
+ *   </li>
+ * </ol>
+ * The rest of the parameters are treated as argument values within the command.
+ * See the 'Executes' section for more info on that.
  *
  * <h2 id="syn-all-fields">Fields used by all nodes</h2>
  *
@@ -316,6 +335,15 @@
  * If the 'executes' field is unset of the 'root' command node, then it may be
  * assigned a default value, if it exists. See {@link net.forthecrown.grenadier.annotations.AnnotatedCommandContext#getDefaultExecutes()}
  * for more info.
+ *
+ * <p>
+ * Since the 'map_type' can be applied to any argument to change it's result
+ * type, any value output from any modifier is also valid for executes methods.
+ * For example, say we have an argument that returns an intermediary object,
+ * like {@link net.forthecrown.grenadier.types.PositionArgument} which returns
+ * {@link net.forthecrown.grenadier.types.ParsedPosition}. If we have a
+ * map_type that converts the position into a location with {@link net.forthecrown.grenadier.types.ParsedPosition#apply(net.forthecrown.grenadier.CommandSource)}
+ * then we can use either the parsed position or location in method parameters.
  *
  * <h3>Requires</h3>
  *

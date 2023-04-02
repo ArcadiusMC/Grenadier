@@ -3,7 +3,6 @@ package net.forthecrown.grenadier;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.text;
 
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -202,14 +201,10 @@ public class SignEditCommand {
   /* ---------------------------- SUGGESTIONS ----------------------------- */
 
   public CompletableFuture<Suggestions> suggestSignLine(
-      CommandContext<CommandSource> context,
-      SuggestionsBuilder builder
-  ) throws CommandSyntaxException {
-    CommandSource source = context.getSource();
-
-    ParsedPosition position = context.getArgument(SIGN_ARG, ParsedPosition.class);
-    Sign sign = positionToSign(source, position);
-
+      CommandSource source,
+      SuggestionsBuilder builder,
+      @Argument(SIGN_ARG) Sign sign
+  ) {
     return Completions.suggest(builder,
         sign.lines()
             .stream()

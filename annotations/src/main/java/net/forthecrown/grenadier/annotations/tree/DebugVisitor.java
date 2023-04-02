@@ -13,6 +13,7 @@ import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
 import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.ConstantRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
@@ -31,7 +32,7 @@ public class DebugVisitor implements TreeVisitor<Void, Void> {
 
   int indent = 0;
 
-  private void appendRef(ClassComponentRef ref) {
+  private void appendRef(MemberChainTree ref) {
     ref.appendTo(builder);
   }
 
@@ -77,6 +78,12 @@ public class DebugVisitor implements TreeVisitor<Void, Void> {
   @Override
   public Void visitVariableRequires(VariableRequires tree, Void unused) {
     appendVar(tree);
+    return null;
+  }
+
+  @Override
+  public Void visitConstantRequires(ConstantRequires tree, Void unused) {
+    builder.append(tree.value());
     return null;
   }
 

@@ -13,7 +13,7 @@ public interface SuggestsTree extends Tree {
     }
   }
 
-  record ComponentRefSuggestions(int tokenStart, ClassComponentRef ref)
+  record ComponentRefSuggestions(int tokenStart, MemberChainTree ref)
       implements SuggestsTree
   {
 

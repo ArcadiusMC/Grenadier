@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import net.forthecrown.grenadier.CommandContexts;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
@@ -43,5 +44,9 @@ public final class Utils {
     }
 
     return buffer.toString();
+  }
+
+  public static Class<?> primitiveToWrapper(Class<?> c) {
+    return CommandContexts.PRIMITIVE_TO_WRAPPER.getOrDefault(c, c);
   }
 }

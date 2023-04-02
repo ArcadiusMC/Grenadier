@@ -1,10 +1,12 @@
 package net.forthecrown.grenadier.annotations.tree;
 
-import com.google.common.base.Preconditions;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.Pair;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -18,19 +20,19 @@ import org.jetbrains.annotations.NotNull;
  *             {@code null}, if there is no next node
  */
 @Internal
-public record ClassComponentRef(
+public record MemberChainTree(
     String name,
     Kind kind,
-    ClassComponentRef next
+    MemberChainTree next
 ) {
 
-  public ClassComponentRef(String name, Kind kind, ClassComponentRef next) {
+  public MemberChainTree(String name, Kind kind, MemberChainTree next) {
     this.name = Objects.requireNonNull(name);
     this.kind = Objects.requireNonNull(kind);
     this.next = next;
   }
 
-  public @NotNull Pair<Object, ClassComponentRef> resolveLast(Object o) {
+  public @NotNull Pair<Object, MemberChainTree> resolveLast(Object o) {
     if (next == null) {
       return Pair.of(o, this);
     }
@@ -46,60 +48,51 @@ public record ClassComponentRef(
     }
   }
 
-  public @NotNull Method findMethod(Object o, Class<?>[] params) {
-    Preconditions.checkState(this.kind == Kind.METHOD, "Not a method");
-
-    Class<?> clazz = o.getClass();
+  public Result<Field> getField(Class<?> declaring) {
+    assert kind == Kind.FIELD;
 
     try {
-      return clazz.getDeclaredMethod(name, params);
-    } catch (ReflectiveOperationException exc) {
-      Utils.sneakyThrow(exc);
-      return null;
+      return Result.success(declaring.getDeclaredField(name));
+    } catch (NoSuchFieldException e) {
+      return Result.fail("No such method '%s' in class %s", name, declaring);
     }
   }
 
-  public <R, I> @NotNull R execute(
-      Class<R> resultType,
-      Class<I> providerType,
-      ThrowingException<I, R> providerFunction,
-      Class<?>[] params,
-      Object commandClass,
-      Object... paramObjects
-  ) throws CommandSyntaxException {
-    Pair<Object, ClassComponentRef> last = resolveLast(commandClass);
+  public Result<Method> getMethod(Class<?> declaring,
+                                  Class<?>... paramTypes
+  ) {
+    assert kind == Kind.METHOD;
 
-    var o = last.left();
-    var lastRef = last.right();
-
-    if (lastRef.kind() == Kind.METHOD) {
-      Method m = lastRef.findMethod(o, params);
-
-      Preconditions.checkState(
-          m.getReturnType() == resultType,
-          "Test method '%s' must return a %s",
-          lastRef.name(),
-          resultType.getSimpleName()
+    try {
+      return Result.success(declaring.getMethod(name, paramTypes));
+    } catch (NoSuchMethodException e) {
+      return Result.fail("No such method '%s' in %s with params %s",
+          name, declaring,
+          Arrays.toString(paramTypes)
       );
+    }
+  }
 
-      try {
-        Object value = m.invoke(o, paramObjects);
-        return (R) value;
-      } catch (ReflectiveOperationException exc) {
-        Utils.sneakyThrow(exc);
-        return null;
-      }
+  public Result<Method> findUniqueMethod(Class<?> declaring) {
+    Method[] methods = declaring.getMethods();
+
+    List<Method> matching = Arrays.stream(methods)
+        .filter(method -> method.getName().equals(name))
+        .toList();
+
+    if (matching.isEmpty()) {
+      return Result.fail("No method named '%s' found in %s", name, declaring);
     }
 
-    Object predicateObject = lastRef.resolve(o);
+    if (matching.size() > 1) {
+      return Result.fail(
+          "Found too many methods named '%s' in %s. "
+              + "Cannot resolve a single one",
+          name, declaring
+      );
+    }
 
-    Preconditions.checkState(
-        providerType.isInstance(predicateObject),
-        "Field '%s' must be a %s", providerType
-    );
-
-    I predicate = (I) predicateObject;
-    return providerFunction.apply(predicate);
+    return Result.success(matching.iterator().next());
   }
 
   public String path() {
@@ -128,10 +121,6 @@ public record ClassComponentRef(
       Utils.sneakyThrow(exc);
       return null;
     }
-  }
-
-  public interface ThrowingException<I, R> {
-    R apply(I i) throws CommandSyntaxException;
   }
 
   public enum Kind {

@@ -4,7 +4,7 @@ public interface ArgumentMapperTree extends Tree {
 
   Name argumentName();
 
-  record RefMapper(int tokenStart, Name argumentName, ClassComponentRef ref)
+  record RefMapper(int tokenStart, Name argumentName, MemberChainTree ref)
       implements ArgumentMapperTree
   {
 
@@ -24,7 +24,7 @@ public interface ArgumentMapperTree extends Tree {
     }
   }
 
-  record InvokeResultMethod(int tokenStart, Name argumentName, ClassComponentRef ref)
+  record InvokeResultMethod(int tokenStart, Name argumentName, MemberChainTree ref)
       implements ArgumentMapperTree
   {
 

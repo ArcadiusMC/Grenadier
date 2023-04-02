@@ -9,6 +9,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.COMMA;
 import static net.forthecrown.grenadier.annotations.TokenType.DESCRIPTION;
 import static net.forthecrown.grenadier.annotations.TokenType.DOT;
 import static net.forthecrown.grenadier.annotations.TokenType.EXECUTES;
+import static net.forthecrown.grenadier.annotations.TokenType.FALSE;
 import static net.forthecrown.grenadier.annotations.TokenType.IDENTIFIER;
 import static net.forthecrown.grenadier.annotations.TokenType.LITERAL;
 import static net.forthecrown.grenadier.annotations.TokenType.NAME;
@@ -20,6 +21,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.SCOPE_END;
 import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_CLOSE;
 import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_OPEN;
 import static net.forthecrown.grenadier.annotations.TokenType.SUGGESTS;
+import static net.forthecrown.grenadier.annotations.TokenType.TRUE;
 import static net.forthecrown.grenadier.annotations.TokenType.TYPE_MAP;
 import static net.forthecrown.grenadier.annotations.TokenType.VARIABLE;
 import static net.forthecrown.grenadier.annotations.TokenType.WALL;
@@ -42,8 +44,8 @@ import net.forthecrown.grenadier.annotations.tree.ArgumentTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRef;
-import net.forthecrown.grenadier.annotations.tree.ClassComponentRef;
-import net.forthecrown.grenadier.annotations.tree.ClassComponentRef.Kind;
+import net.forthecrown.grenadier.annotations.tree.MemberChainTree;
+import net.forthecrown.grenadier.annotations.tree.MemberChainTree.Kind;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
@@ -53,6 +55,7 @@ import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
 import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.ConstantRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
@@ -169,7 +172,7 @@ class Parser {
       return new VariableExecutes(NO_POSITION, variable);
     }
 
-    return new RefExecution(NO_POSITION, new ClassComponentRef(s, Kind.METHOD, null));
+    return new RefExecution(NO_POSITION, new MemberChainTree(s, Kind.METHOD, null));
   }
 
   List<Name> parseAliases() {
@@ -378,7 +381,7 @@ class Parser {
     }
 
     if (!lexer.peek().is(SQUARE_OPEN)) {
-      var ref = parseComponentRef();
+      var ref = parseMemberChain();
       return new ComponentRefSuggestions(start, ref);
     }
 
@@ -399,9 +402,15 @@ class Parser {
       return new VariableRequires(peek.position(), lexer.next().value());
     }
 
+    if (peek.is(TRUE, FALSE)) {
+      int pos = peek.position();
+      boolean value = lexer.next().is(TRUE);
+      return new ConstantRequires(pos, value);
+    }
+
     if (!peek.is(PERMISSION)) {
       int pos = lexer.peek().position();
-      ClassComponentRef ref = parseComponentRef();
+      MemberChainTree ref = parseMemberChain();
       return new RequiresRef(pos, ref);
     }
 
@@ -422,7 +431,7 @@ class Parser {
       return new VariableExecutes(start, lexer.next().value());
     }
 
-    ClassComponentRef ref = parseComponentRef();
+    MemberChainTree ref = parseMemberChain();
     return new RefExecution(start, ref);
   }
 
@@ -460,11 +469,11 @@ class Parser {
       lexer.next();
       lexer.expect(DOT);
 
-      var ref = parseComponentRef();
+      var ref = parseMemberChain();
       return new InvokeResultMethod(start, name, ref);
     }
 
-    ClassComponentRef ref = parseComponentRef();
+    MemberChainTree ref = parseMemberChain();
     return new RefMapper(start, name, ref);
   }
 
@@ -488,7 +497,7 @@ class Parser {
     return new DirectName(start, token.value());
   }
 
-  private ClassComponentRef parseComponentRef() {
+  private MemberChainTree parseMemberChain() {
     Token labelToken = lexer.expect(IDENTIFIER);
     String label = labelToken.value();
 
@@ -503,16 +512,16 @@ class Parser {
       kind = Kind.FIELD;
     }
 
-    ClassComponentRef next;
+    MemberChainTree next;
 
     if (lexer.peek().is(DOT)) {
       lexer.expect(DOT);
-      next = parseComponentRef();
+      next = parseMemberChain();
     } else {
       next = null;
     }
 
-    return new ClassComponentRef(label, kind, next);
+    return new MemberChainTree(label, kind, next);
   }
 
   /* ---------------------- DELIMITER-BASED PARSING ----------------------- */

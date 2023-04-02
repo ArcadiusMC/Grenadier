@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.forthecrown.grenadier.annotations.AnnotatedCommandContext;
+import net.forthecrown.grenadier.annotations.AnnotatedCommandContext.DefaultExecutionRule;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class GrenadierPlugin extends JavaPlugin {
@@ -36,6 +37,7 @@ public class GrenadierPlugin extends JavaPlugin {
 
     ctx.setDefaultPermissionFormat("grenadier.test.{command}");
     ctx.setDefaultExecutes("defRun");
+    ctx.setDefaultRule(DefaultExecutionRule.IF_NO_CHILDREN);
 
     ctx.registerCommand(new TestAnnotatedCommand());
     ctx.registerCommand(new TestCommand2());

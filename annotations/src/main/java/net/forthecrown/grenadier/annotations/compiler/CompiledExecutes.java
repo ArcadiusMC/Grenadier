@@ -1,134 +1,135 @@
 package net.forthecrown.grenadier.annotations.compiler;
 
-import com.google.common.base.Preconditions;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.Pair;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import net.forthecrown.grenadier.CommandContexts;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.annotations.Argument;
-import net.forthecrown.grenadier.annotations.ArgumentModifier;
-import net.forthecrown.grenadier.annotations.tree.ArgumentValue;
-import net.forthecrown.grenadier.annotations.tree.ClassComponentRef;
-import net.forthecrown.grenadier.annotations.tree.ClassComponentRef.Kind;
+import net.forthecrown.grenadier.annotations.compiler.MemberChain.FieldMember;
+import net.forthecrown.grenadier.annotations.compiler.MemberChain.MethodMember;
+import net.forthecrown.grenadier.annotations.compiler.MemberChainCompiler.ChainCompileConfig;
+import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
+import net.forthecrown.grenadier.annotations.util.ExpandedCommandContext;
+import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
 
 @RequiredArgsConstructor
 class CompiledExecutes implements Command<CommandSource> {
 
-  private final ClassComponentRef ref;
   private final Object commandClass;
+  private final MemberChain chain;
 
-  final Map<String, List<ArgumentModifier>> modifierMap;
+  private final ContextFactory factory;
+  private final ParamFiller[] fillers;
 
   @Override
   public int run(CommandContext<CommandSource> context)
       throws CommandSyntaxException
   {
-    Pair<Object, ClassComponentRef> last = ref.resolveLast(commandClass);
+    Pair<Object, MemberChain> last;
 
-    ClassComponentRef lastRef = last.right();
-    Object handle = last.left();
-
-    if (lastRef.kind() == Kind.FIELD) {
-      Object value = lastRef.resolve(handle);
-
-      Preconditions.checkState(
-          value instanceof Command<?>,
-          "'%s' does not point to a Command<CommandSource> interface",
-          ref.path()
-      );
-
-      return ((Command<CommandSource>) value)
-          .run(context);
+    try {
+      last = chain.resolveLast(commandClass);
+    } catch (Throwable t) {
+      Utils.sneakyThrow(t);
+      return 0;
     }
 
-    Map<String, ParsedArgument<CommandSource, ?>> arguments
-        = CommandContexts.getArguments(context);
+    Object o = last.left();
+    MemberChain chain = last.right();
 
-    // Apply any existing argument modifiers
-    Map<String, ArgumentValue<?>> argumentValues = new HashMap<>();
-    for (var entry : arguments.entrySet()) {
-      String s = entry.getKey();
-      ParsedArgument<CommandSource, ?> v = entry.getValue();
-
-      ArgumentValue value = new ArgumentValue(v.getResult());
-      List<ArgumentModifier> modifierList = modifierMap.get(s);
-
-      if (modifierList != null && modifierList.size() > 0) {
-        List<Object> mappedValues = new ArrayList<>();
-        value.setMappedValues(mappedValues);
-
-        for (ArgumentModifier modifier : modifierList) {
-          ArgumentModifier unchecked = modifier;
-          Object val = unchecked.apply(context, v.getResult());
-          mappedValues.add(val);
-        }
-      }
-
-      argumentValues.put(s, value);
+    if (chain instanceof FieldMember) {
+      Command rawCommand = (Command) chain.resolveSafe(o);
+      return rawCommand.run(context);
     }
 
-    Class<?> objectClass = handle.getClass();
+    var ctx = factory.create(context);
 
-    var methods = Arrays.stream(objectClass.getMethods())
-        .filter(method -> method.getName().equals(lastRef.name()))
-        .toList();
+    MethodMember member = (MethodMember) chain;
+    Method method = member.method();
 
-    Preconditions.checkState(
-        !methods.isEmpty(),
-        "No executes method named '%s' found in %s",
-        lastRef.name(), handle
-    );
-
-    Preconditions.checkState(
-        methods.size() < 2,
-        "Found more than 1 method named '%s' in %s",
-        lastRef.name(), handle
-    );
-
-    Method method = methods.iterator().next();
-    Parameter[] params = method.getParameters();
-
-    int contextIndex = -1;
-    int sourceIndex = -1;
-
-    Object[] invocationParameters = new Object[params.length];
+    Object[] params = new Object[method.getParameterCount()];
 
     for (int i = 0; i < params.length; i++) {
-      var p = params[i];
+      ParamFiller filler = fillers[i];
+
+      Objects.requireNonNull(filler,
+          "Parameter filler at " + i + " is missing"
+      );
+
+      params[i] = filler.fill(ctx);
+    }
+
+    Object result = member.invokeSafe(commandClass, params);
+
+    if (result instanceof Integer i) {
+      return i;
+    }
+
+    return 0;
+  }
+
+  static Result<Command> compile(RefExecution tree, CompileContext context) {
+    ChainCompileConfig config = ChainCompileConfig.create(tree.tokenStart())
+        .setFinalFieldTypes(Command.class);
+
+    Class<?> declaring = context.getCommandClass().getClass();
+
+    return MemberChainCompiler.compile(declaring, tree.ref(), config)
+        .flatMap(chain -> compileFromChain(chain, context, tree.tokenStart()));
+  }
+
+  private static Result<Command> compileFromChain(
+      MemberChain chain,
+      CompileContext context,
+      int pos
+  ) {
+    MemberChain last = chain.getLastNode();
+
+    if (last instanceof FieldMember) {
+      return Result.success(
+          new CompiledExecutes(context.getCommandClass(), last, null, null)
+      );
+    }
+
+    MethodMember member = (MethodMember) last;
+    Method method = member.method();
+
+    Parameter[] parameters = method.getParameters();
+    ParamFiller[] fillers = new ParamFiller[parameters.length];
+
+    int contextIndex = -1;
+    int sourceIndex  = -1;
+
+    for (int i = 0; i < parameters.length; i++) {
+      Parameter p = parameters[i];
 
       if (p.getType() == CommandContext.class) {
-        Preconditions.checkState(
-            contextIndex == -1,
-            "Cannot have more than 1 CommandContext parameter"
-        );
+        if (contextIndex != -1) {
+          return Result.fail(pos,
+              "CommandContext<CommandSource> parameter set more than once"
+          );
+        }
 
         contextIndex = i;
-        invocationParameters[i] = context;
-
+        fillers[i] = ParamFiller.FILL_CONTEXT;
         continue;
       }
 
       if (p.getType() == CommandSource.class) {
-        Preconditions.checkState(
-            sourceIndex == -1,
-            "Cannot have more than 1 CommandSource parameter"
-        );
+        if (sourceIndex != -1) {
+          return Result.fail(pos,
+              "CommandSource parameter set more than once"
+          );
+        }
 
         sourceIndex = i;
-        invocationParameters[i] = context.getSource();
-
+        fillers[i] = ParamFiller.FILL_SOURCE;
         continue;
       }
 
@@ -136,61 +137,61 @@ class CompiledExecutes implements Command<CommandSource> {
       boolean optional;
 
       if (p.isAnnotationPresent(Argument.class)) {
-        var arg = p.getAnnotation(Argument.class);
-        argumentName = arg.value();
-        optional = arg.optional();
+        Argument argument = p.getAnnotation(Argument.class);
+        argumentName = argument.value();
+        optional = argument.optional();
       } else {
         argumentName = p.getName();
         optional = false;
       }
 
-      ArgumentValue<?> argument = argumentValues.get(argumentName);
-
-      if (argument == null) {
-        if (optional) {
-          invocationParameters[i] = null;
-          continue;
-        }
-
-        throw new IllegalStateException(String.format(
-            "No argument named '%s' in command",
+      if (!context.getAvailableArguments().contains(argumentName)
+          && !optional
+      ) {
+        return Result.fail(pos,
+            "Argument '%s' is not available in the current context",
             argumentName
-        ));
-      }
-
-      Class<?> parameterType = CommandContexts.PRIMITIVE_TO_WRAPPER
-          .getOrDefault(p.getType(), p.getType());
-
-      Object value = argument.findValue(parameterType);
-
-      if (value == null) {
-        Preconditions.checkState(
-            parameterType.isAssignableFrom(argument.getValue().getClass()),
-            "Argument '%s' is defined as %s not %s",
-            argumentName,
-            argument.getValue().getClass(),
-            parameterType
         );
-
-        continue;
       }
 
-      invocationParameters[i] = value;
+      ArgumentParamFiller filler = new ArgumentParamFiller(
+          argumentName,
+          Utils.primitiveToWrapper(p.getType()),
+          optional
+      );
+
+      fillers[i] = filler;
     }
 
-    Object result;
+    return Result.success(
+        new CompiledExecutes(
+            context.getCommandClass(),
+            chain,
+            context.createFactory(),
+            fillers
+        )
+    );
+  }
 
-    try {
-      result = method.invoke(handle, invocationParameters);
-    } catch (ReflectiveOperationException exc) {
-      Utils.sneakyThrow(exc);
-      return 1;
+  interface ParamFiller {
+    ParamFiller FILL_SOURCE = ExpandedCommandContext::getSource;
+    ParamFiller FILL_CONTEXT = ExpandedCommandContext::getBase;
+
+    Object fill(ExpandedCommandContext context) throws CommandSyntaxException;
+  }
+
+  @RequiredArgsConstructor
+  static class ArgumentParamFiller implements ParamFiller {
+
+    private final String argumentName;
+    private final Class<?> type;
+    private final boolean optional;
+
+    @Override
+    public Object fill(ExpandedCommandContext context)
+        throws CommandSyntaxException
+    {
+      return context.getValue(argumentName, type, optional);
     }
-
-    if (result instanceof Integer integer) {
-      return integer;
-    }
-
-    return 0;
   }
 }

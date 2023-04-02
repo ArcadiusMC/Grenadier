@@ -112,4 +112,9 @@ public class CompileContext {
         map
     );
   }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public ContextFactory createFactory() {
+    return new ContextFactory((Map) mappers);
+  }
 }

@@ -66,7 +66,7 @@ public class Result<V> {
   }
 
   public <T> Result<T> map(Function<V, T> mapper) {
-    if (value == null) {
+    if (value == null || mapper == null) {
       return (Result<T>) this;
     }
 

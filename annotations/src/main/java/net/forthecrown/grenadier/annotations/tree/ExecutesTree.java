@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 public interface ExecutesTree extends Tree {
 
-  record RefExecution(int tokenStart, ClassComponentRef ref) implements ExecutesTree {
+  record RefExecution(int tokenStart, MemberChainTree ref) implements ExecutesTree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {

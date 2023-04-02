@@ -10,6 +10,7 @@ import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
 import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.ConstantRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
@@ -20,6 +21,12 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
 public interface TreeVisitor<R, C> {
+
+  R visitLiteral(LiteralTree tree, C c);
+
+  R visitArgument(ArgumentTree tree, C c);
+
+  R visitRoot(RootTree tree, C c);
 
   R visitStringSuggestions(StringListSuggestions tree, C c);
 
@@ -33,11 +40,7 @@ public interface TreeVisitor<R, C> {
 
   R visitVariableRequires(VariableRequires tree, C c);
 
-  R visitLiteral(LiteralTree tree, C c);
-  
-  R visitArgument(ArgumentTree tree, C c);
-
-  R visitRoot(RootTree tree, C c);
+  R visitConstantRequires(ConstantRequires tree, C c);
 
   R visitTypeInfo(TypeInfoTree tree, C c);
 

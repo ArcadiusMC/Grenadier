@@ -32,6 +32,7 @@ import net.forthecrown.grenadier.annotations.tree.Name;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
 import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.ConstantRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
@@ -73,9 +74,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       ComponentRefSuggestions tree,
       CompileContext context
   ) {
-    return Result.success(
-        new CompiledSuggester(tree.ref(), context.getCommandClass())
-    );
+    return CompiledSuggester.compile(tree, context);
   }
 
   @Override
@@ -104,10 +103,15 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       RequiresRef tree,
       CompileContext context
   ) {
-    // TODO perform validation of reference before returning success
-    return Result.success(
-        new CompiledRequires(tree.ref(), context.getCommandClass())
-    );
+    return CompiledRequires.compile(tree, context);
+  }
+
+  @Override
+  public Result<Predicate> visitConstantRequires(ConstantRequires tree,
+                                                 CompileContext context
+  ) {
+    boolean value = tree.value();
+    return Result.success(o -> value);
   }
 
   @Override
@@ -334,14 +338,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   public Result<Command> visitRefExec(RefExecution tree,
                                       CompileContext context
   ) {
-    // TODO perform validation of reference before returning success
-    return Result.success(
-        new CompiledExecutes(
-            tree.ref(),
-            context.getCommandClass(),
-            context.getMappers()
-        )
-    );
+    return CompiledExecutes.compile(tree, context);
   }
 
   @Override

@@ -8,22 +8,22 @@ import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.util.Utils;
-import net.forthecrown.grenadier.annotations.tree.ClassComponentRef;
-import net.forthecrown.grenadier.annotations.tree.ClassComponentRef.Kind;
+import net.forthecrown.grenadier.annotations.tree.MemberChainTree;
+import net.forthecrown.grenadier.annotations.tree.MemberChainTree.Kind;
 
 @RequiredArgsConstructor
 class CompiledArgumentMapper implements ArgumentModifier<Object, Object> {
 
   private final Object handle;
-  private final ClassComponentRef ref;
+  private final MemberChainTree ref;
 
   @Override
   public Object apply(CommandContext<CommandSource> context, Object input) {
     Object value = handle == null ? input : handle;
 
-    Pair<Object, ClassComponentRef> lastPair = ref.resolveLast(value);
+    Pair<Object, MemberChainTree> lastPair = ref.resolveLast(value);
 
-    ClassComponentRef lastRef = lastPair.right();
+    MemberChainTree lastRef = lastPair.right();
     Object lastValue = lastPair.left();
 
     if (lastRef.kind() == Kind.FIELD) {
