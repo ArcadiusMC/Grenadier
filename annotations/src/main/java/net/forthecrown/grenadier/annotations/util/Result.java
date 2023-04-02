@@ -95,6 +95,10 @@ public class Result<V> {
     return value;
   }
 
+  public V orElse(V value) {
+    return error != null ? value : this.value;
+  }
+
   public void consume(Consumer<V> consumer) {
     if (value == null) {
       return;

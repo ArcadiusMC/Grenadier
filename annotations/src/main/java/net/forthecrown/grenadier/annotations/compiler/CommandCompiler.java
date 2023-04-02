@@ -6,6 +6,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.CommandSource;
@@ -22,11 +24,13 @@ import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.VariableMap
 import net.forthecrown.grenadier.annotations.tree.ArgumentTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRef;
+import net.forthecrown.grenadier.annotations.tree.ChildCommandTree;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.LiteralTree;
 import net.forthecrown.grenadier.annotations.tree.Name;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
+import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
@@ -40,6 +44,8 @@ import net.forthecrown.grenadier.annotations.util.Result;
 
 public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
+  private final String FAILED = "FAILED";
+
   public static final CommandCompiler COMPILER = new CommandCompiler();
 
   private void consumeName(Name name,
@@ -47,8 +53,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
                            Consumer<String> consumer
   ) {
     Result<String> res = (Result<String>) name.accept(this, context);
-    res.report(context.getErrors());
-    res.consume(consumer);
+    res.apply(context.getErrors(), consumer);
   }
 
   @Override
@@ -78,7 +83,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       VariableSuggestions tree,
       CompileContext context
   ) {
-    return context.getVariable(tree.variable(), SuggestionProvider.class);
+    return context.getVariable(tree, SuggestionProvider.class);
   }
 
   @Override
@@ -99,6 +104,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       RequiresRef tree,
       CompileContext context
   ) {
+    // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledRequires(tree.ref(), context.getCommandClass())
     );
@@ -109,7 +115,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       VariableRequires tree,
       CompileContext context
   ) {
-    return context.getVariable(tree.variable(), Predicate.class);
+    return context.getVariable(tree, Predicate.class);
   }
 
   @Override
@@ -121,10 +127,11 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
     nameResult.report(context.getErrors());
 
-    String name = nameResult.isError() ? "FAILED" : nameResult.getValue();
+    String name = nameResult.orElse(FAILED);
     var literal = Nodes.literal(name);
 
-    genericNodeVisit(tree, literal, context);
+    genericChildVisit(tree, literal, context, name);
+
     return literal.build();
   }
 
@@ -146,7 +153,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
     nameResult.report(context.getErrors());
 
-    String name = nameResult.isError() ? "FAILED" : nameResult.getValue();
+    String name = nameResult.orElse(FAILED);
 
     if (!nameResult.isError()) {
       context.pushArgument(name);
@@ -162,36 +169,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       providerResult.apply(context.getErrors(), builder::suggests);
     }
 
-    if (tree.getMapper() != null) {
-      Result<ArgumentModifier> modifierResult
-          = (Result<ArgumentModifier>) tree.getMapper().accept(this, context);
-
-      String modifierArgumentName;
-
-      if (tree.getMapper().argumentName() == null) {
-        modifierArgumentName = name;
-      } else {
-        Result<String> mapperNameResult = (Result<String>)
-            tree.getMapper().argumentName().accept(this, context);
-
-        mapperNameResult.report(context.getErrors());
-
-        modifierArgumentName = mapperNameResult.isError()
-            ? "FAILED"
-            : mapperNameResult.getValue();
-      }
-
-      modifierResult.report(context.getErrors());
-
-      if (!modifierResult.isError()) {
-        context = context.withModifier(
-            modifierArgumentName,
-            modifierResult.getValue()
-        );
-      }
-    }
-
-    genericNodeVisit(tree, builder, context);
+    genericChildVisit(tree, builder, context, name);
 
     if (!nameResult.isError()) {
       context.popArgument();
@@ -207,7 +185,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
     nameResult.report(context.getErrors());
 
-    String name = nameResult.isError() ? "FAILED" : nameResult.getValue();
+    String name = nameResult.orElse(FAILED);
     GrenadierCommand builder = new GrenadierCommand(name);
 
     if (tree.getDescription() != null) {
@@ -231,6 +209,15 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
     genericNodeVisit(tree, builder, context);
     return builder.build();
+  }
+
+  private void genericChildVisit(ChildCommandTree tree,
+                                 ArgumentBuilder<CommandSource, ?> builder,
+                                 CompileContext context,
+                                 String name
+  ) {
+    context = compileMappers(tree, context, name);
+    genericNodeVisit(tree, builder, context);
   }
 
   private void genericNodeVisit(AbstractCmdTree tree,
@@ -261,15 +248,69 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     });
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private CompileContext compileMappers(ChildCommandTree tree,
+                                        CompileContext context,
+                                        String argumentName
+  ) {
+    if (tree.getMappers() == null || tree.getMappers().isEmpty()) {
+      return context;
+    }
+
+    CompileContext result = context;
+
+    for (var m: tree.getMappers()) {
+      Result<ArgumentModifier> modifierResult
+          = (Result<ArgumentModifier>) m.accept(this, context);
+
+      String modifierArgumentName;
+      if (m.argumentName() == null) {
+        modifierArgumentName = argumentName;
+      } else {
+        Result<String> mapperNameResult = (Result<String>)
+            m.argumentName().accept(this, context);
+
+        mapperNameResult.report(context.getErrors());
+        modifierArgumentName = mapperNameResult.orElse(FAILED);
+
+        if (!mapperNameResult.isError()) {
+          boolean argumentExists = context.getAvailableArguments()
+              .contains(modifierArgumentName);
+
+          if (!argumentExists) {
+            context.getErrors().warning(
+                m.argumentName().tokenStart(),
+                "Argument '%s' doesn't exist in current scope",
+                modifierArgumentName
+            );
+          }
+        }
+      }
+
+      modifierResult.report(context.getErrors());
+
+      if (!modifierResult.isError()) {
+        result = context.withModifier(
+            modifierArgumentName,
+            modifierResult.getValue()
+        );
+      }
+    }
+
+    return result;
+  }
+
   @Override
   public Result<ArgumentType> visitTypeInfo(TypeInfoTree tree,
-                                       CompileContext context
+                                            CompileContext context
   ) {
     var registry = context.getTypeRegistry();
     TypeParser<?> parser = registry.getParser(tree.name());
 
     if (parser == null) {
-      return Result.fail("Unknown argument type '%s'", tree.name());
+      return Result.fail(tree.tokenStart(),
+          "Unknown argument type '%s'", tree.name()
+      );
     }
 
     return (Result<ArgumentType>) parser.parse(tree, context);
@@ -279,18 +320,21 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   public Result<ArgumentType> visitVariableType(VariableTypeRef tree,
                                                 CompileContext context
   ) {
-    return context.getVariable(tree.variable(), ArgumentType.class);
+    return context.getVariable(tree, ArgumentType.class);
   }
 
   @Override
   public Result<Command> visitVarExec(VariableExecutes tree,
-                                                     CompileContext context
+                                      CompileContext context
   ) {
-    return context.getVariable(tree.variable(), Command.class);
+    return context.getVariable(tree, Command.class);
   }
 
   @Override
-  public Result<Command> visitRefExec(RefExecution tree, CompileContext context) {
+  public Result<Command> visitRefExec(RefExecution tree,
+                                      CompileContext context
+  ) {
+    // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledExecutes(
             tree.ref(),
@@ -304,25 +348,84 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   public Result<String> visitVariableName(VariableName tree,
                                           CompileContext context
   ) {
-    return context.getVariable(tree.variable(), String.class);
+    return context.getVariable(tree, String.class);
   }
 
   @Override
-  public Result<String> visitDirectName(DirectName tree, CompileContext context) {
+  public Result<String> visitDirectName(DirectName tree,
+                                        CompileContext context
+  ) {
     return Result.success(tree.value());
+  }
+
+  @Override
+  public Result<String> visitFieldName(FieldRefName tree,
+                                       CompileContext context
+  ) {
+    Class<?> cmdClass = context.getCommandClass().getClass();
+    Field nameField;
+
+    try {
+      nameField = cmdClass.getDeclaredField(tree.fieldName());
+    } catch (ReflectiveOperationException exc) {
+      return Result.fail(
+          "Reflection error while accessing field '%s': %s",
+          tree.fieldName(), exc.getMessage()
+      );
+    }
+
+    if (!Modifier.isFinal(nameField.getModifiers())) {
+      context.getErrors().warning(
+          "Field '%s' in '%s' is not final! Changes to "
+              + "this field will not be reflected in the command tree",
+
+          nameField.getName(), nameField.getDeclaringClass()
+      );
+    }
+
+    if (CharSequence.class.isAssignableFrom(nameField.getDeclaringClass())) {
+      return Result.fail(
+          "Cannot get name from field '%s' in %s. "
+              + "Field's type is not an inheritor of java.lang.CharSequence",
+
+          nameField.getName(), nameField.getDeclaringClass()
+      );
+    }
+
+    try {
+      Object o = nameField.get(context.getCommandClass());
+      CharSequence sequence = (CharSequence) o;
+
+      if (sequence == null) {
+        return Result.fail(
+            "Field '%s' in %s returned null! Cannot get name",
+            nameField.getName(), nameField.getDeclaringClass()
+        );
+      }
+
+      return Result.success(sequence.toString());
+    } catch (IllegalAccessException e) {
+      return Result.fail(
+          "Illegal access to field '%s' in %s. "
+              + "This error shouldn't happen",
+
+          nameField.getName(), nameField.getDeclaringClass()
+      );
+    }
   }
 
   @Override
   public Result<ArgumentModifier> visitVarModifier(VariableMapper tree,
                                                    CompileContext context
   ) {
-    return context.getVariable(tree.variable(), ArgumentModifier.class);
+    return context.getVariable(tree, ArgumentModifier.class);
   }
 
   @Override
   public Result<ArgumentModifier> visitRefModifier(RefMapper tree,
                                                    CompileContext context
   ) {
+    // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledArgumentMapper(context.getCommandClass(), tree.ref())
     );
@@ -332,6 +435,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   public Object visitResultInvokeModifier(InvokeResultMethod tree,
                                           CompileContext context
   ) {
+    // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledArgumentMapper(null, tree.ref())
     );

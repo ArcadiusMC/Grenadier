@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 name = 'test_type_mapping'
 
 argument('entity_arg', entity) {
-  map_type = #findEntity()
+  map_type = result.findEntity()
   
   executes = runEntity()
   

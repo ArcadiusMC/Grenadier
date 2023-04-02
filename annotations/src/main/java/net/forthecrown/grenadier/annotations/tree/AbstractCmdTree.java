@@ -1,5 +1,7 @@
 package net.forthecrown.grenadier.annotations.tree;
 
+import static net.forthecrown.grenadier.annotations.util.Result.NO_POSITION;
+
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -17,4 +19,13 @@ public abstract class AbstractCmdTree implements Tree {
   private RequiresTree requires;
 
   private final List<ChildCommandTree> children = new ArrayList<>();
+
+  private final List<ArgumentMapperTree> mappers = new ArrayList<>();
+
+  private int tokenStart = NO_POSITION;
+
+  @Override
+  public int tokenStart() {
+    return tokenStart;
+  }
 }

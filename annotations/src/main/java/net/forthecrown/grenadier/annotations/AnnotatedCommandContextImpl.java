@@ -148,7 +148,19 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         tree.accept(CommandCompiler.COMPILER, context);
 
     if (!errors.getErrors().isEmpty()) {
-      throw new CommandCompilationException(errors.getErrors(), reader);
+      int error = errors.errorCount();
+
+      if (error > 0) {
+        throw new CommandCompilationException(errors.getErrors(), reader);
+      }
+
+      String msg = CommandCompilationException.createMessage(
+          errors.getErrors(),
+          reader
+      );
+
+      System.out.print(msg);
+      System.out.print("\n");
     }
 
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();

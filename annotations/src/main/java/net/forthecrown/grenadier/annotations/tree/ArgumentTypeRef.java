@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 public interface ArgumentTypeRef extends Tree {
 
 
-  record TypeInfoTree(String name, Map<String, Token> options)
+  record TypeInfoTree(int tokenStart, String name, Map<String, Token> options)
       implements ArgumentTypeRef
   {
 
@@ -31,8 +31,9 @@ public interface ArgumentTypeRef extends Tree {
       }
   }
 
-  record VariableTypeRef(String variable) implements ArgumentTypeRef {
-
+  record VariableTypeRef(int tokenStart, String variable)
+      implements ArgumentTypeRef, VariableHolder
+  {
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
       return visitor.visitVariableType(this, context);

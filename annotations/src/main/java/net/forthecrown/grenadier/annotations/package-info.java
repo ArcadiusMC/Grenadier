@@ -25,6 +25,7 @@
  *         <ol>
  *           <li><a href="#conc-refs">Method/Field References</a></li>
  *           <li><a href="#conc-vars">Variable References</a></li>
+ *           <li><a href="#conc-names">Names</a></li>
  *         </ol>
  *       </li>
  *       <li><a href="#syn-nodes">Command node syntax</a></li>
@@ -188,6 +189,26 @@
  * will be called before the command is 'compiled' to initialize local
  * variables within that command's scope.
  *
+ * <h3 id="conc-names">Names</h3>
+ * For the most part, and most commonly, names are just quoted strings,
+ * eg: {@code 'name'}, but there are times when this is not enough. So, whenever
+ * a name is referenced in this documentation it can be 1 or 3 types of values.
+ * These are: A) Quoted strings, B) Variable references or C) Field references.
+ * In the case of C, they reference a field member of the command class.
+ * <p>
+ * As an example, we'll use the 3 above name types in declaring a
+ * {@code literal} node:
+ * <pre><code>
+ * // Quoted string name
+ * literal('name') = methodName()
+ *
+ * // Variable reference name
+ * literal(@name) = methodName()
+ *
+ * // Field reference
+ * literal(argumentName) = methodName()
+ * </code></pre>
+ *
  * <h2 id="syn-nodes">Command node syntax</h2>
  * The top level of the Annotation input is the 'root' node, it allows users to
  * specify details about the base command such as aliases, permission, name and
@@ -196,10 +217,13 @@
  * <h2 id="syn-root-fields">Root specific fields</h2>
  *
  * <h3>Name</h3>
- * A quoted string or '@' variable reference. Specifies the name of the command,
- * examples: <pre>
+ * See <a href="#conc-names">Concepts, Names</a> for valid input. Determines the
+ * name of the command.
+ * <p>
+ * Examples: <pre>
  * name = 'command_name'
- * name = @variable // Must be a string variable
+ * name = @variable
+ * name = classField
  * </pre>
  *
  * <h3>Permission</h3>
@@ -221,8 +245,8 @@
  * </pre>
  *
  * <h3>Aliases</h3>
- * A special list of either quoted strings or variable references. These
- * obviously determine the aliases a command uses. Examples:
+ * A special list of either quoted strings, unquoted strings, or variable
+ * references. These obviously determine the aliases a command uses. Examples:
  * <pre>
  * aliases = alias1 | alias2 | alias3
  * </pre>
@@ -314,6 +338,38 @@
  * requires = methodName()
  * </pre>
  *
+ * <h3>Map type</h3>
+ * A field/method reference or variable reference. Allows for the result of an
+ * argument type to mapped to a different type.
+ * <br>
+ * Results can be mapped with a reference to a method/field within the command's
+ * class or with in the argument result's class.
+ * <br>
+ * In the case the value of this is a variable reference, then the variable must
+ * be an instance of {@link net.forthecrown.grenadier.annotations.ArgumentModifier}.
+ *
+ * <br>
+ * Examples:
+ * <pre>
+ * // References a method within the argument result
+ * map_type = result.apply()
+ * // References a method in the command class
+ * map_type = mapArgument()
+ * map_type = @variable
+ * </pre>
+ *
+ * <p>
+ * If you need to map the value of an argument other than the current one, you
+ * can use {@code map_type(argument name)}, for example:
+ * <pre><code>
+ * argument('arg1', entities) {
+ *
+ *   argument('arg2', int(min=1, max=2) {
+ *     map_type('arg1') = result.findEntities()
+ *   }
+ * }
+ * </code></pre>
+ *
  * <h2 id="syn-children">Child nodes</h2>
  *
  * There are 2 types of child nodes, literals and argument nodes, exactly like
@@ -336,7 +392,8 @@
  * literal('foobar') = @executes_variable
  * </pre>
  * See <a href="#syn-exec">Executes</a> section for how executes methods are
- * specified
+ * specified. And see <a href="conc-names">Concepts, Names</a> for valid name
+ * input
  *
  * <h3>Arguments</h3>
  *
@@ -357,7 +414,8 @@
  * argument('arg', int(min=1, max=5)) = @executes_variable
  * </pre>
  * See <a href="#syn-exec">Executes</a> section for how executes methods are
- * specified
+ * specified. And see <a href="conc-names">Concepts, Names</a> for valid name
+ * input
  *
  * <h2 id="syn-comments">Comments</h2>
  * Comments inside {@link net.forthecrown.grenadier.annotations.CommandData}

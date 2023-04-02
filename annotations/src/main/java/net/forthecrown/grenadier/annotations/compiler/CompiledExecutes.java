@@ -18,10 +18,10 @@ import net.forthecrown.grenadier.CommandContexts;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.annotations.Argument;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
-import net.forthecrown.grenadier.annotations.util.Utils;
 import net.forthecrown.grenadier.annotations.tree.ArgumentValue;
 import net.forthecrown.grenadier.annotations.tree.ClassComponentRef;
 import net.forthecrown.grenadier.annotations.tree.ClassComponentRef.Kind;
+import net.forthecrown.grenadier.annotations.util.Utils;
 
 @RequiredArgsConstructor
 class CompiledExecutes implements Command<CommandSource> {
@@ -58,24 +58,26 @@ class CompiledExecutes implements Command<CommandSource> {
 
     // Apply any existing argument modifiers
     Map<String, ArgumentValue<?>> argumentValues = new HashMap<>();
-    arguments.forEach((s, arg) -> {
-      ArgumentValue value = new ArgumentValue(arg.getResult());
+    for (var entry : arguments.entrySet()) {
+      String s = entry.getKey();
+      ParsedArgument<CommandSource, ?> v = entry.getValue();
 
+      ArgumentValue value = new ArgumentValue(v.getResult());
       List<ArgumentModifier> modifierList = modifierMap.get(s);
 
       if (modifierList != null && modifierList.size() > 0) {
         List<Object> mappedValues = new ArrayList<>();
         value.setMappedValues(mappedValues);
 
-        modifierList.forEach(modifier -> {
+        for (ArgumentModifier modifier : modifierList) {
           ArgumentModifier unchecked = modifier;
-          Object val = unchecked.apply(context, arg.getResult());
+          Object val = unchecked.apply(context, v.getResult());
           mappedValues.add(val);
-        });
+        }
       }
 
       argumentValues.put(s, value);
-    });
+    }
 
     Class<?> objectClass = handle.getClass();
 
@@ -99,6 +101,8 @@ class CompiledExecutes implements Command<CommandSource> {
     Parameter[] params = method.getParameters();
 
     int contextIndex = -1;
+    int sourceIndex = -1;
+
     Object[] invocationParameters = new Object[params.length];
 
     for (int i = 0; i < params.length; i++) {
@@ -112,6 +116,18 @@ class CompiledExecutes implements Command<CommandSource> {
 
         contextIndex = i;
         invocationParameters[i] = context;
+
+        continue;
+      }
+
+      if (p.getType() == CommandSource.class) {
+        Preconditions.checkState(
+            sourceIndex == -1,
+            "Cannot have more than 1 CommandSource parameter"
+        );
+
+        sourceIndex = i;
+        invocationParameters[i] = context.getSource();
 
         continue;
       }

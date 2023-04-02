@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 public interface Name extends Tree {
 
   @Internal
-  record DirectName(String value) implements Name {
+  record DirectName(int tokenStart, String value) implements Name {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
@@ -14,8 +14,16 @@ public interface Name extends Tree {
     }
   }
 
+  record FieldRefName(int tokenStart, String fieldName) implements Name {
+
+    @Override
+    public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
+      return visitor.visitFieldName(this, context);
+    }
+  }
+
   @Internal
-  record VariableName(String variable) implements Name, VariableHolder {
+  record VariableName(int tokenStart, String variable) implements Name, VariableHolder {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {

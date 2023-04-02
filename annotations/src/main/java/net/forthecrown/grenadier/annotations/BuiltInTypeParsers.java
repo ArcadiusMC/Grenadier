@@ -1,6 +1,7 @@
 package net.forthecrown.grenadier.annotations;
 
 import static net.forthecrown.grenadier.annotations.TokenType.IDENTIFIER;
+import static net.forthecrown.grenadier.annotations.TokenType.NUMBER;
 import static net.forthecrown.grenadier.annotations.TokenType.QUOTED_STRING;
 import static net.forthecrown.grenadier.annotations.TokenType.VARIABLE;
 
@@ -29,7 +30,7 @@ final class BuiltInTypeParsers {
   static final TypeParser<ArrayArgument<?>> ARRAY = (info, ctx) -> {
     return info.getOption("values")
         .flatMap(token -> token.parseExpect(VARIABLE))
-        .flatMap(token -> ctx.getVariable(token.value(), ArgumentType.class))
+        .flatMap(token -> ctx.getVariable(token, ArgumentType.class))
         .map(ArgumentTypes::array);
   };
 
@@ -37,7 +38,7 @@ final class BuiltInTypeParsers {
   static final TypeParser<MapArgument<?>> MAP = (info, ctx) -> {
     return info.getOption("values")
         .flatMap(token -> token.parseExpect(VARIABLE))
-        .flatMap(token -> ctx.getVariable(token.value(), Map.class))
+        .flatMap(token -> ctx.getVariable(token, Map.class))
         .map(map -> ArgumentTypes.map(map));
   };
 
@@ -71,7 +72,7 @@ final class BuiltInTypeParsers {
       if (value instanceof Class<?> enumClass) {
         enumType = Result.success(enumClass);
       } else if (value instanceof String string) {
-        enumType = readClassName(string, context.getLoader());
+        enumType = readClassName(string, context.getLoader(), token.position());
       } else {
         return Result.fail(token.position(),
 
@@ -83,7 +84,11 @@ final class BuiltInTypeParsers {
         );
       }
     } else {
-      enumType = readClassName(token.value(), context.getLoader());
+      enumType = readClassName(
+          token.value(),
+          context.getLoader(),
+          token.position()
+      );
     }
 
     return enumType.flatMap(aClass -> {
@@ -102,12 +107,13 @@ final class BuiltInTypeParsers {
 
   private static Result<Class<?>> readClassName(
       String className,
-      ClassLoader loader
+      ClassLoader loader,
+      int pos
   ) {
     try {
       return Result.success(Class.forName(className, true, loader));
     } catch (ClassNotFoundException exc) {
-      return Result.fail("Unknown enum class '%s', not found", className);
+      return Result.fail(pos, "Unknown enum class '%s'", className);
     }
   }
 
@@ -154,23 +160,39 @@ final class BuiltInTypeParsers {
       Token maxToken = info.options().get("max");
 
       if (minToken != null) {
-        Result res = minToken.parseExpect(IDENTIFIER);
+        Result res = minToken.parseExpect(NUMBER);
 
         if (res.isError()) {
           return res;
         }
 
-        min = parser.apply(minToken.value());
+        try {
+          min = parser.apply(minToken.value());
+        } catch (NumberFormatException exc) {
+          return Result.fail(minToken.position(),
+              "Invalid %s '%s'",
+              minValue.getClass().getSimpleName(),
+              minToken.value()
+          );
+        }
       }
 
       if (maxToken != null) {
-        Result res = maxToken.parseExpect(IDENTIFIER);
+        Result res = maxToken.parseExpect(NUMBER);
 
         if (res.isError()) {
           return res;
         }
 
-        max = parser.apply(maxToken.value());
+        try {
+          max = parser.apply(maxToken.value());
+        } catch (NumberFormatException exc) {
+          return Result.fail(maxToken.position(),
+              "Invalid %s '%s'",
+              minValue.getClass().getSimpleName(),
+              maxToken.value()
+          );
+        }
       }
 
       return Result.success(factory.apply(min, max));

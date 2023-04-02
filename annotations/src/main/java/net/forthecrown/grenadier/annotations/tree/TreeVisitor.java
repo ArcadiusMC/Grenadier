@@ -8,6 +8,7 @@ import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRe
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
+import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
@@ -49,6 +50,8 @@ public interface TreeVisitor<R, C> {
   R visitVariableName(VariableName tree, C c);
 
   R visitDirectName(DirectName tree, C c);
+
+  R visitFieldName(FieldRefName tree, C c);
 
   R visitVarModifier(VariableMapper tree, C c);
 

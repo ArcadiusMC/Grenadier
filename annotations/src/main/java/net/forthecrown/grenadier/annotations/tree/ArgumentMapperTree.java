@@ -4,7 +4,7 @@ public interface ArgumentMapperTree extends Tree {
 
   Name argumentName();
 
-  record RefMapper(Name argumentName, ClassComponentRef ref)
+  record RefMapper(int tokenStart, Name argumentName, ClassComponentRef ref)
       implements ArgumentMapperTree
   {
 
@@ -14,7 +14,7 @@ public interface ArgumentMapperTree extends Tree {
     }
   }
 
-  record VariableMapper(Name argumentName, String variable)
+  record VariableMapper(int tokenStart, Name argumentName, String variable)
       implements ArgumentMapperTree, VariableHolder
   {
 
@@ -24,7 +24,7 @@ public interface ArgumentMapperTree extends Tree {
     }
   }
 
-  record InvokeResultMethod(Name argumentName, ClassComponentRef ref)
+  record InvokeResultMethod(int tokenStart, Name argumentName, ClassComponentRef ref)
       implements ArgumentMapperTree
   {
 

@@ -1,10 +1,12 @@
 package net.forthecrown.grenadier;
 
+import java.util.List;
 import java.util.Map;
 import net.forthecrown.grenadier.annotations.Argument;
 import net.forthecrown.grenadier.annotations.CommandData;
 import net.forthecrown.grenadier.annotations.VariableInitializer;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public class ResourcedCommandTest {
 
   static final String POS_ARG = "position";
-  static final Logger LOGGER = LoggerFactory.getLogger("Resource tes");
+  static final Logger LOGGER = LoggerFactory.getLogger("Resource test");
 
   @VariableInitializer
   void initVars(Map<String, Object> maps) {
@@ -29,5 +31,9 @@ public class ResourcedCommandTest {
 
   public void runPos(@Argument(POS_ARG) Location l) {
     LOGGER.debug("location={}", l);
+  }
+
+  public void runEntities(@Argument("other_arg") List<Entity> entities) {
+    LOGGER.debug(entities.toString());
   }
 }

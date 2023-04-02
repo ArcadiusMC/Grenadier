@@ -55,6 +55,34 @@ public record Token(String value, TokenType type, int position) {
     );
   }
 
+  public Result<Number> asNumber() {
+    return parseExpect(TokenType.NUMBER).map(token -> {
+      double d = Double.parseDouble(token.value());
+
+      if (((byte) d) == d) {
+        return (byte) d;
+      }
+
+      if (((short) d) == d) {
+        return (short) d;
+      }
+
+      if (((int) d) == d) {
+        return (int) d;
+      }
+
+      if (((long) d) == d) {
+        return (long) d;
+      }
+
+      if (((float) d) == d) {
+        return (float) d;
+      }
+
+      return d;
+    });
+  }
+
   private static String typesToString(TokenType[] types) {
     if (types.length == 1) {
       return types[0].toString();

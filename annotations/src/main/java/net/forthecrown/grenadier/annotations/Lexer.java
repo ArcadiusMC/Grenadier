@@ -1,8 +1,10 @@
 package net.forthecrown.grenadier.annotations;
 
+import com.google.common.base.Strings;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.Readers;
@@ -94,6 +96,24 @@ class Lexer implements Iterator<Token> {
     if (StringReader.isQuotedStringStart(c)) {
       String quoted = reader.readQuotedString();
       return TokenType.QUOTED_STRING.token(p, quoted);
+    }
+
+    String remaining = reader.getRemaining();
+    for (TokenType type: TokenType.patternLookup) {
+      Pattern pattern = type.getPattern();
+
+      var matcher = pattern.matcher(remaining);
+
+      if (matcher.find()) {
+        String group = matcher.group();
+
+        if (Strings.isNullOrEmpty(group)) {
+          continue;
+        }
+
+        reader.setCursor(p + group.length());
+        return type.token(p, group);
+      }
     }
 
     String word = readWord();

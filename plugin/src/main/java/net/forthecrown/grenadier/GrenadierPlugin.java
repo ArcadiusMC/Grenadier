@@ -43,6 +43,7 @@ public class GrenadierPlugin extends JavaPlugin {
     ctx.registerCommand(new DefaultExecutesTest());
     ctx.registerCommand(new AnnotationMapperTest());
     ctx.registerCommand(new ResourcedCommandTest());
+    ctx.registerCommand(new SignEditCommand());
   }
 
   @Override

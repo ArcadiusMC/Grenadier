@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 public interface SuggestsTree extends Tree {
 
-  record StringListSuggestions(String[] suggestions) implements SuggestsTree {
+  record StringListSuggestions(int tokenStart, String[] suggestions) implements SuggestsTree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
@@ -13,7 +13,7 @@ public interface SuggestsTree extends Tree {
     }
   }
 
-  record ComponentRefSuggestions(ClassComponentRef ref)
+  record ComponentRefSuggestions(int tokenStart, ClassComponentRef ref)
       implements SuggestsTree
   {
 
@@ -23,7 +23,7 @@ public interface SuggestsTree extends Tree {
     }
   }
 
-  record VariableSuggestions(String variable)
+  record VariableSuggestions(int tokenStart, String variable)
       implements SuggestsTree, VariableHolder
   {
 

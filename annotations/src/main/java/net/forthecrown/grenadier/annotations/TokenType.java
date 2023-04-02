@@ -1,8 +1,11 @@
 package net.forthecrown.grenadier.annotations;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,14 +46,21 @@ public enum TokenType {
   IDENTIFIER,
   VARIABLE,
 
+  // What a mess of regex lmao, this is bad regex and should be replaced
+  // at some point. It can match empty strings, but it works for the same kind
+  // of double input as in java source files... hopefully
+  NUMBER (Pattern.compile("([+-]?([0-9]+)?(\\.([0-9]+([eE][+-]?[0-9]+)?)?)?){1}")),
+
   EOF;
 
   static final Map<Character, TokenType> charLookup;
   static final Map<String, TokenType> stringLookup;
+  static final List<TokenType> patternLookup;
 
   static {
     Map<Character, TokenType> charMap = new HashMap<>();
     Map<String, TokenType> stringMap = new HashMap<>();
+    List<TokenType> patternMap = new ArrayList<>();
 
     for (var t: values()) {
       if (t.getCharacterValue() != null) {
@@ -60,29 +70,54 @@ public enum TokenType {
 
       if (t.getStringValue() != null) {
         stringMap.put(t.getStringValue(), t);
+        continue;
+      }
+
+      if (t.getPattern() != null) {
+        patternMap.add(t);
       }
     }
 
     charLookup = Collections.unmodifiableMap(charMap);
     stringLookup = Collections.unmodifiableMap(stringMap);
+    patternLookup = Collections.unmodifiableList(patternMap);
   }
 
   private final Character characterValue;
   private final String stringValue;
+  private final Pattern pattern;
 
   TokenType() {
     this.characterValue = null;
     this.stringValue = null;
+    this.pattern = null;
   }
 
   TokenType(Character characterValue) {
     this.characterValue = characterValue;
     this.stringValue = null;
+    this.pattern = null;
   }
 
   TokenType(String stringValue) {
     this.characterValue = null;
+    this.pattern = null;
     this.stringValue = stringValue;
+  }
+
+  TokenType(Pattern pattern) {
+    String patternString = pattern.pattern();
+
+    // Prevent patterns being able to match input that isn't
+    // being read currently
+    if (patternString.startsWith("^")) {
+      this.pattern = pattern;
+    } else {
+      this.pattern = Pattern.compile("^" + patternString);
+    }
+
+    this.characterValue = null;
+    this.stringValue = null;
   }
 
   public static @Nullable TokenType fromCharacter(char c) {

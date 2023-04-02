@@ -23,6 +23,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.SUGGESTS;
 import static net.forthecrown.grenadier.annotations.TokenType.TYPE_MAP;
 import static net.forthecrown.grenadier.annotations.TokenType.VARIABLE;
 import static net.forthecrown.grenadier.annotations.TokenType.WALL;
+import static net.forthecrown.grenadier.annotations.util.Result.NO_POSITION;
 
 import com.google.common.base.Strings;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.LiteralTree;
 import net.forthecrown.grenadier.annotations.tree.Name;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
+import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
@@ -95,6 +97,7 @@ class Parser {
 
   public RootTree parse() {
     RootTree tree = new RootTree();
+    tree.setTokenStart(0);
 
     lexer.expect(NAME);
     lexer.expect(ASSIGN);
@@ -108,9 +111,9 @@ class Parser {
       }
 
       var next = lexer.expect(
-          PERMISSION, ALIASES, DESCRIPTION,
-          ARGUMENT, EXECUTES, REQUIRES,
-          LITERAL
+          PERMISSION, ALIASES,  DESCRIPTION,
+          ARGUMENT,   EXECUTES, REQUIRES,
+          LITERAL,    TYPE_MAP
       );
 
       lexer.expect(ASSIGN);
@@ -163,10 +166,10 @@ class Parser {
   private ExecutesTree executesFromString(String s) {
     if (s.startsWith("@")) {
       String variable = s.substring(1);
-      return new VariableExecutes(variable);
+      return new VariableExecutes(NO_POSITION, variable);
     }
 
-    return new RefExecution(new ClassComponentRef(s, Kind.METHOD, null));
+    return new RefExecution(NO_POSITION, new ClassComponentRef(s, Kind.METHOD, null));
   }
 
   List<Name> parseAliases() {
@@ -186,7 +189,7 @@ class Parser {
   }
 
   public ArgumentTree parseArgument() {
-    lexer.expect(ARGUMENT);
+    int start = lexer.expect(ARGUMENT).position();
     lexer.expect(BRACKET_OPEN);
 
     var name = parseName(false);
@@ -200,6 +203,7 @@ class Parser {
     ArgumentTree tree = new ArgumentTree();
     tree.setName(name);
     tree.setTypeInfo(typeInfo);
+    tree.setTokenStart(start);
 
     parseNodeBody(tree, () -> {
       if (baseBodyParse(tree)) {
@@ -216,14 +220,6 @@ class Parser {
 
         var suggests = parseSuggestsValue();
         tree.setSuggests(suggests);
-        return;
-      }
-
-      if (peek.is(TYPE_MAP)) {
-        ensureCanSet(tree.getMapper(), "map_type", tree);
-
-        var modifier = parseArgumentMapper();
-        tree.setMapper(modifier);
         return;
       }
 
@@ -244,13 +240,19 @@ class Parser {
 
   ArgumentTypeRef parseTypeInfo() {
     if (lexer.peek().is(VARIABLE)) {
-      return new VariableTypeRef(lexer.next().value());
+      Token next = lexer.next();
+      return new VariableTypeRef(next.position(), next.value());
     }
 
     Token typeToken = lexer.expect(IDENTIFIER);
+    int start = typeToken.position();
 
     if (!lexer.peek().is(BRACKET_OPEN)) {
-      return new TypeInfoTree(typeToken.value(), Collections.emptyMap());
+      return new TypeInfoTree(
+          start,
+          typeToken.value(),
+          Collections.emptyMap()
+      );
     }
 
     Map<String, Token> options = new HashMap<>();
@@ -262,11 +264,11 @@ class Parser {
       options.put(label.value(), value);
     });
 
-    return new TypeInfoTree(typeToken.value(), options);
+    return new TypeInfoTree(start, typeToken.value(), options);
   }
 
   public LiteralTree parseLiteral() {
-    lexer.expect(LITERAL);
+    int start = lexer.expect(LITERAL).position();
     lexer.expect(BRACKET_OPEN);
 
     var name = parseName(false);
@@ -275,16 +277,29 @@ class Parser {
 
     LiteralTree tree = new LiteralTree();
     tree.setName(name);
+    tree.setTokenStart(start);
 
     parseNodeBody(tree, () -> {
       if (baseBodyParse(tree)) {
         return;
       }
 
-      lexer.expect(EXECUTES, REQUIRES, ARGUMENT, LITERAL);
+      lexer.expect(EXECUTES, REQUIRES, ARGUMENT, LITERAL, TYPE_MAP);
     });
 
     return tree;
+  }
+
+  boolean optionallyParseMapper(AbstractCmdTree tree) {
+    var peek = lexer.peek();
+
+    if (peek.is(TYPE_MAP)) {
+      var modifier = parseArgumentMapper();
+      tree.getMappers().add(modifier);
+      return true;
+    }
+
+    return false;
   }
 
   boolean baseBodyParse(AbstractCmdTree tree) {
@@ -315,6 +330,10 @@ class Parser {
     if (peek.is(ARGUMENT)) {
       var argument = parseArgument();
       tree.getChildren().add(argument);
+      return true;
+    }
+
+    if (optionallyParseMapper(tree)) {
       return true;
     }
 
@@ -352,13 +371,15 @@ class Parser {
   }
 
   public SuggestsTree parseSuggestsValue() {
+    final int start = lexer.peek().position();
+
     if (lexer.peek().is(VARIABLE)) {
-      return new VariableSuggestions(lexer.next().value());
+      return new VariableSuggestions(start, lexer.next().value());
     }
 
     if (!lexer.peek().is(SQUARE_OPEN)) {
       var ref = parseComponentRef();
-      return new ComponentRefSuggestions(ref);
+      return new ComponentRefSuggestions(start, ref);
     }
 
     List<String> strings = new ArrayList<>();
@@ -368,38 +389,41 @@ class Parser {
       strings.add(suggestion);
     });
 
-    return new StringListSuggestions(strings.toArray(String[]::new));
+    return new StringListSuggestions(start, strings.toArray(String[]::new));
   }
 
   public RequiresTree parseRequires() {
     var peek = lexer.peek();
 
     if (peek.is(VARIABLE)) {
-      return new VariableRequires(lexer.next().value());
+      return new VariableRequires(peek.position(), lexer.next().value());
     }
 
     if (!peek.is(PERMISSION)) {
+      int pos = lexer.peek().position();
       ClassComponentRef ref = parseComponentRef();
-      return new RequiresRef(ref);
+      return new RequiresRef(pos, ref);
     }
 
     // Skip 'permission' token
-    lexer.next();
+    int start = lexer.next().position();
 
     lexer.expect(BRACKET_OPEN);
     Name name = parseName(false);
     lexer.expect(BRACKET_CLOSE);
 
-    return new PermissionRequires(name);
+    return new PermissionRequires(start, name);
   }
 
   private ExecutesTree parseExecutes() {
+    final int start = lexer.peek().position();
+
     if (lexer.peek().is(VARIABLE)) {
-      return new VariableExecutes(lexer.next().value());
+      return new VariableExecutes(start, lexer.next().value());
     }
 
     ClassComponentRef ref = parseComponentRef();
-    return new RefExecution(ref);
+    return new RefExecution(start, ref);
   }
 
   public ArgumentMapperTree parseArgumentMapper() {
@@ -422,10 +446,11 @@ class Parser {
     }
 
     lexer.expect(ASSIGN);
+    final int start = lexer.peek().position();
 
     if (lexer.peek().is(VARIABLE)) {
       var variableName = lexer.next().value();
-      return new VariableMapper(name, variableName);
+      return new VariableMapper(start, name, variableName);
     }
 
     var peek = lexer.peek();
@@ -436,25 +461,31 @@ class Parser {
       lexer.expect(DOT);
 
       var ref = parseComponentRef();
-      return new InvokeResultMethod(name, ref);
+      return new InvokeResultMethod(start, name, ref);
     }
 
     ClassComponentRef ref = parseComponentRef();
-    return new RefMapper(name, ref);
+    return new RefMapper(start, name, ref);
   }
 
   private Name parseName(boolean allowId) {
-    var token = lexer.expect(
-        allowId
-            ? WITH_ID_NAME_TOKENS
-            : NO_ID_NAME_TOKENS
-    );
+    var token = lexer.expect(IDENTIFIER, QUOTED_STRING, VARIABLE);
+
+    final int start = token.position();
 
     if (token.is(VARIABLE)) {
-      return new VariableName(token.value());
+      return new VariableName(start, token.value());
     }
 
-    return new DirectName(token.value());
+    if (token.is(IDENTIFIER)) {
+      if (allowId) {
+        return new DirectName(start, token.value());
+      }
+
+      return new FieldRefName(start, token.value());
+    }
+
+    return new DirectName(start, token.value());
   }
 
   private ClassComponentRef parseComponentRef() {

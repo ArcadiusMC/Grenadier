@@ -8,7 +8,9 @@ import java.util.Stack;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
+import net.forthecrown.grenadier.annotations.Token;
 import net.forthecrown.grenadier.annotations.TypeRegistry;
+import net.forthecrown.grenadier.annotations.tree.VariableHolder;
 import net.forthecrown.grenadier.annotations.util.Result;
 
 @Getter
@@ -28,6 +30,14 @@ public class CompileContext {
 
   private final Map<String, List<ArgumentModifier>> mappers;
 
+  public <T> Result<T> getVariable(VariableHolder variable, Class<T> type) {
+    return getVariable(variable.tokenStart(), variable.variable(), type);
+  }
+
+  public <T> Result<T> getVariable(Token token, Class<T> type) {
+    return getVariable(token.position(), token.value(), type);
+  }
+
   /**
    * Gets a variable's optional value
    * @param name Name of the variable
@@ -37,17 +47,18 @@ public class CompileContext {
    * @throws IllegalStateException If the variable was found, but its type did not
    *                               match the specified {@code type}
    */
-  public <T> Result<T> getVariable(String name, Class<T> type)
+  public <T> Result<T> getVariable(int position, String name, Class<T> type)
       throws IllegalStateException
   {
     Object value = variables.get(name);
 
     if (value == null) {
-      return Result.fail("Variable '%s' not found", name);
+      return Result.fail(position, "Variable '%s' not found", name);
     }
 
     if (!type.isInstance(value)) {
-      return Result.fail("Variable '%s' is defined as %s, must be '%s'",
+      return Result.fail(position,
+          "Variable '%s' is defined as %s, must be '%s'",
           name, value.getClass().getName(), type.getName()
       );
     }

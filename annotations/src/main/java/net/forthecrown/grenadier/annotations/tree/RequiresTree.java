@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 public interface RequiresTree extends Tree {
 
-  record RequiresRef(ClassComponentRef ref) implements RequiresTree {
+  record RequiresRef(int tokenStart, ClassComponentRef ref) implements RequiresTree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
@@ -13,7 +13,7 @@ public interface RequiresTree extends Tree {
     }
   }
 
-  record PermissionRequires(Name name) implements RequiresTree {
+  record PermissionRequires(int tokenStart, Name name) implements RequiresTree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
@@ -21,7 +21,7 @@ public interface RequiresTree extends Tree {
     }
   }
 
-  record VariableRequires(String variable)
+  record VariableRequires(int tokenStart, String variable)
       implements RequiresTree, VariableHolder
   {
 
