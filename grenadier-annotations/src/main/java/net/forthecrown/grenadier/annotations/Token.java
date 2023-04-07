@@ -3,7 +3,7 @@ package net.forthecrown.grenadier.annotations;
 import net.forthecrown.grenadier.annotations.util.Result;
 
 /**
- * A character or string of characters read from input
+ * A character or string of characters read from an input
  */
 public interface Token {
 

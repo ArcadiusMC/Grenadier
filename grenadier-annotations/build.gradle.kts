@@ -1,6 +1,5 @@
 plugins {
   `java-library`
-  id("io.papermc.paperweight.userdev") version "1.5.3"
 
   // Maven publishing
   id("maven-publish")
@@ -8,7 +7,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.0.8"
+version = "1.0.0"
 
 repositories {
   mavenCentral()
@@ -19,37 +18,25 @@ repositories {
 
 dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+  testImplementation("com.google.guava:guava:31.1-jre")
 
-  // As a general rule, lombok is only used in implementation
-  // classes, not in the API.
-  compileOnly("org.projectlombok:lombok:1.18.22")
-  annotationProcessor("org.projectlombok:lombok:1.18.22")
-
+  api(project(":grenadier"))
   api("com.mojang:brigadier:1.0.18")
 
-  api("net.forthecrown:nbt:latest.release")
-  api("net.forthecrown:paper-nbt:latest.release")
+  compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
 
-  paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT")
+  compileOnly("org.projectlombok:lombok:1.18.22")
+  annotationProcessor("org.projectlombok:lombok:1.18.22")
 }
 
 tasks {
-  assemble {
-    dependsOn(reobfJar)
-  }
-
-  compileJava {
-    options.encoding = Charsets.UTF_8.name()
-    options.release.set(17)
+  test {
+    useJUnitPlatform()
   }
 
   java {
     withSourcesJar()
     withJavadocJar()
-  }
-
-  test {
-    useJUnitPlatform()
   }
 
   javadoc {
@@ -64,13 +51,10 @@ tasks {
     links.add("https://repo.karuslabs.com/repository/brigadier/")
     links.add("https://javadoc.io/doc/net.forthecrown/paper-nbt/latest/")
     links.add("https://javadoc.io/doc/net.forthecrown/nbt/latest/")
+    links.add("https://javadoc.io/doc/net.forthecrown/grenadier/latest/")
 
-    exclude("**/internal/**")
+    exclude("**/compiler/**")
   }
-}
-
-java {
-  toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 
 publishing {
@@ -79,15 +63,9 @@ publishing {
       from(components["java"])
 
       pom {
-        name.set("grenadier")
-        description.set("Command engine made with Mojang's Brigadier for PaperMC")
+        name.set("grenadier-annotations")
+        description.set("Annotation-based command support for Grenadier")
         url.set("https://github.com/ForTheCrown/Grenadier")
-
-        // For some reason the normal jar file gets forgotten lol,
-        // so gotta do this to include it
-        val jarPath = buildDir.path + "/libs/${project.name}-${project.version}.jar"
-        val jarFile = file(jarPath)
-        artifact(jarFile)
 
         licenses {
           license {

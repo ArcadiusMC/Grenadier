@@ -40,12 +40,12 @@
  * ParsedOptions options
  *    = context.getArgument("argument name", ParsedOptions.class);
  *
- * // The source parameter here is required for checking if the source is
- * // allowed to access these options. This becomes crucial if you specify
- * // use conditions for any of the options
+ * // Ensure the source executing the command is allowed to access
+ * // all of the parsed options
+ * options.checkAccess(source);
  *
- * int intValue = options.getValue(ARGUMENT, source);
- * boolean flag = options.hasFlag(EXAMPLE_FLAG, source);
+ * int intValue = options.getValue(ARGUMENT);
+ * boolean flag = options.hasFlag(EXAMPLE_FLAG);
  *
  * </code></pre>
  *

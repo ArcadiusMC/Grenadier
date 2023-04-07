@@ -24,11 +24,6 @@ import net.forthecrown.grenadier.annotations.util.Utils;
 @RequiredArgsConstructor
 class CompiledSuggester implements SuggestionProvider<CommandSource> {
 
-  private static final Class<?>[] PARAMS = {
-      CommandContext.class,
-      SuggestionsBuilder.class
-  };
-
   private final MemberChain chain;
   private final Object commandClass;
 

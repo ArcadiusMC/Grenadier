@@ -39,7 +39,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
   private String defaultExecutes;
 
   @Getter
-  private DefaultExecutionRule defaultRule = DefaultExecutionRule.IF_MISSING;
+  private DefaultExecutionRule defaultRule = DefaultExecutionRule.IF_NO_CHILDREN;
 
   @Getter
   private TypeRegistry typeRegistry = TypeRegistry.global();
@@ -48,8 +48,6 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
 
   @Getter @Setter
   private SyntaxConsumer syntaxConsumer;
-
-  private int registeredCommands = 0;
 
   AnnotatedCommandContextImpl() {
     CommandDataLoader defaultLoader
@@ -111,8 +109,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         continue;
       }
 
-      StringReader inReader = new StringReader(inputString);
-      return inReader;
+      return new StringReader(inputString);
     }
 
     throw exceptions.create("No valid loader path '%s' found", path);
@@ -178,7 +175,6 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
     dispatcher.getRoot().addChild(node);
 
-    registeredCommands++;
     return node;
   }
 
@@ -195,6 +191,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     return data;
   }
 
+  @SuppressWarnings("deprecation")
   Map<String, Object> initializeLocalVariables(Object o) {
     Class<?> type = o.getClass();
 
@@ -275,10 +272,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
 
     @Override
     public void putAll(Map<? extends String, ?> m) {
-      m.forEach((s, o) -> {
-        validateKey(s);
-      });
-
+      m.forEach((s, o) -> validateKey(s));
       super.putAll(m);
     }
 
