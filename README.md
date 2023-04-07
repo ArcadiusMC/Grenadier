@@ -21,7 +21,10 @@ repositories {
 
 dependencies {
   // Grenadier itself
-  implementation("net.forthecrown:grenadier:2.0.6")
+  implementation("net.forthecrown:grenadier:2.0.8")
+  
+  // Get the annotation library with
+  implementation("net.forthecrown:grenadier-annotations:2.0.8")
   
   // Mojang's Brigadier engine
   compileOnly("com.mojang:brigadier:1.0.18")
