@@ -168,12 +168,12 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       System.out.print("\n");
     }
 
-    if (syntaxConsumer != null) {
-      context.consumeSyntax(node.getName(), syntaxConsumer);
-    }
-
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
     dispatcher.getRoot().addChild(node);
+
+    if (syntaxConsumer != null) {
+      context.consumeSyntax(node, syntaxConsumer);
+    }
 
     return node;
   }

@@ -168,11 +168,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       argumentLabel = argLabel.orElse(FAILED);
     }
 
-    // Only add help prefixes if not in the root node
-    boolean prefixPushed = !(tree instanceof RootTree);
-    if (prefixPushed) {
-      context.pushPrefix(argumentLabel);
-    }
+    context.pushPrefix(argumentLabel);
 
     if (tree.getDescription() != null) {
       final var fContext = context;
@@ -219,9 +215,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       builder.then(node);
     });
 
-    if (prefixPushed) {
-      context.popPrefix();
-    }
+    context.popPrefix();
 
     if (conditionPushed[0]) {
       context.popCondition();

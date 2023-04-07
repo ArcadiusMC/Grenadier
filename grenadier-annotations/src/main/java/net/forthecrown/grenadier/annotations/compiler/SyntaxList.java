@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.annotations.SyntaxConsumer;
 import net.kyori.adventure.text.Component;
 
@@ -20,9 +21,9 @@ class SyntaxList {
     elements.add(element);
   }
 
-  public void consume(String commandName, SyntaxConsumer consumer) {
+  public void consume(GrenadierCommandNode node, SyntaxConsumer consumer) {
     for (SyntaxElement syntaxElement : elements) {
-      consumer.accept(commandName,
+      consumer.accept(node,
           syntaxElement.arguments,
           syntaxElement.info,
           syntaxElement.predicate

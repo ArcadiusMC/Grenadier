@@ -2,6 +2,7 @@ package net.forthecrown.grenadier.annotations;
 
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,22 +34,21 @@ public interface SyntaxConsumer {
    * instance which looks like so:
    * <pre>
    * commandName = 'command_name'
-   * argument = '&lt;player's name&gt; kill'
+   * argument = 'command_name &lt;player's name&gt; kill'
    * info = 'Kills a player'
    * condition = predicate list [
    *   1) has permission: 'permission.name'
    *   2) has permission: 'permission.player.kill'
    * ]
    * </pre>
-   * Notice that the command's name is omitted from the {@code argument} value
    *
-   * @param commandName Root node's name
+   * @param node Grenadier command
    * @param argument Usage syntax
    * @param info Usage description
    * @param condition A complete condition a source must pass to see the
    *                  specified information
    */
-  void accept(String commandName,
+  void accept(GrenadierCommandNode node,
               String argument,
               Component info,
               @Nullable Predicate<CommandSource> condition

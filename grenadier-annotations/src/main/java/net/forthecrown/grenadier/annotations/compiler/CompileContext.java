@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
 import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.SyntaxConsumer;
 import net.forthecrown.grenadier.annotations.Token;
@@ -140,8 +141,8 @@ public class CompileContext {
     return withMappers(map);
   }
 
-  public void consumeSyntax(String name, SyntaxConsumer consumer) {
-    syntaxList.consume(name, consumer);
+  public void consumeSyntax(GrenadierCommandNode node, SyntaxConsumer consumer) {
+    syntaxList.consume(node, consumer);
   }
 
   public String syntaxPrefix() {
