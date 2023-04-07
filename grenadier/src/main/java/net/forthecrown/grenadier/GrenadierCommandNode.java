@@ -55,6 +55,22 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
         : LegacyComponentSerializer.legacySection().serialize(description);
   }
 
+  @Override
+  public GrenadierCommand createBuilder() {
+    var builder = Grenadier.createCommand(getName());
+    builder.withAliases(getAliases());
+    builder.withDescription(description);
+    builder.withPermission(getPermission());
+    builder.requires(getRequirement());
+    builder.forward(getRedirect(), getRedirectModifier(), isFork());
+
+    if (getCommand() != null) {
+      builder.executes(getCommand());
+    }
+
+    return builder;
+  }
+
   public Component description() {
     return description;
   }
