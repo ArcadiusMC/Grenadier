@@ -66,7 +66,7 @@ class GrenadierBukkitWrapper extends Command {
                          @NotNull String[] args
   ) {
     CommandSource source = Grenadier.createSource(sender, treeRoot);
-    StringReader reader = InternalUtil.ofBukkit(commandLabel, args);
+    StringReader reader = InternalUtil.bukkitReader(commandLabel, args);
 
     InternalUtil.execute(source, reader);
     return true;
@@ -78,7 +78,7 @@ class GrenadierBukkitWrapper extends Command {
                                            @NotNull String[] args
   ) throws IllegalArgumentException {
     CommandSource source = Grenadier.createSource(sender, treeRoot);
-    StringReader reader = InternalUtil.ofBukkit(alias, args);
+    StringReader reader = InternalUtil.bukkitReader(alias, args);
 
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
     ParseResults<CommandSource> results = dispatcher.parse(reader, source);

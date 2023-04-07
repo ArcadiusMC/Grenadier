@@ -10,7 +10,7 @@ import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.util.ExpandedCommandContext;
 
 @RequiredArgsConstructor
-public class ContextFactory {
+class ContextFactory {
   final Map<String, List<ArgumentModifier<?, ?>>> modifierMap;
 
   public ExpandedCommandContext create(CommandContext<CommandSource> context)

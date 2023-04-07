@@ -13,7 +13,7 @@ import net.forthecrown.grenadier.annotations.Argument;
 import net.forthecrown.grenadier.annotations.compiler.MemberChain.FieldMember;
 import net.forthecrown.grenadier.annotations.compiler.MemberChain.MethodMember;
 import net.forthecrown.grenadier.annotations.compiler.MemberChainCompiler.ChainCompileConfig;
-import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
+import net.forthecrown.grenadier.annotations.tree.ExecutesTree.MemberExecutes;
 import net.forthecrown.grenadier.annotations.util.ExpandedCommandContext;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
@@ -74,7 +74,7 @@ class CompiledExecutes implements Command<CommandSource> {
     return 0;
   }
 
-  static Result<Command> compile(RefExecution tree, CompileContext context) {
+  static Result<Command> compile(MemberExecutes tree, CompileContext context) {
     ChainCompileConfig config = ChainCompileConfig.create(tree.tokenStart())
         .setFinalFieldTypes(Command.class);
 

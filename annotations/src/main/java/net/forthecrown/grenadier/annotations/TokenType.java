@@ -21,7 +21,9 @@ public enum TokenType {
   REQUIRES        ("requires"),
   LITERAL         ("literal"),
   ARGUMENT        ("argument"),
-  TYPE_MAP        ("map_type"),
+  TYPE_MAP        ("map_result"),
+  SYNTAX_LABEL    ("label"),
+  TRANSLATABLE    ("translatable"),
 
   TRUE            ("true"),  // Currently unused
   FALSE           ("false"), // Currently unused
@@ -133,7 +135,7 @@ public enum TokenType {
   }
 
   public Token token(int position, String input) {
-    return new Token(input, this, position);
+    return new TokenImpl(input, this, position);
   }
 
   @Override

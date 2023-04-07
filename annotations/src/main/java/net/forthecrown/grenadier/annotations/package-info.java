@@ -243,6 +243,8 @@
  * <pre>
  * description = 'This command does a thing'
  * </pre>
+ * See <a href="syn-all-desc">All Nodes, Descriptions</a> for more info on
+ * descriptions
  *
  * <h3>Aliases</h3>
  * A special list of either quoted strings, unquoted strings, or variable
@@ -337,36 +339,42 @@
  * for more info.
  *
  * <p>
- * Since the 'map_type' can be applied to any argument to change it's result
+ * Since the 'map_result' can be applied to any argument to change it's result
  * type, any value output from any modifier is also valid for executes methods.
  * For example, say we have an argument that returns an intermediary object,
  * like {@link net.forthecrown.grenadier.types.PositionArgument} which returns
  * {@link net.forthecrown.grenadier.types.ParsedPosition}. If we have a
- * map_type that converts the position into a location with {@link net.forthecrown.grenadier.types.ParsedPosition#apply(net.forthecrown.grenadier.CommandSource)}
+ * map_result that converts the position into a location with {@link net.forthecrown.grenadier.types.ParsedPosition#apply(net.forthecrown.grenadier.CommandSource)}
  * then we can use either the parsed position or location in method parameters.
  *
  * <h3>Requires</h3>
- *
  * Accepts a field/method reference, a variable name or a special 'permission'
  * value.
- *
  * <p>
  * Sets the requirement a command source must pass to use the command node and
- * any child nodes. In the case this field is set to a variable name then the
- * variable must be a {@link java.util.function.Predicate}. Otherwise, in the
- * case of a field reference the field must be a {@link java.util.function.Predicate}
- * and finally, in the case of a method reference the method must return a
+ * any child nodes.
+ * <br>
+ * In the case this field is set to a variable name then the variable must be a
+ * {@link java.util.function.Predicate}. Otherwise, in the case of a field
+ * reference the field must be a {@link java.util.function.Predicate} and
+ * finally, in the case of a method reference the method must return a
  * {@code boolean} and accept a single parameter, a {@link net.forthecrown.grenadier.CommandSource}.
- *
+ * <br>
+ * If the 'requires' is set to a permission value, the permission value can be
+ * a quoted string, a reference to a field in the command class or a variable.
+ * The variable must be a string or a {@link org.bukkit.permissions.Permission}
  * <p>
  * Examples: <pre>
  * requires = permission('permission.name')
+ * requires = permission(PERMISSION_CONSTANT)
+ * requires = permission(@permissionVariable)
+ *
  * requires = @variableName
  * requires = fieldName
  * requires = methodName()
  * </pre>
  *
- * <h3>Map type</h3>
+ * <h3>Map Result</h3>
  * A field/method reference or variable reference. Allows for the result of an
  * argument type to mapped to a different type.
  * <br>
@@ -380,23 +388,63 @@
  * Examples:
  * <pre>
  * // References a method within the argument result
- * map_type = result.apply()
+ * map_result = result.apply()
  * // References a method in the command class
- * map_type = mapArgument()
- * map_type = @variable
+ * map_result = mapArgument()
+ * map_result = @variable
  * </pre>
  *
  * <p>
  * If you need to map the value of an argument other than the current one, you
- * can use {@code map_type(argument name)}, for example:
+ * can use {@code map_result(argument name)}, for example:
  * <pre><code>
  * argument('arg1', entities) {
  *
  *   argument('arg2', int(min=1, max=2) {
- *     map_type('arg1') = result.findEntities()
+ *     map_result('arg1') = result.findEntities()
  *   }
  * }
  * </code></pre>
+ *
+ * <h3 id="syn-all-desc">Description</h3>
+ * A quoted string, variable or translatable text key.
+ * <br>
+ * Describes an argument's use description. If this is set in the root node,
+ * then this becomes the command's description and won't become the usage text
+ * unless there's an executes method in the root node.
+ * <br>
+ * Literal description Example: <pre><code>
+ * description = 'Argument description'
+ * </code></pre>
+ * Translatable description example: <pre><code>
+ * description = translatable('translation.key')
+ * </code></pre>
+ * See {@link net.kyori.adventure.translation.TranslationRegistry},
+ * {@link net.kyori.adventure.translation.GlobalTranslator} or
+ * {@link net.kyori.adventure.text.TranslatableComponent} for more info on
+ * translatable text.
+ * <p>
+ * Variable description example: <pre><code>
+ * description = @desc_variable
+ * </code></pre>
+ * The variable must be an instance of {@link net.kyori.adventure.text.Component}
+ * <p>
+ * This and the {@code label} values are a part of the usage/help system
+ * of the command system. When this description is compiled it will be given to
+ * the {@link net.forthecrown.grenadier.annotations.SyntaxConsumer} of the
+ * current context with the path to the argument provided as well.
+ *
+ * <h3>Syntax Label</h3>
+ * A quoted string, field name or variable that overrides the default node name
+ * for usage/help messages.
+ * <br>
+ * Example: <pre><code>
+ * argument('pos', vec3i) {
+ *   label = '&lt;pos: x,y,z&gt;'
+ * }
+ * </code></pre>
+ * In the above example, when the node's name is used in a help message, it will
+ * say '&lt;pos: x,y,z&gt;' instead of '&lt;pos&gt;'
  *
  * <h2 id="syn-children">Child nodes</h2>
  *
@@ -455,33 +503,52 @@
  * <pre>
  * name = 'signedit'
  * aliases = sign | signs
- * permission = 'admin.commands.signs'
+ * permission = 'commands.admin.signedit'
  * description = 'Allows you to edit signs'
  *
- * argument('pos', vec3i) {
- *   literal('clear') = clearSign()
- *   literal('copy') = copySign()
- *   literal('paste') = pasteSign()
+ * argument(SIGN_ARG, vec3i) {
+ *   map_result = positionToSign()
+ *   label = "&lt;sign: x,y,z&gt;"
  *
- *   literal('type') {
- *     requires = permission('admin.commands.signs.type')
- *     argument('signType', map(values=@signTypeMap)) = setSignType()
+ *   literal('clear') {
+ *     description = "Clears a &lt;sign&gt;"
+ *     executes = clear()
  *   }
  *
- *   literal('glow') {
- *     requires = permission('admin.commands.signs.glow')
- *     argument('glowing', bool) = setSignGlow()
+ *   literal('copy') {
+ *     description = "Copies a sign that you can later paste"
+ *     executes = copy()
  *   }
  *
- *   argument('line' int(min=1, max=4)) {
- *     requires = permission('admin.commands.signs.line')
+ *   literal('paste') {
+ *     description = "Pastes a previously copied sign"
+ *     executes = paste()
+ *   }
+ *
+ *   literal('glowing').argument(GLOW_ARG, bool) {
+ *     description = "Changes whether the sign is glowing or not"
+ *     executes = setGlowing()
+ *   }
+ *
+ *   argument(LINE_ARG, int(min=1, max=4)) {
+ *     label = '&lt;line: 1..4&gt;'
  *     suggests = ['1', '2', '3', '4']
  *
  *     literal('set') {
- *       argument('text' greedy_string) = setSignText()
+ *       argument(TEXT_ARG, greedy_string) {
+ *         description = "Sets the sign's &lt;line&gt; to &lt;text&gt;"
+ *
+ *         map_result = stringToComponent()
+ *
+ *         suggests = suggestSignLine()
+ *         executes = setLine()
+ *       }
  *     }
  *
- *     literal('clear') = clearSignLine()
+ *     literal('clear') {
+ *       executes = clearLine()
+ *       description = "Clears a sign's &lt;line&gt;"
+ *     }
  *   }
  * }
  * </pre>

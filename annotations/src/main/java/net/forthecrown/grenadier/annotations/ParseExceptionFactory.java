@@ -6,12 +6,18 @@ import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.annotations.util.ErrorMessages;
+import net.forthecrown.grenadier.annotations.util.Result.ErrorExceptionFactory;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.translation.GlobalTranslator;
 
+/**
+ * Parse exception factory
+ */
 @RequiredArgsConstructor
-public class ParseExceptions {
+public class ParseExceptionFactory
+    implements ErrorExceptionFactory<CommandParseException>
+{
 
   /**
    * Parse position value for {@link #create(int, String, Object...)} to
@@ -20,13 +26,14 @@ public class ParseExceptions {
   public static final int NO_POS = -1;
   private final StringReader input;
 
-  public static ParseExceptions factory(StringReader input) {
-    return new ParseExceptions(input);
-  }
-
   public CommandParseException create(int pos, String format, Object... args) {
     String message = ErrorMessages.formatError(input, pos, format, args);
     return new CommandParseException(message);
+  }
+
+  @Override
+  public CommandParseException createException(int position, String message) {
+    return create(position, message);
   }
 
   public CommandParseException create(String format, Object... args) {

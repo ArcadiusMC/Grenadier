@@ -24,6 +24,10 @@ public abstract class AbstractCmdTree implements Tree {
 
   private int tokenStart = NO_POSITION;
 
+  private DescriptionTree description;
+
+  private Name syntaxLabel;
+
   @Override
   public int tokenStart() {
     return tokenStart;

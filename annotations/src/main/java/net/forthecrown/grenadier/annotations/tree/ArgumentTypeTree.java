@@ -6,11 +6,10 @@ import net.forthecrown.grenadier.annotations.util.Result;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
-public interface ArgumentTypeRef extends Tree {
-
+public interface ArgumentTypeTree extends Tree {
 
   record TypeInfoTree(int tokenStart, String name, Map<String, Token> options)
-      implements ArgumentTypeRef
+      implements ArgumentTypeTree
   {
 
     public Result<Token> getOption(String optionName) {
@@ -26,17 +25,18 @@ public interface ArgumentTypeRef extends Tree {
     }
 
     @Override
-      public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-        return visitor.visitTypeInfo(this, context);
-      }
+    public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
+      return visitor.visitArgumentTypeTree(this, context);
+    }
   }
 
-  record VariableTypeRef(int tokenStart, String variable)
-      implements ArgumentTypeRef, VariableHolder
+  record VariableTypeReference(int tokenStart, String variable)
+      implements ArgumentTypeTree, VariableHolder
   {
+
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-      return visitor.visitVariableType(this, context);
+      return visitor.visitVariableArgumentType(this, context);
     }
   }
 }

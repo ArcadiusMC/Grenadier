@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Parameter annotation for command execution methods.
+ * <p>
+ * Use this annotation if you're seeing error messages along the lines of
+ * {@code Argument 'arg2' is not available in the current context} As that means
+ * java has gotten rid of the parameter names.
  *
  * <p>
  * Use example: <pre><code>

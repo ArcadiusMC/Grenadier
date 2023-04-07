@@ -12,7 +12,9 @@ import net.forthecrown.grenadier.CommandContexts;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.tree.ArgumentValue;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
+@Internal
 public class ExpandedCommandContext {
   private final CommandContext<CommandSource> base;
   private Map<String, ArgumentValue<?>> values = new HashMap<>();

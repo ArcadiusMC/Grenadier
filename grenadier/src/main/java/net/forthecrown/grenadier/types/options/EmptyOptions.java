@@ -1,5 +1,7 @@
 package net.forthecrown.grenadier.types.options;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import net.forthecrown.grenadier.CommandSource;
 import org.jetbrains.annotations.NotNull;
@@ -34,28 +36,33 @@ class EmptyOptions implements ParsedOptions {
 
   @Override
   public <T> @Nullable T getValue(ArgumentOption<T> option) {
-    return null;
+    return option.getDefaultValue();
   }
 
   @Override
   public <T> Optional<T> getValueOptional(ArgumentOption<T> option) {
-    return Optional.empty();
+    return Optional.ofNullable(option.getDefaultValue());
   }
 
   @Override
   public <T> T getValue(ArgumentOption<T> option, CommandSource source) {
-    return null;
+    return option.getDefaultValue();
   }
 
   @Override
   public <T> Optional<T> getValueOptional(ArgumentOption<T> option,
                                           CommandSource source
   ) {
-    return Optional.empty();
+    return Optional.ofNullable(option.getDefaultValue());
   }
 
   @Override
   public boolean hasFlag(FlagOption option, CommandSource source) {
     return false;
+  }
+
+  @Override
+  public Collection<ParsedOption> parsedOptions() {
+    return Collections.emptyList();
   }
 }

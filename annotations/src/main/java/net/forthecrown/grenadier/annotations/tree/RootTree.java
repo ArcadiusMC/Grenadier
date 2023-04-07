@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 public class RootTree extends AbstractCmdTree {
 
   private Name permission;
-  private String description;
 
   private List<Name> aliases;
 

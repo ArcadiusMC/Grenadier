@@ -5,7 +5,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import net.forthecrown.grenadier.annotations.util.Utils;
 
-public interface MemberChain {
+/**
+ * A chain of method calls/field accesses
+ */
+interface MemberChain {
+
+  /**
+   * Gets the next member in the chain of member calls
+   * @return Next member chain
+   */
   MemberChain next();
 
   Object resolve(Object declaringObject) throws ReflectiveOperationException;

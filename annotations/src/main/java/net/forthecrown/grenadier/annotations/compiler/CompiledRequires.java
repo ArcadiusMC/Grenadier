@@ -7,7 +7,7 @@ import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.annotations.compiler.MemberChain.FieldMember;
 import net.forthecrown.grenadier.annotations.compiler.MemberChain.MethodMember;
 import net.forthecrown.grenadier.annotations.compiler.MemberChainCompiler.ChainCompileConfig;
-import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.MemberRequires;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
 
@@ -50,7 +50,7 @@ class CompiledRequires implements Predicate<CommandSource> {
   }
 
   static Result<Predicate> compile(
-      RequiresRef tree,
+      MemberRequires tree,
       CompileContext context
   ) {
     Object o = context.getCommandClass();

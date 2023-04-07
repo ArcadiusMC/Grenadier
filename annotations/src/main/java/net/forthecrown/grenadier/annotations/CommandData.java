@@ -15,5 +15,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CommandData {
 
+  /**
+   * Command structure value, see {@link net.forthecrown.grenadier.annotations}
+   * for documentation on accepted syntax
+   *
+   * @return Command data tree
+   */
   String value() default "";
 }

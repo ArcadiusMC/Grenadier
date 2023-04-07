@@ -4,13 +4,13 @@ public interface ArgumentMapperTree extends Tree {
 
   Name argumentName();
 
-  record RefMapper(int tokenStart, Name argumentName, MemberChainTree ref)
+  record MemberMapper(int tokenStart, Name argumentName, MemberChainTree ref)
       implements ArgumentMapperTree
   {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-      return visitor.visitRefModifier(this, context);
+      return visitor.visitMemberMapper(this, context);
     }
   }
 
@@ -20,17 +20,17 @@ public interface ArgumentMapperTree extends Tree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-      return visitor.visitVarModifier(this, context);
+      return visitor.visitVariableMapper(this, context);
     }
   }
 
-  record InvokeResultMethod(int tokenStart, Name argumentName, MemberChainTree ref)
+  record ResultMemberMapper(int tokenStart, Name argumentName, MemberChainTree ref)
       implements ArgumentMapperTree
   {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-      return visitor.visitResultInvokeModifier(this, context);
+      return visitor.visitResultMemberMapper(this, context);
     }
   }
 }

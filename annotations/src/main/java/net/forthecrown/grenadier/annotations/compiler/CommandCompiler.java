@@ -18,109 +18,43 @@ import net.forthecrown.grenadier.Nodes;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.TypeRegistry.TypeParser;
 import net.forthecrown.grenadier.annotations.tree.AbstractCmdTree;
-import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.InvokeResultMethod;
-import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.RefMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.MemberMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.ResultMemberMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.VariableMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTree;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRef;
-import net.forthecrown.grenadier.annotations.tree.ChildCommandTree;
-import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree.TypeInfoTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree.VariableTypeReference;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.ArrayDescription;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.LiteralDescription;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.TranslatableDescription;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.VariableDescription;
+import net.forthecrown.grenadier.annotations.tree.ExecutesTree.MemberExecutes;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.LiteralTree;
 import net.forthecrown.grenadier.annotations.tree.Name;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
-import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
+import net.forthecrown.grenadier.annotations.tree.Name.FieldReferenceName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.ConstantRequires;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.MemberRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
-import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
 import net.forthecrown.grenadier.annotations.tree.RootTree;
-import net.forthecrown.grenadier.annotations.tree.SuggestsTree.ComponentRefSuggestions;
+import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
 import net.forthecrown.grenadier.annotations.tree.TreeVisitor;
 import net.forthecrown.grenadier.annotations.util.Result;
+import net.kyori.adventure.text.Component;
 
 public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
-  private final String FAILED = "FAILED";
+  private static final String FAILED = "FAILED";
 
   public static final CommandCompiler COMPILER = new CommandCompiler();
 
-  private void consumeName(Name name,
-                           CompileContext context,
-                           Consumer<String> consumer
-  ) {
-    Result<String> res = (Result<String>) name.accept(this, context);
-    res.apply(context.getErrors(), consumer);
-  }
-
-  @Override
-  public Result<SuggestionProvider> visitStringSuggestions(
-      StringListSuggestions tree,
-      CompileContext context
-  ) {
-    String[] suggestions = tree.suggestions();
-
-    return Result.success((context1, builder) -> {
-      return Completions.suggest(builder, suggestions);
-    });
-  }
-
-  @Override
-  public Result<SuggestionProvider> visitRefSuggestions(
-      ComponentRefSuggestions tree,
-      CompileContext context
-  ) {
-    return CompiledSuggester.compile(tree, context);
-  }
-
-  @Override
-  public Result<SuggestionProvider> visitVariableSuggests(
-      VariableSuggestions tree,
-      CompileContext context
-  ) {
-    return context.getVariable(tree, SuggestionProvider.class);
-  }
-
-  @Override
-  public Result<Predicate<CommandSource>> visitPermissionRequirement(
-      PermissionRequires tree,
-      CompileContext context
-  ) {
-    Result<String> permissionResult
-        = (Result<String>) tree.name().accept(this, context);
-
-    return permissionResult.map(permission -> {
-      return source -> source.hasPermission(permission);
-    });
-  }
-
-  @Override
-  public Result<Predicate> visitRefRequires(
-      RequiresRef tree,
-      CompileContext context
-  ) {
-    return CompiledRequires.compile(tree, context);
-  }
-
-  @Override
-  public Result<Predicate> visitConstantRequires(ConstantRequires tree,
-                                                 CompileContext context
-  ) {
-    boolean value = tree.value();
-    return Result.success(o -> value);
-  }
-
-  @Override
-  public Result<Predicate> visitVariableRequires(
-      VariableRequires tree,
-      CompileContext context
-  ) {
-    return context.getVariable(tree, Predicate.class);
-  }
+  /* ------------------------------- NODES -------------------------------- */
 
   @Override
   public CommandNode<CommandSource> visitLiteral(LiteralTree tree,
@@ -134,7 +68,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     String name = nameResult.orElse(FAILED);
     var literal = Nodes.literal(name);
 
-    genericChildVisit(tree, literal, context, name);
+    genericNodeVisit(tree, literal, context, name);
 
     return literal.build();
   }
@@ -173,7 +107,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       providerResult.apply(context.getErrors(), builder::suggests);
     }
 
-    genericChildVisit(tree, builder, context, name);
+    genericNodeVisit(tree, builder, context, name);
 
     if (!nameResult.isError()) {
       context.popArgument();
@@ -192,14 +126,11 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     String name = nameResult.orElse(FAILED);
     GrenadierCommand builder = new GrenadierCommand(name);
 
-    if (tree.getDescription() != null) {
-      builder.withDescription(tree.getDescription());
-    }
-
     if (tree.getPermission() != null) {
       consumeName(tree.getPermission(), context, s -> {
         String permission = s.replace("{command}", name);
         builder.withPermission(permission);
+        context.pushCondition(new PermissionPredicate(permission));
       });
     } else {
       builder.withPermission(context.defaultedPermission(name));
@@ -211,29 +142,66 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       });
     }
 
-    genericNodeVisit(tree, builder, context);
+    genericNodeVisit(tree, builder, context, name);
     return builder.build();
-  }
-
-  private void genericChildVisit(ChildCommandTree tree,
-                                 ArgumentBuilder<CommandSource, ?> builder,
-                                 CompileContext context,
-                                 String name
-  ) {
-    context = compileMappers(tree, context, name);
-    genericNodeVisit(tree, builder, context);
   }
 
   private void genericNodeVisit(AbstractCmdTree tree,
                                 ArgumentBuilder<CommandSource, ?> builder,
-                                CompileContext context
+                                CompileContext t_context,
+                                String name
   ) {
+    var context = compileMappers(tree, t_context, name);
+
+    String argumentLabel;
+
+    if (tree.getSyntaxLabel() == null) {
+      argumentLabel = tree instanceof ArgumentTree
+          ? "<%s>".formatted(name)
+          : name;
+
+    } else {
+      Result<String> argLabel
+          = (Result<String>) tree.getSyntaxLabel().accept(this, context);
+
+      argLabel.report(context.getErrors());
+      argumentLabel = argLabel.orElse(FAILED);
+    }
+
+    // Only add help prefixes if not in the root node
+    boolean prefixPushed = !(tree instanceof RootTree);
+    if (prefixPushed) {
+      context.pushPrefix(argumentLabel);
+    }
+
+    if (tree.getDescription() != null) {
+      final var fContext = context;
+
+      consumeDescription(tree.getDescription(), context, component -> {
+        if (builder instanceof GrenadierCommand gren) {
+          if (tree.getExecutes() != null) {
+            consumeSyntax(fContext, component);
+          }
+
+          gren.withDescription(component);
+          return;
+        }
+
+        consumeSyntax(fContext, component);
+      });
+    }
+
+    final boolean[] conditionPushed = new boolean[1];
     if (tree.getRequires() != null) {
       Result<Predicate<CommandSource>> predicateResult
           = (Result<Predicate<CommandSource>>)
           tree.getRequires().accept(this, context);
 
-      predicateResult.apply(context.getErrors(), builder::requires);
+      predicateResult.apply(context.getErrors(), predicate -> {
+        conditionPushed[0] = true;
+        context.pushCondition(predicate);
+        builder.requires(predicate);
+      });
     }
 
     if (tree.getExecutes() != null) {
@@ -250,10 +218,33 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
       builder.then(node);
     });
+
+    if (prefixPushed) {
+      context.popPrefix();
+    }
+
+    if (conditionPushed[0]) {
+      context.popCondition();
+    }
+  }
+
+  private void consumeDescription(DescriptionTree tree,
+                                  CompileContext context,
+                                  Consumer<Component> consumer
+  ) {
+    Result<Component> descRes = (Result<Component>) tree.accept(this, context);
+    descRes.apply(context.getErrors(), consumer);
+  }
+
+  private void consumeSyntax(CompileContext context,
+                             Component component
+  ) {
+    String label = context.syntaxPrefix();
+    context.getSyntaxList().add(label, component, context.buildConditions());
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private CompileContext compileMappers(ChildCommandTree tree,
+  private CompileContext compileMappers(AbstractCmdTree tree,
                                         CompileContext context,
                                         String argumentName
   ) {
@@ -304,9 +295,88 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     return result;
   }
 
+  private void consumeName(Name name,
+                           CompileContext context,
+                           Consumer<String> consumer
+  ) {
+    Result<String> res = (Result<String>) name.accept(this, context);
+    res.apply(context.getErrors(), consumer);
+  }
+
+  /* ---------------------------- SUGGESTIONS ----------------------------- */
+
   @Override
-  public Result<ArgumentType> visitTypeInfo(TypeInfoTree tree,
-                                            CompileContext context
+  public Result<SuggestionProvider> visitStringSuggestions(
+      StringListSuggestions tree,
+      CompileContext context
+  ) {
+    String[] suggestions = tree.suggestions();
+
+    return Result.success((context1, builder) -> {
+      return Completions.suggest(builder, suggestions);
+    });
+  }
+
+  @Override
+  public Result<SuggestionProvider> visitMemberSuggestions(
+      MemberSuggestions tree,
+      CompileContext context
+  ) {
+    return CompiledSuggester.compile(tree, context);
+  }
+
+  @Override
+  public Result<SuggestionProvider> visitVariableSuggests(
+      VariableSuggestions tree,
+      CompileContext context
+  ) {
+    return context.getVariable(tree, SuggestionProvider.class);
+  }
+
+  /* ---------------------------- REQUIREMENTS ---------------------------- */
+
+  @Override
+  public Result<Predicate<CommandSource>> visitPermissionRequirement(
+      PermissionRequires tree,
+      CompileContext context
+  ) {
+    Result<String> permissionResult
+        = (Result<String>) tree.name().accept(this, context);
+
+    return permissionResult.map(permission -> {
+      return source -> source.hasPermission(permission);
+    });
+  }
+
+  @Override
+  public Result<Predicate> visitMemberRequirement(
+      MemberRequires tree,
+      CompileContext context
+  ) {
+    return CompiledRequires.compile(tree, context);
+  }
+
+  @Override
+  public Result<Predicate> visitConstantRequires(ConstantRequires tree,
+                                                 CompileContext context
+  ) {
+    boolean value = tree.value();
+    return Result.success(o -> value);
+  }
+
+  @Override
+  public Result<Predicate> visitVariableRequires(
+      VariableRequires tree,
+      CompileContext context
+  ) {
+    return context.getVariable(tree, Predicate.class);
+  }
+
+  /* ------------------------ ARGUMENT TYPE INFOS ------------------------- */
+
+  @Override
+  public Result<ArgumentType> visitArgumentTypeTree(TypeInfoTree tree,
+                                                    CompileContext context
   ) {
     var registry = context.getTypeRegistry();
     TypeParser<?> parser = registry.getParser(tree.name());
@@ -321,25 +391,29 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   }
 
   @Override
-  public Result<ArgumentType> visitVariableType(VariableTypeRef tree,
-                                                CompileContext context
+  public Result<ArgumentType> visitVariableArgumentType(VariableTypeReference tree,
+                                                        CompileContext context
   ) {
     return context.getVariable(tree, ArgumentType.class);
   }
 
+  /* ----------------------------- EXECUTIONS ----------------------------- */
+
   @Override
-  public Result<Command> visitVarExec(VariableExecutes tree,
-                                      CompileContext context
+  public Result<Command> visitVariableExecutes(VariableExecutes tree,
+                                               CompileContext context
   ) {
     return context.getVariable(tree, Command.class);
   }
 
   @Override
-  public Result<Command> visitRefExec(RefExecution tree,
-                                      CompileContext context
+  public Result<Command> visitMemberExecutes(MemberExecutes tree,
+                                             CompileContext context
   ) {
     return CompiledExecutes.compile(tree, context);
   }
+
+  /* ------------------------------- NAMES -------------------------------- */
 
   @Override
   public Result<String> visitVariableName(VariableName tree,
@@ -356,7 +430,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   }
 
   @Override
-  public Result<String> visitFieldName(FieldRefName tree,
+  public Result<String> visitFieldName(FieldReferenceName tree,
                                        CompileContext context
   ) {
     Class<?> cmdClass = context.getCommandClass().getClass();
@@ -411,16 +485,18 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     }
   }
 
+  /* --------------------------- RESULT MAPPERS --------------------------- */
+
   @Override
-  public Result<ArgumentModifier> visitVarModifier(VariableMapper tree,
-                                                   CompileContext context
+  public Result<ArgumentModifier> visitVariableMapper(VariableMapper tree,
+                                                      CompileContext context
   ) {
     return context.getVariable(tree, ArgumentModifier.class);
   }
 
   @Override
-  public Result<ArgumentModifier> visitRefModifier(RefMapper tree,
-                                                   CompileContext context
+  public Result<ArgumentModifier> visitMemberMapper(MemberMapper tree,
+                                                    CompileContext context
   ) {
     // TODO perform validation of reference before returning success
     return Result.success(
@@ -429,12 +505,75 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   }
 
   @Override
-  public Object visitResultInvokeModifier(InvokeResultMethod tree,
-                                          CompileContext context
+  public Object visitResultMemberMapper(ResultMemberMapper tree,
+                                        CompileContext context
   ) {
     // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledArgumentMapper(null, tree.ref())
     );
+  }
+
+  /* ---------------------------- DESCRIPTION ----------------------------- */
+
+  @Override
+  public Result<Component> visitLiteralDescription(
+      LiteralDescription tree,
+      CompileContext context
+  ) {
+    return Result.success(Component.text(tree.value()));
+  }
+
+  @Override
+  public Result<Component> visitVariableDescription(
+      VariableDescription tree,
+      CompileContext context
+  ) {
+    return context.getVariable(tree, Component.class);
+  }
+
+  @Override
+  public Result<Component> visitTranslatableDescription(
+      TranslatableDescription tree,
+      CompileContext context
+  ) {
+    return Result.success(
+        Component.translatable(tree.translationKey())
+    );
+  }
+
+  @Override
+  public Result<Component> visitArrayDescription(
+      ArrayDescription tree,
+      CompileContext context
+  ) {
+    if (tree.elements().length < 1) {
+      return Result.fail(tree.tokenStart(), "Empty description");
+    }
+
+    var builder = Component.text();
+    final boolean[] addedAny = { false };
+
+    for (DescriptionTree element : tree.elements()) {
+      Result<Component> res
+          = (Result<Component>) element.accept(this, context);
+
+      res.apply(context.getErrors(), component -> {
+        if (addedAny[0]) {
+          builder.append(Component.newline());
+        }
+
+        builder.append(component);
+        addedAny[0] = true;
+      });
+    }
+
+    if (addedAny[0]) {
+      return Result.success(builder.build());
+    } else {
+      return Result.fail(tree.tokenStart(),
+          "Failed to read any elements for description"
+      );
+    }
   }
 }

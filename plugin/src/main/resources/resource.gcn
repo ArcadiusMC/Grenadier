@@ -4,12 +4,12 @@ literal('literal') = run1()
 literal('other_literal') = run2()
 
 argument(@pos_arg, vec3i) {
-  map_type = result.apply()
+  map_result = result.apply()
 
   executes = runPos()
 
   argument('other_arg', entities) {
-    map_type = result.findEntities()
+    map_result = result.findEntities()
     executes = runEntities()
   }
 }

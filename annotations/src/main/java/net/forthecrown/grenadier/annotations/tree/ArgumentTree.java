@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @Getter @Setter
 public class ArgumentTree extends ChildCommandTree {
 
-  private ArgumentTypeRef typeInfo;
+  private ArgumentTypeTree typeInfo;
 
   private SuggestsTree suggests;
 

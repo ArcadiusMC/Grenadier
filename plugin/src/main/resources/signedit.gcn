@@ -1,0 +1,46 @@
+name = 'signedit'
+aliases = sign | signs
+permission = 'commands.admin.signedit'
+description = 'Allows you to edit signs'
+
+argument(SIGN_ARG, vec3i) {
+  map_result = positionToSign()
+  label = "<sign: x,y,z>"
+
+  literal('clear') {
+    description = "Clears a <sign>"
+    executes = clear()
+  }
+
+  literal('copy') {
+    description = "Copies a sign that you can later paste"
+    executes = copy()
+  }
+
+  literal('paste') {
+    description = "Pastes a previously copied sign"
+    executes = paste()
+  }
+
+  literal('glowing').argument(GLOW_ARG, bool) {
+    description = "Changes whether the sign is glowing or not"
+    executes = setGlowing()
+  }
+
+  argument(LINE_ARG, int(min=1, max=4)) {
+    label = '<line: 1..4>'
+    suggests = ['1', '2', '3', '4']
+
+    literal('set').argument(TEXT_ARG, greedy_string) {
+      description = "Sets the sign's <line> to <text>"
+      map_result = stringToComponent()
+      suggests = suggestSignLine()
+      executes = setLine()
+    }
+
+    literal('clear') {
+      executes = clearLine()
+      description = "Clears a sign's <line>"
+    }
+  }
+}

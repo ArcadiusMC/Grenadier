@@ -46,12 +46,7 @@ public final class CommandContexts {
    */
   public static String getInput(CommandContext<?> context, String nodeName) {
     var range = getNodeRange(context, nodeName);
-
-    if (range == null) {
-      return null;
-    }
-
-    return range.get(context.getInput());
+    return range == null ? null : range.get(context.getInput());
   }
 
   /**

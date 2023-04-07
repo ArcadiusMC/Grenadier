@@ -2,6 +2,7 @@ package net.forthecrown.grenadier.types.options;
 
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.Collection;
 import java.util.Optional;
 import net.forthecrown.grenadier.CommandSource;
 import org.jetbrains.annotations.NotNull;
@@ -170,6 +171,12 @@ public interface ParsedOptions {
     parsed.checkAccess(source);
     return true;
   }
+
+  /**
+   * Gets a collection of all options that were parsed
+   * @return Immutable list of parsed options
+   */
+  Collection<ParsedOption> parsedOptions();
 
   /**
    * Parse data about an option

@@ -4,6 +4,7 @@ import java.util.Map;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.annotations.compiler.CommandCompilationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Command registration context
@@ -110,6 +111,24 @@ public interface AnnotatedCommandContext {
    * @param loader Command data file loader
    */
   void addLoader(CommandDataLoader loader);
+
+  /**
+   * Gets the syntax consumer
+   * @return Syntax consumer
+   * @see #setSyntaxConsumer(SyntaxConsumer)
+   */
+  SyntaxConsumer getSyntaxConsumer();
+
+  /**
+   * Sets the syntax consumer
+   * <p>
+   * Syntax consumers consume the syntax information created in command trees
+   * these can be used in commands like `/help` to provide information on
+   * command uses
+   *
+   * @param consumer Syntax consumer
+   */
+  void setSyntaxConsumer(@Nullable SyntaxConsumer consumer);
 
   /**
    * Registers the specified {@code command}

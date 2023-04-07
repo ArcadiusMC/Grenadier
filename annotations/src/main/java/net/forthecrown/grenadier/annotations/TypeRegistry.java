@@ -10,7 +10,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.forthecrown.grenadier.annotations.compiler.CompileContext;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree.TypeInfoTree;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.types.ArgumentTypes;
 import org.jetbrains.annotations.NotNull;

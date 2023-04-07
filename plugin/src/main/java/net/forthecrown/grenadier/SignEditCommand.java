@@ -23,38 +23,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 
-@CommandData("""
-name = 'signedit'
-aliases = sign | signs
-permission = 'commands.admin.signedit'
-description = 'Allows you to edit signs'
-
-argument(SIGN_ARG, vec3i) {
-  map_type = positionToSign()
-
-  literal('clear') = clear()
-  literal('copy') = copy()
-  literal('paste') = paste()
-  
-  literal('glowing') {
-    argument(GLOW_ARG, bool) = setGlowing()
-  }
-  
-  argument(LINE_ARG, int(min=1, max=4)) {
-    suggests = ['1', '2', '3', '4']
-  
-    literal('set') {
-      argument(TEXT_ARG, greedy_string) {
-        map_type = stringToComponent()
-        suggests = suggestSignLine()
-        executes = setLine()
-      }
-    }
-    
-    literal('clear') = clearLine()
-  }
-}
-""")
+@CommandData("file = signedit.gcn")
 public class SignEditCommand {
 
   public static final int LINES = 4;
@@ -75,7 +44,7 @@ public class SignEditCommand {
     variables.put("pos", SIGN_ARG);
   }
 
-  /* ------------------------- ARUGMENT MAPPERS --------------------------- */
+  /* ------------------------- ARGUMENT MAPPERS --------------------------- */
 
   // Maps parsed position to sign
   public Sign positionToSign(CommandSource source, ParsedPosition position)
@@ -109,7 +78,7 @@ public class SignEditCommand {
       sign.line(i, empty());
     }
 
-    attemptSignUpdate(sign, false, source, () -> text("Cleared sign"));
+    attemptSignUpdate(sign, source, () -> text("Cleared sign"));
   }
 
   public void copy(CommandSource source, @Argument(SIGN_ARG) Sign sign)
@@ -140,7 +109,7 @@ public class SignEditCommand {
       sign.line(i, lines[i]);
     }
 
-    attemptSignUpdate(sign, false, source, () -> text("Pasted sign"));
+    attemptSignUpdate(sign, source, () -> text("Pasted sign"));
   }
 
   public void setGlowing(CommandSource source,
@@ -149,7 +118,7 @@ public class SignEditCommand {
   ) throws CommandSyntaxException {
     sign.setGlowingText(glowing);
 
-    attemptSignUpdate(sign, false, source, () -> {
+    attemptSignUpdate(sign, source, () -> {
       if (glowing) {
         return text("Made sign glow");
       } else {
@@ -165,7 +134,7 @@ public class SignEditCommand {
   ) throws CommandSyntaxException {
     sign.line(line - 1, text);
 
-    attemptSignUpdate(sign, false, source, () -> {
+    attemptSignUpdate(sign, source, () -> {
       return text("Set line ")
           .append(text(line))
           .append(text(" to "))
@@ -177,20 +146,24 @@ public class SignEditCommand {
                         @Argument(SIGN_ARG) Sign sign,
                         @Argument(LINE_ARG) int line
   ) throws CommandSyntaxException {
+    Component existingText = sign.line(line - 1);
     sign.line(line-1, empty());
 
-    attemptSignUpdate(sign, false, source, () -> {
-      return text("Cleared line ").append(text(line));
+    attemptSignUpdate(sign, source, () -> {
+      return text("Cleared line ")
+          .append(text(line))
+          .append(text(", text: '"))
+          .append(existingText)
+          .append(text("'"));
     });
   }
 
 
   private void attemptSignUpdate(Sign sign,
-                                 boolean force,
                                  CommandSource source,
                                  Supplier<Component> message
   ) throws CommandSyntaxException {
-    if (sign.update(force)) {
+    if (sign.update(false)) {
       source.sendSuccess(message.get());
       return;
     }

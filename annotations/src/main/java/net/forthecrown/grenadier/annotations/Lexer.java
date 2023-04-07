@@ -16,7 +16,7 @@ class Lexer implements Iterator<Token> {
   private final StringReader reader;
 
   @Getter
-  private final ParseExceptions factory;
+  private final ParseExceptionFactory factory;
 
   private Token peeked;
 
@@ -38,9 +38,7 @@ class Lexer implements Iterator<Token> {
   }
 
   public Token expect(TokenType... types) throws CommandParseException {
-    var next = next();
-    next.expect(factory, types);
-    return next;
+    return next().expect(types).orThrow(factory);
   }
 
   @Override

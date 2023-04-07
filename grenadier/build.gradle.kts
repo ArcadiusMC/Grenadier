@@ -27,7 +27,7 @@ dependencies {
 
   api("com.mojang:brigadier:1.0.18")
 
-  api("net.forthecrown:nbt:1.2.1")
+  api("net.forthecrown:nbt:latest.release")
   api("net.forthecrown:paper-nbt:latest.release")
 
   paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT")

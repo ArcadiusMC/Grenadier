@@ -1,21 +1,18 @@
 package net.forthecrown.grenadier.annotations.compiler;
 
-import static net.forthecrown.grenadier.annotations.ParseExceptions.NO_POS;
+import static net.forthecrown.grenadier.annotations.ParseExceptionFactory.NO_POS;
 import static net.forthecrown.grenadier.annotations.compiler.CompileErrors.Error.TYPE_ERROR;
 import static net.forthecrown.grenadier.annotations.compiler.CompileErrors.Error.TYPE_WARN;
 
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
+import net.forthecrown.grenadier.annotations.util.Result.ErrorConsumer;
 
-public class CompileErrors {
+public class CompileErrors implements ErrorConsumer {
 
   @Getter
   private final List<Error> errors = new ArrayList<>();
-
-  public void error(String message, Object... args) {
-    error(NO_POS, message ,args);
-  }
 
   public void error(int pos, String message, Object... args) {
     Error error = new Error(message.formatted(args), TYPE_ERROR, pos);
@@ -34,6 +31,11 @@ public class CompileErrors {
     return (int) errors.stream()
         .filter(error -> error.type == TYPE_ERROR)
         .count();
+  }
+
+  @Override
+  public void onError(int position, String message) {
+    error(position, message);
   }
 
   record Error(String message, int type, int position) {

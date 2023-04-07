@@ -3,6 +3,8 @@ package net.forthecrown.grenadier.types.options;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
@@ -66,6 +68,11 @@ class ParsedOptionsImpl implements ParsedOptions {
   @Override
   public @Nullable ParsedOption getParsedOption(@NotNull String label) {
     return lookup.get(label);
+  }
+
+  @Override
+  public Collection<ParsedOption> parsedOptions() {
+    return Collections.unmodifiableCollection(options.values());
   }
 
   @Override

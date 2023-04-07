@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.permissions.Permission;
 
 /**
@@ -89,7 +91,7 @@ import org.bukkit.permissions.Permission;
 public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
 
   private final List<String> aliases = new ArrayList<>();
-  private String description;
+  private Component description;
 
   private String permission;
 
@@ -99,11 +101,25 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
   }
 
   public String getDescription() {
+    if (description == null) {
+      return null;
+    }
+
+    return LegacyComponentSerializer.legacySection().serialize(description);
+  }
+
+  public Component description() {
     return description;
   }
 
   public GrenadierCommand withDescription(String description) {
-    this.description = description;
+    return withDescription(
+        LegacyComponentSerializer.legacySection().deserialize(description)
+    );
+  }
+
+  public GrenadierCommand withDescription(Component component) {
+    this.description = component;
     return this;
   }
 

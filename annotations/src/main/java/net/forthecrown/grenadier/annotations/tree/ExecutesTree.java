@@ -5,11 +5,11 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 public interface ExecutesTree extends Tree {
 
-  record RefExecution(int tokenStart, MemberChainTree ref) implements ExecutesTree {
+  record MemberExecutes(int tokenStart, MemberChainTree ref) implements ExecutesTree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-      return visitor.visitRefExec(this, context);
+      return visitor.visitMemberExecutes(this, context);
     }
   }
 
@@ -19,7 +19,7 @@ public interface ExecutesTree extends Tree {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
-      return visitor.visitVarExec(this, context);
+      return visitor.visitVariableExecutes(this, context);
     }
   }
 }

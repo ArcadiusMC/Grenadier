@@ -16,7 +16,7 @@ import java.util.function.Function;
 import jdk.jfr.Event;
 import net.forthecrown.grenadier.annotations.TypeRegistry.TypeParser;
 import net.forthecrown.grenadier.annotations.compiler.CompileContext;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree.TypeInfoTree;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.types.ArgumentTypes;
 import net.forthecrown.grenadier.types.ArrayArgument;
@@ -29,7 +29,7 @@ final class BuiltInTypeParsers {
   @SuppressWarnings("unchecked")
   static final TypeParser<ArrayArgument<?>> ARRAY = (info, ctx) -> {
     return info.getOption("values")
-        .flatMap(token -> token.parseExpect(VARIABLE))
+        .flatMap(token -> token.expect(VARIABLE))
         .flatMap(token -> ctx.getVariable(token, ArgumentType.class))
         .map(ArgumentTypes::array);
   };
@@ -37,7 +37,7 @@ final class BuiltInTypeParsers {
   @SuppressWarnings("unchecked")
   static final TypeParser<MapArgument<?>> MAP = (info, ctx) -> {
     return info.getOption("values")
-        .flatMap(token -> token.parseExpect(VARIABLE))
+        .flatMap(token -> token.expect(VARIABLE))
         .flatMap(token -> ctx.getVariable(token, Map.class))
         .map(map -> ArgumentTypes.map(map));
   };
@@ -45,7 +45,7 @@ final class BuiltInTypeParsers {
   static final TypeParser<EnumArgument<?>> ENUM = (info, context) -> {
     return info.getOption("type")
         .flatMap(token -> {
-          return token.parseExpect(IDENTIFIER, QUOTED_STRING, VARIABLE);
+          return token.expect(IDENTIFIER, QUOTED_STRING, VARIABLE);
         })
 
         .flatMap(token -> parseEnumToken(token, context, info));
@@ -146,7 +146,7 @@ final class BuiltInTypeParsers {
   );
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  static <N extends Number, T extends ArgumentType<N>> TypeParser<T> numberType(
+  static <N extends Comparable<N>, T extends ArgumentType<N>> TypeParser<T> numberType(
       N minValue,
       N maxValue,
       Function<String, N> parser,
@@ -160,7 +160,7 @@ final class BuiltInTypeParsers {
       Token maxToken = info.options().get("max");
 
       if (minToken != null) {
-        Result res = minToken.parseExpect(NUMBER);
+        Result res = minToken.expect(NUMBER);
 
         if (res.isError()) {
           return res;
@@ -178,7 +178,7 @@ final class BuiltInTypeParsers {
       }
 
       if (maxToken != null) {
-        Result res = maxToken.parseExpect(NUMBER);
+        Result res = maxToken.expect(NUMBER);
 
         if (res.isError()) {
           return res;
@@ -193,6 +193,12 @@ final class BuiltInTypeParsers {
               maxToken.value()
           );
         }
+      }
+
+      if (min.compareTo(max) >= 1) {
+        return Result.fail(info.tokenStart(),
+            "Min value %s larger than max value %s", min, max
+        );
       }
 
       return Result.success(factory.apply(min, max));

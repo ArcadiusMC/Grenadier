@@ -17,11 +17,13 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
 
   private final String permission;
-  private final String description;
+  private final Component description;
 
   private final List<String> aliases;
 
@@ -32,7 +34,7 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
                               RedirectModifier<CommandSource> modifier,
                               boolean forks,
                               String permission,
-                              String description,
+                              Component description,
                               List<String> aliases
   ) {
     super(literal, command, requirement, redirect, modifier, forks);
@@ -48,6 +50,12 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
   }
 
   public String getDescription() {
+    return description == null
+        ? null
+        : LegacyComponentSerializer.legacySection().serialize(description);
+  }
+
+  public Component description() {
     return description;
   }
 

@@ -14,7 +14,7 @@ public interface Name extends Tree {
     }
   }
 
-  record FieldRefName(int tokenStart, String fieldName) implements Name {
+  record FieldReferenceName(int tokenStart, String fieldName) implements Name {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
@@ -23,7 +23,9 @@ public interface Name extends Tree {
   }
 
   @Internal
-  record VariableName(int tokenStart, String variable) implements Name, VariableHolder {
+  record VariableName(int tokenStart, String variable)
+      implements Name, VariableHolder
+  {
 
     @Override
     public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {

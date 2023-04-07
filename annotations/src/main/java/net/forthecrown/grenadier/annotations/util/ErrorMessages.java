@@ -1,12 +1,15 @@
 package net.forthecrown.grenadier.annotations.util;
 
-import static net.forthecrown.grenadier.annotations.ParseExceptions.NO_POS;
+import static net.forthecrown.grenadier.annotations.ParseExceptionFactory.NO_POS;
 
 import com.mojang.brigadier.StringReader;
 import java.util.Objects;
 import net.forthecrown.grenadier.Readers;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
+@Internal
 public final class ErrorMessages {
+  private ErrorMessages() {}
 
   public static String formatError(
       StringReader input,

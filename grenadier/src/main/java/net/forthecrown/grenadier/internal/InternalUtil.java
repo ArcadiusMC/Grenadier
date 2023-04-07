@@ -1,13 +1,12 @@
 package net.forthecrown.grenadier.internal;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -65,10 +64,8 @@ public final class InternalUtil {
     return ((CommandSourceImpl) source).getStack();
   }
 
-  public static StringReader ofBukkit(String label, String[] args) {
-    List<String> arguments = new ArrayList<>(args.length + 1);
-    arguments.add(label);
-    arguments.addAll(Arrays.asList(args));
+  public static StringReader bukkitReader(String label, String[] args) {
+    List<String> arguments = Lists.asList(label, args);
     return new StringReader(Joiner.on(' ').join(arguments));
   }
 

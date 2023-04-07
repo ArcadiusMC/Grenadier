@@ -1,20 +1,28 @@
 package net.forthecrown.grenadier.annotations.compiler;
 
+import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.function.Predicate;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.With;
+import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
+import net.forthecrown.grenadier.annotations.SyntaxConsumer;
 import net.forthecrown.grenadier.annotations.Token;
 import net.forthecrown.grenadier.annotations.TypeRegistry;
 import net.forthecrown.grenadier.annotations.tree.VariableHolder;
 import net.forthecrown.grenadier.annotations.util.Result;
 
 @Getter
+@With
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class CompileContext {
 
   private final Map<String, Object> variables;
@@ -27,8 +35,11 @@ public class CompileContext {
   private final CompileErrors errors;
 
   private final Stack<String> availableArguments;
-
   private final Map<String, List<ArgumentModifier>> mappers;
+
+  private SyntaxList syntaxList = new SyntaxList();
+  private final List<String> syntaxPrefixes;
+  private Stack<Predicate<CommandSource>> predicateStack = new Stack<>();
 
   public <T> Result<T> getVariable(VariableHolder variable, Class<T> type) {
     return getVariable(variable.tokenStart(), variable.variable(), type);
@@ -89,6 +100,31 @@ public class CompileContext {
     availableArguments.pop();
   }
 
+  public void pushPrefix(String syntaxPrefix) {
+    syntaxPrefixes.add(syntaxPrefix);
+  }
+
+  public void popPrefix() {
+    syntaxPrefixes.remove(syntaxPrefixes.size() - 1);
+  }
+
+  public void pushCondition(Predicate<CommandSource> predicate) {
+    predicateStack.push(predicate);
+  }
+
+  public void popCondition() {
+    predicateStack.pop();
+  }
+
+  public Predicate<CommandSource> buildConditions() {
+    if (predicateStack.isEmpty()) {
+      return null;
+    }
+
+    Predicate<CommandSource>[] predicates = new Predicate[predicateStack.size()];
+    return new PredicateList(predicateStack.toArray(predicates));
+  }
+
   public CompileContext withModifier(String argumentName,
                                      ArgumentModifier<?, ?> modifier
   ) {
@@ -101,16 +137,15 @@ public class CompileContext {
     var list = map.computeIfAbsent(argumentName, s -> new ArrayList<>());
     list.add(modifier);
 
-    return new CompileContext(
-        variables,
-        loader,
-        typeRegistry,
-        commandClass,
-        defaultPermission,
-        errors,
-        availableArguments,
-        map
-    );
+    return withMappers(map);
+  }
+
+  public void consumeSyntax(String name, SyntaxConsumer consumer) {
+    syntaxList.consume(name, consumer);
+  }
+
+  public String syntaxPrefix() {
+    return Joiner.on(' ').join(syntaxPrefixes);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

@@ -12,14 +12,14 @@ import org.bukkit.entity.Player;
 name = 'test_type_mapping'
 
 argument('entity_arg', entity) {
-  map_type = result.findEntity()
+  map_result = result.findEntity()
   
   executes = runEntity()
   
   literal('original_again') = runEntity1()
   
   argument('other_mapping', bool) {
-    map_type('entity_arg') = result.findPlayer()
+    map_result('entity_arg') = result.findPlayer()
     executes = run3()
   }
 }

@@ -46,6 +46,11 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
 
   private final List<CommandDataLoader> loaders = new ArrayList<>();
 
+  @Getter @Setter
+  private SyntaxConsumer syntaxConsumer;
+
+  private int registeredCommands = 0;
+
   AnnotatedCommandContextImpl() {
     CommandDataLoader defaultLoader
         = CommandDataLoader.resources(getClass().getClassLoader());
@@ -75,7 +80,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       return reader;
     }
 
-    ParseExceptions exceptions = ParseExceptions.factory(reader);
+    ParseExceptionFactory exceptions = new ParseExceptionFactory(reader);
 
     reader.setCursor(reader.getCursor() + "file".length());
     reader.skipWhitespace();
@@ -121,7 +126,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     String value = data.value();
     StringReader reader = getReader(value);
 
-    ParseExceptions exceptions = ParseExceptions.factory(reader);
+    ParseExceptionFactory exceptions = new ParseExceptionFactory(reader);
 
     Lexer lexer = new Lexer(reader, exceptions);
     Parser parser = new Parser(lexer, defaultExecutes, defaultRule);
@@ -141,7 +146,8 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         defaultPermissionFormat,
         errors,
         new Stack<>(),
-        new HashMap<>()
+        new HashMap<>(),
+        new ArrayList<>()
     );
 
     GrenadierCommandNode node = (GrenadierCommandNode)
@@ -150,6 +156,8 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     if (!errors.getErrors().isEmpty()) {
       int error = errors.errorCount();
 
+      // The error list contains not only fatal compile errors but also
+      // warnings, so only throw if the fatal error count is above 0
       if (error > 0) {
         throw new CommandCompilationException(errors.getErrors(), reader);
       }
@@ -163,9 +171,14 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       System.out.print("\n");
     }
 
+    if (syntaxConsumer != null) {
+      context.consumeSyntax(node.getName(), syntaxConsumer);
+    }
+
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
     dispatcher.getRoot().addChild(node);
 
+    registeredCommands++;
     return node;
   }
 

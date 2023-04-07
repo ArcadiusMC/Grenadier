@@ -13,7 +13,8 @@ import net.forthecrown.grenadier.annotations.tree.MemberChainTree;
 import net.forthecrown.grenadier.annotations.tree.MemberChainTree.Kind;
 import net.forthecrown.grenadier.annotations.util.Result;
 
-public class MemberChainCompiler {
+final class MemberChainCompiler {
+  private MemberChainCompiler() {}
 
   public static Result<MemberChain> compile(
       Class<?> declaring,

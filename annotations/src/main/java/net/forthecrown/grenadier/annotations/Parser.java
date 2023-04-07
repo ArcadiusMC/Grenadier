@@ -21,6 +21,8 @@ import static net.forthecrown.grenadier.annotations.TokenType.SCOPE_END;
 import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_CLOSE;
 import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_OPEN;
 import static net.forthecrown.grenadier.annotations.TokenType.SUGGESTS;
+import static net.forthecrown.grenadier.annotations.TokenType.SYNTAX_LABEL;
+import static net.forthecrown.grenadier.annotations.TokenType.TRANSLATABLE;
 import static net.forthecrown.grenadier.annotations.TokenType.TRUE;
 import static net.forthecrown.grenadier.annotations.TokenType.TYPE_MAP;
 import static net.forthecrown.grenadier.annotations.TokenType.VARIABLE;
@@ -37,40 +39,41 @@ import lombok.Getter;
 import net.forthecrown.grenadier.annotations.AnnotatedCommandContext.DefaultExecutionRule;
 import net.forthecrown.grenadier.annotations.tree.AbstractCmdTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree;
-import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.InvokeResultMethod;
-import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.RefMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.MemberMapper;
+import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.ResultMemberMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.VariableMapper;
 import net.forthecrown.grenadier.annotations.tree.ArgumentTree;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.TypeInfoTree;
-import net.forthecrown.grenadier.annotations.tree.ArgumentTypeRef.VariableTypeRef;
-import net.forthecrown.grenadier.annotations.tree.MemberChainTree;
-import net.forthecrown.grenadier.annotations.tree.MemberChainTree.Kind;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree.TypeInfoTree;
+import net.forthecrown.grenadier.annotations.tree.ArgumentTypeTree.VariableTypeReference;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.ArrayDescription;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.LiteralDescription;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.TranslatableDescription;
+import net.forthecrown.grenadier.annotations.tree.DescriptionTree.VariableDescription;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree;
-import net.forthecrown.grenadier.annotations.tree.ExecutesTree.RefExecution;
+import net.forthecrown.grenadier.annotations.tree.ExecutesTree.MemberExecutes;
 import net.forthecrown.grenadier.annotations.tree.ExecutesTree.VariableExecutes;
 import net.forthecrown.grenadier.annotations.tree.LiteralTree;
+import net.forthecrown.grenadier.annotations.tree.MemberChainTree;
+import net.forthecrown.grenadier.annotations.tree.MemberChainTree.Kind;
 import net.forthecrown.grenadier.annotations.tree.Name;
 import net.forthecrown.grenadier.annotations.tree.Name.DirectName;
-import net.forthecrown.grenadier.annotations.tree.Name.FieldRefName;
+import net.forthecrown.grenadier.annotations.tree.Name.FieldReferenceName;
 import net.forthecrown.grenadier.annotations.tree.Name.VariableName;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.ConstantRequires;
+import net.forthecrown.grenadier.annotations.tree.RequiresTree.MemberRequires;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.PermissionRequires;
-import net.forthecrown.grenadier.annotations.tree.RequiresTree.RequiresRef;
 import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
 import net.forthecrown.grenadier.annotations.tree.RootTree;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree;
-import net.forthecrown.grenadier.annotations.tree.SuggestsTree.ComponentRefSuggestions;
+import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Getter
 class Parser {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger("Parser");
 
   static final int CONTEXT_OFFSET = 25;
 
@@ -84,7 +87,7 @@ class Parser {
   private final String defaultExecutes;
   private final DefaultExecutionRule rule;
 
-  private final ParseExceptions factory;
+  private final ParseExceptionFactory factory;
 
   public Parser(
       Lexer lexer,
@@ -114,9 +117,9 @@ class Parser {
       }
 
       var next = lexer.expect(
-          PERMISSION, ALIASES,  DESCRIPTION,
-          ARGUMENT,   EXECUTES, REQUIRES,
-          LITERAL,    TYPE_MAP
+          PERMISSION,  ALIASES,  DESCRIPTION,
+            ARGUMENT, EXECUTES,     REQUIRES,
+             LITERAL, TYPE_MAP, SYNTAX_LABEL
       );
 
       lexer.expect(ASSIGN);
@@ -126,15 +129,6 @@ class Parser {
 
         Name permission = parseName(false);
         tree.setPermission(permission);
-
-        continue;
-      }
-
-      if (next.is(DESCRIPTION)) {
-        ensureCanSet(tree.getDescription(), DESCRIPTION, tree);
-
-        var desc = lexer.expect(QUOTED_STRING).value();
-        tree.setDescription(desc);
 
         continue;
       }
@@ -172,7 +166,7 @@ class Parser {
       return new VariableExecutes(NO_POSITION, variable);
     }
 
-    return new RefExecution(NO_POSITION, new MemberChainTree(s, Kind.METHOD, null));
+    return new MemberExecutes(NO_POSITION, new MemberChainTree(s, Kind.METHOD, null));
   }
 
   List<Name> parseAliases() {
@@ -199,7 +193,7 @@ class Parser {
 
     lexer.expect(COMMA);
 
-    ArgumentTypeRef typeInfo = parseTypeInfo();
+    ArgumentTypeTree typeInfo = parseTypeInfo();
 
     lexer.expect(BRACKET_CLOSE);
 
@@ -226,7 +220,11 @@ class Parser {
         return;
       }
 
-      lexer.expect(EXECUTES, SUGGESTS, REQUIRES, ARGUMENT, LITERAL, TYPE_MAP);
+      lexer.expect(
+             EXECUTES,     SUGGESTS, REQUIRES,
+             ARGUMENT,      LITERAL, TYPE_MAP,
+          DESCRIPTION, SYNTAX_LABEL
+      );
     });
 
     return tree;
@@ -236,15 +234,35 @@ class Parser {
     if (lexer.peek().is(ASSIGN)) {
       lexer.expect(ASSIGN);
       parseExecutes(tree);
-    } else {
-      parseScope(scopeParseLoop);
+      return;
     }
+
+    if (lexer.peek().is(SCOPE_BEGIN)) {
+      parseScope(scopeParseLoop);
+      return;
+    }
+
+    lexer.expect(DOT, SCOPE_BEGIN, ASSIGN);
+
+    if (lexer.peek().is(ARGUMENT)) {
+      var argument = parseArgument();
+      tree.getChildren().add(argument);
+      return;
+    }
+
+    if (lexer.peek().is(LITERAL)) {
+      var literal = parseLiteral();
+      tree.getChildren().add(literal);
+      return;
+    }
+
+    lexer.expect(LITERAL, ARGUMENT);
   }
 
-  ArgumentTypeRef parseTypeInfo() {
+  ArgumentTypeTree parseTypeInfo() {
     if (lexer.peek().is(VARIABLE)) {
       Token next = lexer.next();
-      return new VariableTypeRef(next.position(), next.value());
+      return new VariableTypeReference(next.position(), next.value());
     }
 
     Token typeToken = lexer.expect(IDENTIFIER);
@@ -287,7 +305,12 @@ class Parser {
         return;
       }
 
-      lexer.expect(EXECUTES, REQUIRES, ARGUMENT, LITERAL, TYPE_MAP);
+      lexer.expect(
+          EXECUTES, REQUIRES, ARGUMENT,
+           LITERAL, TYPE_MAP, DESCRIPTION,
+
+          SYNTAX_LABEL
+      );
     });
 
     return tree;
@@ -336,6 +359,30 @@ class Parser {
       return true;
     }
 
+    if (peek.is(DESCRIPTION)) {
+      ensureCanSet(tree.getDescription(), DESCRIPTION, tree);
+
+      lexer.next();
+      lexer.expect(ASSIGN);
+
+      DescriptionTree desc = parseDescription(true);
+      tree.setDescription(desc);
+
+      return true;
+    }
+
+    if (peek.is(SYNTAX_LABEL)) {
+      ensureCanSet(tree.getSyntaxLabel(), SYNTAX_LABEL, tree);
+
+      lexer.next();
+      lexer.expect(ASSIGN);
+
+      Name name = parseName(false);
+      tree.setSyntaxLabel(name);
+
+      return true;
+    }
+
     if (optionallyParseMapper(tree)) {
       return true;
     }
@@ -373,6 +420,45 @@ class Parser {
     );
   }
 
+  public DescriptionTree parseDescription(boolean allowArray) {
+    Token peek = lexer.peek();
+    int start = peek.position();
+
+    if (peek.is(SQUARE_OPEN) && allowArray) {
+      List<DescriptionTree> elements = new ArrayList<>();
+
+      parseSquareBrackets(() -> {
+        var tree = parseDescription(false);
+        elements.add(tree);
+      });
+
+      DescriptionTree[] trees = elements.toArray(DescriptionTree[]::new);
+      return new ArrayDescription(start, trees);
+    }
+
+    Token next;
+
+    if (allowArray) {
+      next = lexer.expect(QUOTED_STRING, SQUARE_OPEN, VARIABLE, TRANSLATABLE);
+    } else {
+      next = lexer.expect(QUOTED_STRING, VARIABLE, TRANSLATABLE);
+    }
+
+    if (next.is(QUOTED_STRING)) {
+      return new LiteralDescription(start, next.value());
+    }
+
+    if (next.is(VARIABLE)) {
+      return new VariableDescription(start, next.value());
+    }
+
+    lexer.expect(BRACKET_OPEN);
+    Token keyStr = lexer.expect(QUOTED_STRING);
+    lexer.expect(BRACKET_CLOSE);
+
+    return new TranslatableDescription(start, keyStr.value());
+  }
+
   public SuggestsTree parseSuggestsValue() {
     final int start = lexer.peek().position();
 
@@ -382,7 +468,7 @@ class Parser {
 
     if (!lexer.peek().is(SQUARE_OPEN)) {
       var ref = parseMemberChain();
-      return new ComponentRefSuggestions(start, ref);
+      return new MemberSuggestions(start, ref);
     }
 
     List<String> strings = new ArrayList<>();
@@ -411,7 +497,7 @@ class Parser {
     if (!peek.is(PERMISSION)) {
       int pos = lexer.peek().position();
       MemberChainTree ref = parseMemberChain();
-      return new RequiresRef(pos, ref);
+      return new MemberRequires(pos, ref);
     }
 
     // Skip 'permission' token
@@ -432,7 +518,7 @@ class Parser {
     }
 
     MemberChainTree ref = parseMemberChain();
-    return new RefExecution(start, ref);
+    return new MemberExecutes(start, ref);
   }
 
   public ArgumentMapperTree parseArgumentMapper() {
@@ -463,18 +549,17 @@ class Parser {
     }
 
     var peek = lexer.peek();
-    LOGGER.debug("peek={}", peek);
 
     if (peek.is(IDENTIFIER) && peek.value().equals("result")) {
       lexer.next();
       lexer.expect(DOT);
 
       var ref = parseMemberChain();
-      return new InvokeResultMethod(start, name, ref);
+      return new ResultMemberMapper(start, name, ref);
     }
 
     MemberChainTree ref = parseMemberChain();
-    return new RefMapper(start, name, ref);
+    return new MemberMapper(start, name, ref);
   }
 
   private Name parseName(boolean allowId) {
@@ -491,7 +576,7 @@ class Parser {
         return new DirectName(start, token.value());
       }
 
-      return new FieldRefName(start, token.value());
+      return new FieldReferenceName(start, token.value());
     }
 
     return new DirectName(start, token.value());
