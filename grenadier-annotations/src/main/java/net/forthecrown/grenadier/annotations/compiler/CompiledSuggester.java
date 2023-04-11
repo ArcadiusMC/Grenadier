@@ -7,43 +7,43 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import it.unimi.dsi.fastutil.Pair;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.CommandSource;
-import net.forthecrown.grenadier.annotations.Argument;
 import net.forthecrown.grenadier.annotations.compiler.MemberChain.FieldMember;
 import net.forthecrown.grenadier.annotations.compiler.MemberChain.MethodMember;
 import net.forthecrown.grenadier.annotations.compiler.MemberChainCompiler.ChainCompileConfig;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
-import net.forthecrown.grenadier.annotations.util.ExpandedCommandContext;
 import net.forthecrown.grenadier.annotations.util.Result;
-import net.forthecrown.grenadier.annotations.util.Utils;
 
-@RequiredArgsConstructor
 class CompiledSuggester implements SuggestionProvider<CommandSource> {
 
   private final MemberChain chain;
   private final Object commandClass;
 
   private final ParamFiller[] fillers;
+  private final Object[] parameterBuffer;
 
   private final ContextFactory factory;
+
+  public CompiledSuggester(MemberChain chain,
+                           Object commandClass,
+                           ParamFiller[] fillers,
+                           ContextFactory factory
+  ) {
+    this.chain = chain;
+    this.commandClass = commandClass;
+    this.fillers = fillers;
+    this.factory = factory;
+
+    this.parameterBuffer = new Object[fillers.length];
+  }
 
   @Override
   public CompletableFuture<Suggestions> getSuggestions(
       CommandContext<CommandSource> context,
       SuggestionsBuilder builder
   ) throws CommandSyntaxException {
-    Pair<Object, MemberChain> lastChain;
-
-    try {
-      lastChain = chain.resolveLast(commandClass);
-    } catch (ReflectiveOperationException exc) {
-      Utils.sneakyThrow(exc);
-      return Suggestions.empty();
-    }
+    Pair<Object, MemberChain> lastChain = chain.resolveLastSafe(commandClass);
 
     Object o = lastChain.left();
     MemberChain chain = lastChain.right();
@@ -56,21 +56,12 @@ class CompiledSuggester implements SuggestionProvider<CommandSource> {
     }
 
     MethodMember member = (MethodMember) chain;
-    Object[] params = new Object[member.method().getParameterCount()];
-
     var ctx = factory.create(context);
 
-    for (int i = 0; i < fillers.length; i++) {
-      ParamFiller filler = fillers[i];
+    ParamFillers.fill(fillers, parameterBuffer, ctx, builder);
+    Object result = member.invokeSafe(commandClass, parameterBuffer);
 
-      Objects.requireNonNull(filler,
-          "Parameter filler at index " + i + " is missing"
-      );
-
-      params[i] = filler.fill(ctx, builder);
-    }
-
-    return (CompletableFuture<Suggestions>) member.invokeSafe(o, params);
+    return (CompletableFuture<Suggestions>) result;
   }
 
   public static Result<SuggestionProvider> compile(
@@ -103,116 +94,13 @@ class CompiledSuggester implements SuggestionProvider<CommandSource> {
     MethodMember member = (MethodMember) last;
     Method m = member.method();
 
-    Parameter[] params = m.getParameters();
-    ParamFiller[] fillers = new ParamFiller[params.length];
-
-    int contextIndex = -1;
-    int sourceIndex  = -1;
-    int builderIndex = -1;
-
-    for (int i = 0; i < params.length; i++) {
-      Parameter p = params[i];
-      Class<?> type = p.getType();
-
-      if (type == CommandContext.class) {
-        if (contextIndex != -1) {
-          return Result.fail(pos,
-              "CommandContext parameter declared more than once"
-          );
-        }
-
-        contextIndex = i;
-        fillers[i] = ParamFiller.FILL_CONTEXT;
-        continue;
-      }
-
-      if (type == CommandSource.class) {
-        if (sourceIndex != -1) {
-          return Result.fail(pos,
-              "CommandSource parameter declared more than once"
-          );
-        }
-
-        sourceIndex = i;
-        fillers[i] = ParamFiller.FILL_SOURCE;
-        continue;
-      }
-
-      if (type == SuggestionsBuilder.class) {
-        if (builderIndex != -1) {
-          return Result.fail(pos,
-              "SuggestionsBuilder parameter declared more than once"
-          );
-        }
-
-        builderIndex = i;
-        fillers[i] = ParamFiller.FILL_BUILDER;
-        continue;
-      }
-
-      String argumentName;
-      boolean optional;
-
-      if (p.isAnnotationPresent(Argument.class)) {
-        Argument argument = p.getAnnotation(Argument.class);
-        argumentName = argument.value();
-        optional = argument.optional();
-      } else {
-        argumentName = p.getName();
-        optional = false;
-      }
-
-      if (!context.getAvailableArguments().contains(argumentName)
-          && !optional
-      ) {
-        return Result.fail(pos,
-            "Argument '%s' is not available in the current context",
-            argumentName
-        );
-      }
-
-      ArgumentParamFiller filler = new ArgumentParamFiller(
-          Utils.primitiveToWrapper(p.getType()),
-          argumentName,
-          optional
+    return ParamFillers.compile(m, context, true, pos).map(fillers -> {
+      return new CompiledSuggester(
+          chain,
+          context.getCommandClass(),
+          fillers,
+          context.createFactory()
       );
-
-      fillers[i] = filler;
-    }
-
-    return Result.success(
-        new CompiledSuggester(
-            chain,
-            context.getCommandClass(),
-            fillers,
-            context.createFactory()
-        )
-    );
-  }
-
-  @FunctionalInterface
-  interface ParamFiller {
-    ParamFiller FILL_CONTEXT = (context, builder) -> context.getBase();
-    ParamFiller FILL_BUILDER = (context, builder) -> builder;
-    ParamFiller FILL_SOURCE  = (context, builder) -> context.getSource();
-
-    Object fill(ExpandedCommandContext context,
-                SuggestionsBuilder builder
-    );
-  }
-
-  @RequiredArgsConstructor
-  static class ArgumentParamFiller implements ParamFiller {
-
-    private final Class<?> type;
-    private final String argumentName;
-    private final boolean optional;
-
-    @Override
-    public Object fill(ExpandedCommandContext context,
-                       SuggestionsBuilder builder
-    ) {
-      return context.getValue(argumentName, type, optional);
-    }
+    });
   }
 }

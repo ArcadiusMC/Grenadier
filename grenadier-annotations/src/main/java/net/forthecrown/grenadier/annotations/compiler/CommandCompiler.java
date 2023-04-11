@@ -126,6 +126,8 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     String name = nameResult.orElse(FAILED);
     GrenadierCommand builder = new GrenadierCommand(name);
 
+    builder.withPlainTranslation(tree.isPlainTranslation());
+
     if (tree.getPermission() != null) {
       consumeName(tree.getPermission(), context, s -> {
         String permission = s.replace("{command}", name);
@@ -427,20 +429,21 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   public Result<String> visitFieldName(FieldReferenceName tree,
                                        CompileContext context
   ) {
+    int start = tree.tokenStart();
     Class<?> cmdClass = context.getCommandClass().getClass();
     Field nameField;
 
     try {
       nameField = cmdClass.getDeclaredField(tree.fieldName());
     } catch (ReflectiveOperationException exc) {
-      return Result.fail(
+      return Result.fail(start,
           "Reflection error while accessing field '%s': %s",
           tree.fieldName(), exc.getMessage()
       );
     }
 
     if (!Modifier.isFinal(nameField.getModifiers())) {
-      context.getErrors().warning(
+      context.getErrors().warning(start,
           "Field '%s' in '%s' is not final! Changes to "
               + "this field will not be reflected in the command tree",
 
@@ -449,7 +452,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     }
 
     if (CharSequence.class.isAssignableFrom(nameField.getDeclaringClass())) {
-      return Result.fail(
+      return Result.fail(start,
           "Cannot get name from field '%s' in %s. "
               + "Field's type is not an inheritor of java.lang.CharSequence",
 
@@ -458,11 +461,17 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     }
 
     try {
+      var overriden = nameField.isAccessible();
+      nameField.setAccessible(true);
+
       Object o = nameField.get(context.getCommandClass());
+
+      nameField.setAccessible(overriden);
+
       CharSequence sequence = (CharSequence) o;
 
       if (sequence == null) {
-        return Result.fail(
+        return Result.fail(start,
             "Field '%s' in %s returned null! Cannot get name",
             nameField.getName(), nameField.getDeclaringClass()
         );
@@ -470,7 +479,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
       return Result.success(sequence.toString());
     } catch (IllegalAccessException e) {
-      return Result.fail(
+      return Result.fail(start,
           "Illegal access to field '%s' in %s. "
               + "This error shouldn't happen",
 

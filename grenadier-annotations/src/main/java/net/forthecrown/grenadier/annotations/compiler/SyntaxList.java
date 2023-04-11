@@ -21,9 +21,14 @@ class SyntaxList {
     elements.add(element);
   }
 
-  public void consume(GrenadierCommandNode node, SyntaxConsumer consumer) {
+  public void consume(GrenadierCommandNode node,
+                      SyntaxConsumer consumer,
+                      Object commandClass
+  ) {
     for (SyntaxElement syntaxElement : elements) {
-      consumer.accept(node,
+      consumer.accept(
+          node,
+          commandClass,
           syntaxElement.arguments,
           syntaxElement.info,
           syntaxElement.predicate

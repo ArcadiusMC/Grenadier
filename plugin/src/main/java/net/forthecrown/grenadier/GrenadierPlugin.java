@@ -36,6 +36,7 @@ public class GrenadierPlugin extends JavaPlugin {
 
     ctx.setDefaultPermissionFormat("grenadier.test.{command}");
     ctx.setDefaultExecutes("defRun");
+    ctx.setWarningsEnabled(false);
 
     ctx.registerCommand(new TestAnnotatedCommand());
     ctx.registerCommand(new TestCommand2());

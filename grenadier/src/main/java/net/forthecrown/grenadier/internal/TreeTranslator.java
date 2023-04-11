@@ -33,7 +33,7 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 class TreeTranslator {
 
   public static final Command<CommandSourceStack> COMMAND = context -> {
-    StringReader input = Readers.createFiltered(context.getInput());
+    StringReader input = Readers.fromContextInput(context.getLastChild());
     CommandSource source = InternalUtil.wrap(context.getSource());
 
     return InternalUtil.execute(source, input);
@@ -41,12 +41,19 @@ class TreeTranslator {
 
   public static final SuggestionProvider<CommandSourceStack> SUGGESTION_PROVIDER = (context, builder) -> {
     CommandSource source = InternalUtil.wrap(context.getSource());
-    StringReader reader = Readers.createFiltered(context.getInput());
+    StringReader reader = Readers.fromContextInput(context.getLastChild());
 
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
-    ParseResults<CommandSource> parseResults = dispatcher.parse(reader, source);
 
-    return dispatcher.getCompletionSuggestions(parseResults);
+    try {
+      ParseResults<CommandSource> parseResults = dispatcher.parse(reader, source);
+      return dispatcher.getCompletionSuggestions(parseResults);
+    } catch (Throwable t) {
+      Grenadier.getProvider().getExceptionHandler()
+          .onSuggestionException(reader.getString(), t, source);
+
+      return Suggestions.empty();
+    }
   };
 
   public static List<CommandNode<CommandSourceStack>> translate(

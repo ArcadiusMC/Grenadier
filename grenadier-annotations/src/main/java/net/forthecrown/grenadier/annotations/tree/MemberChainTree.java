@@ -3,6 +3,7 @@ package net.forthecrown.grenadier.annotations.tree;
 import it.unimi.dsi.fastutil.Pair;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -74,11 +75,8 @@ public record MemberChainTree(
   }
 
   public Result<Method> findUniqueMethod(Class<?> declaring) {
-    Method[] methods = declaring.getMethods();
-
-    List<Method> matching = Arrays.stream(methods)
-        .filter(method -> method.getName().equals(name))
-        .toList();
+    List<Method> matching = new ArrayList<>();
+    addMethods(declaring, matching, name);
 
     if (matching.isEmpty()) {
       return Result.fail("No method named '%s' found in %s", name, declaring);
@@ -93,6 +91,28 @@ public record MemberChainTree(
     }
 
     return Result.success(matching.iterator().next());
+  }
+
+  private static void addMethods(Class<?> c,
+                                 List<Method> methods,
+                                 String name
+  ) {
+    Arrays.stream(c.getDeclaredMethods())
+        .filter(method -> method.getName().equals(name))
+        .forEach(methods::add);
+
+    Class<?>   superClass = c.getSuperclass();
+    Class<?>[] interfaces = c.getInterfaces();
+
+    if (superClass != null) {
+      addMethods(superClass, methods, name);
+    }
+
+    if (interfaces.length > 1) {
+      for (Class<?> anInterface : interfaces) {
+        addMethods(anInterface, methods, name);
+      }
+    }
   }
 
   public String path() {

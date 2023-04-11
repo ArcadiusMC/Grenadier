@@ -14,6 +14,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.IDENTIFIER;
 import static net.forthecrown.grenadier.annotations.TokenType.LITERAL;
 import static net.forthecrown.grenadier.annotations.TokenType.NAME;
 import static net.forthecrown.grenadier.annotations.TokenType.PERMISSION;
+import static net.forthecrown.grenadier.annotations.TokenType.PLAIN_TRANS;
 import static net.forthecrown.grenadier.annotations.TokenType.QUOTED_STRING;
 import static net.forthecrown.grenadier.annotations.TokenType.REQUIRES;
 import static net.forthecrown.grenadier.annotations.TokenType.SCOPE_BEGIN;
@@ -117,12 +118,18 @@ class Parser {
       }
 
       var next = lexer.expect(
-          PERMISSION,  ALIASES,  DESCRIPTION,
-            ARGUMENT, EXECUTES,     REQUIRES,
-             LITERAL, TYPE_MAP, SYNTAX_LABEL
+           PERMISSION,  ALIASES,  DESCRIPTION,
+             ARGUMENT, EXECUTES,     REQUIRES,
+              LITERAL, TYPE_MAP, SYNTAX_LABEL,
+          PLAIN_TRANS
       );
 
       lexer.expect(ASSIGN);
+
+      if (next.is(PLAIN_TRANS)) {
+        Token boolToken = lexer.expect(TRUE, FALSE);
+        tree.setPlainTranslation(boolToken.is(TRUE));
+      }
 
       if (next.is(PERMISSION)) {
         ensureCanSet(tree.getPermission(), PERMISSION, tree);

@@ -63,7 +63,7 @@ class PositionArgumentImpl implements PositionArgument, VanillaMappedArgument {
   public ParsedPosition parse(StringReader reader)
       throws CommandSyntaxException
   {
-    return new PositionParser(reader, this).parse();
+    return new PositionParser(reader, flags).parse();
   }
 
   @Override

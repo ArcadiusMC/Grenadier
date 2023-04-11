@@ -27,22 +27,31 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
 
   private final List<String> aliases;
 
-  public GrenadierCommandNode(String literal,
-                              Command<CommandSource> command,
-                              Predicate<CommandSource> requirement,
-                              CommandNode<CommandSource> redirect,
-                              RedirectModifier<CommandSource> modifier,
-                              boolean forks,
-                              String permission,
-                              Component description,
-                              List<String> aliases
+  private final boolean plainTranslation;
+
+  public GrenadierCommandNode(
+      String literal,
+      Command<CommandSource> command,
+      Predicate<CommandSource> requirement,
+      CommandNode<CommandSource> redirect,
+      RedirectModifier<CommandSource> modifier,
+      boolean forks,
+      String permission,
+      Component description,
+      List<String> aliases,
+      boolean plainTranslation
   ) {
     super(literal, command, requirement, redirect, modifier, forks);
 
     this.permission = permission;
     this.description = description;
+    this.plainTranslation = plainTranslation;
 
     this.aliases = aliases.stream().map(String::toLowerCase).toList();
+  }
+
+  public boolean isPlainTranslation() {
+    return plainTranslation;
   }
 
   public String getPermission() {

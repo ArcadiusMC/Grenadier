@@ -15,8 +15,7 @@ public class CompileErrors implements ErrorConsumer {
   private final List<Error> errors = new ArrayList<>();
 
   public void error(int pos, String message, Object... args) {
-    Error error = new Error(message.formatted(args), TYPE_ERROR, pos);
-    errors.add(error);
+    errors.add(new Error(message.formatted(args), TYPE_ERROR, pos));
   }
 
   public void warning(String message, Object... args) {

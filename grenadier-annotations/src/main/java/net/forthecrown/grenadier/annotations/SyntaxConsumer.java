@@ -43,12 +43,15 @@ public interface SyntaxConsumer {
    * </pre>
    *
    * @param node Grenadier command
+   * @param commandClass The object the annotated command tree was declared
+   *                     and parsed from
    * @param argument Usage syntax
    * @param info Usage description
    * @param condition A complete condition a source must pass to see the
    *                  specified information
    */
   void accept(GrenadierCommandNode node,
+              Object commandClass,
               String argument,
               Component info,
               @Nullable Predicate<CommandSource> condition

@@ -14,12 +14,12 @@ import net.forthecrown.grenadier.types.ParsedPosition.Type;
 class PositionParser {
 
   private final StringReader reader;
-  private final PositionArgumentImpl argument;
+  private final byte flags;
   private final Type type;
 
-  public PositionParser(StringReader reader, PositionArgumentImpl argument) {
+  public PositionParser(StringReader reader, byte flags) {
     this.reader = reader;
-    this.argument = argument;
+    this.flags = flags;
 
     if (reader.canRead() && reader.peek() == Type.LOCAL.character()) {
       type = Type.LOCAL;
@@ -41,7 +41,7 @@ class PositionParser {
     Coordinate y;
     Coordinate z;
 
-    if (argument.has(FLAG_2D)) {
+    if (hasFlag(FLAG_2D)) {
       y = null;
     } else {
       y = parseCoordinate();
@@ -87,7 +87,7 @@ class PositionParser {
 
       value = 0.0D;
     } else {
-      boolean readInteger = argument.has(FLAG_BLOCK);
+      boolean readInteger = hasFlag(FLAG_BLOCK);
 
       value = readInteger
           ? reader.readInt()
@@ -95,5 +95,9 @@ class PositionParser {
     }
 
     return new Coordinate(value, relative);
+  }
+
+  private boolean hasFlag(byte f) {
+    return (flags & f) == f;
   }
 }

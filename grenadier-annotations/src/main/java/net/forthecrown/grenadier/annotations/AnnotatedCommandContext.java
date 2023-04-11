@@ -93,6 +93,20 @@ public interface AnnotatedCommandContext {
   void setDefaultRule(@NotNull DefaultExecutionRule defaultRule);
 
   /**
+   * Determines whether command compilation warnings are printed or not
+   *
+   * @return {@code true} if command compilation warnings are to be printed,
+   *         {@code false}, otherwise
+   */
+  boolean areWarningsEnabled();
+
+  /**
+   * Enables/disables command compilation warnings
+   * @param enabled Warnings enabled
+   */
+  void setWarningsEnabled(boolean enabled);
+
+  /**
    * Gets the context's type registry
    * @return Type registry
    */

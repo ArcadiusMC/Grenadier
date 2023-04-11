@@ -118,6 +118,11 @@ class EntityArgumentImpl implements EntityArgument, VanillaMappedArgument {
     }
   }
 
+  @Override
+  public boolean useVanillaSuggestions() {
+    return true;
+  }
+
   static class ResultImpl implements EntitySelector {
 
     private final net.minecraft.commands.arguments.selector.EntitySelector handle;

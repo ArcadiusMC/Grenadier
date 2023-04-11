@@ -253,6 +253,14 @@
  * aliases = alias1 | alias2 | alias3
  * </pre>
  *
+ * <h3>Translate plain</h3>
+ * A {@code true} or {@code false} value that specifies {@link net.forthecrown.grenadier.GrenadierCommand#withPlainTranslation(boolean)},
+ * defaults to {@code false}, Examples:
+ * <pre>
+ * translate_plain = true
+ * translate_plain = false
+ * </pre>
+ *
  * <h2 id="syn-argument-fields">Argument node specific fields</h2>
  *
  * <h3>Suggests</h3>

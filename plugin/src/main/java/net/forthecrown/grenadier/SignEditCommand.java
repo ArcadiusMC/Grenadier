@@ -26,28 +26,28 @@ import org.bukkit.entity.Player;
 @CommandData("file = signedit.gcn")
 public class SignEditCommand {
 
-  public static final int LINES = 4;
+  static final int LINES = 4;
 
-  public static final String SIGN_ARG =  "pos";
-  public static final String LINE_ARG = "line";
-  public static final String TEXT_ARG = "text";
-  public static final String GLOW_ARG = "glow";
+  static final String SIGN_ARG =  "pos";
+  static final String LINE_ARG = "line";
+  static final String TEXT_ARG = "text";
+  static final String GLOW_ARG = "glow";
 
   private final Map<UUID, Component[]> copiedSignLines = new HashMap<>();
 
-  public SignEditCommand() {
+  SignEditCommand() {
 
   }
 
   @VariableInitializer
-  public void initializeLocalVariables(Map<String, Object> variables) {
+  void initializeLocalVariables(Map<String, Object> variables) {
     variables.put("pos", SIGN_ARG);
   }
 
   /* ------------------------- ARGUMENT MAPPERS --------------------------- */
 
   // Maps parsed position to sign
-  public Sign positionToSign(CommandSource source, ParsedPosition position)
+  Sign positionToSign(CommandSource source, ParsedPosition position)
       throws CommandSyntaxException
   {
     Location location = position.apply(source);
@@ -65,13 +65,13 @@ public class SignEditCommand {
     );
   }
 
-  public Component stringToComponent(String value) {
+  Component stringToComponent(String value) {
     return LegacyComponentSerializer.legacyAmpersand().deserialize(value);
   }
 
   /* -------------------------- EXECUTES METHODS -------------------------- */
 
-  public void clear(CommandSource source, @Argument(SIGN_ARG) Sign sign)
+  void clear(CommandSource source, @Argument(SIGN_ARG) Sign sign)
       throws CommandSyntaxException
   {
     for (int i = 0; i < LINES; i++) {
@@ -81,7 +81,7 @@ public class SignEditCommand {
     attemptSignUpdate(sign, source, () -> text("Cleared sign"));
   }
 
-  public void copy(CommandSource source, @Argument(SIGN_ARG) Sign sign)
+  void copy(CommandSource source, @Argument(SIGN_ARG) Sign sign)
       throws CommandSyntaxException
   {
     Player player = source.asPlayer();
@@ -95,7 +95,7 @@ public class SignEditCommand {
     source.sendSuccess(text("Copied sign"));
   }
 
-  public void paste(CommandSource source, @Argument(SIGN_ARG) Sign sign)
+  void paste(CommandSource source, @Argument(SIGN_ARG) Sign sign)
       throws CommandSyntaxException
   {
     Player player = source.asPlayer();
@@ -112,9 +112,9 @@ public class SignEditCommand {
     attemptSignUpdate(sign, source, () -> text("Pasted sign"));
   }
 
-  public void setGlowing(CommandSource source,
-                         @Argument(SIGN_ARG) Sign sign,
-                         @Argument(GLOW_ARG) boolean glowing
+  void setGlowing(CommandSource source,
+                  @Argument(SIGN_ARG) Sign sign,
+                  @Argument(GLOW_ARG) boolean glowing
   ) throws CommandSyntaxException {
     sign.setGlowingText(glowing);
 
@@ -127,10 +127,10 @@ public class SignEditCommand {
     });
   }
 
-  public void setLine(CommandSource source,
-                      @Argument(SIGN_ARG) Sign sign,
-                      @Argument(LINE_ARG) int line,
-                      @Argument(TEXT_ARG) Component text
+  void setLine(CommandSource source,
+               @Argument(SIGN_ARG) Sign sign,
+               @Argument(LINE_ARG) int line,
+               @Argument(TEXT_ARG) Component text
   ) throws CommandSyntaxException {
     sign.line(line - 1, text);
 
@@ -142,9 +142,9 @@ public class SignEditCommand {
     });
   }
 
-  public void clearLine(CommandSource source,
-                        @Argument(SIGN_ARG) Sign sign,
-                        @Argument(LINE_ARG) int line
+  void clearLine(CommandSource source,
+                 @Argument(SIGN_ARG) Sign sign,
+                 @Argument(LINE_ARG) int line
   ) throws CommandSyntaxException {
     Component existingText = sign.line(line - 1);
     sign.line(line-1, empty());
@@ -173,7 +173,7 @@ public class SignEditCommand {
 
   /* ---------------------------- SUGGESTIONS ----------------------------- */
 
-  public CompletableFuture<Suggestions> suggestSignLine(
+  CompletableFuture<Suggestions> suggestSignLine(
       CommandSource source,
       SuggestionsBuilder builder,
       @Argument(SIGN_ARG) Sign sign

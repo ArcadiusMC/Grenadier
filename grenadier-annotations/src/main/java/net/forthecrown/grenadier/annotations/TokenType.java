@@ -24,6 +24,7 @@ public enum TokenType {
   TYPE_MAP        ("map_result"),
   SYNTAX_LABEL    ("label"),
   TRANSLATABLE    ("translatable"),
+  PLAIN_TRANS     ("translate_plain"),
 
   TRUE            ("true"),  // Currently unused
   FALSE           ("false"), // Currently unused

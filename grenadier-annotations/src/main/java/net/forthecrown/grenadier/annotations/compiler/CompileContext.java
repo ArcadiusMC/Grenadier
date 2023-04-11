@@ -122,6 +122,10 @@ public class CompileContext {
       return null;
     }
 
+    if (predicateStack.size() == 1) {
+      return predicateStack.get(0);
+    }
+
     Predicate<CommandSource>[] predicates = new Predicate[predicateStack.size()];
     return new PredicateList(predicateStack.toArray(predicates));
   }
@@ -142,7 +146,7 @@ public class CompileContext {
   }
 
   public void consumeSyntax(GrenadierCommandNode node, SyntaxConsumer consumer) {
-    syntaxList.consume(node, consumer);
+    syntaxList.consume(node, consumer, getCommandClass());
   }
 
   public String syntaxPrefix() {

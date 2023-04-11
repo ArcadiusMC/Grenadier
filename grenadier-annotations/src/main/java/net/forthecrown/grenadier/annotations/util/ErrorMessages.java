@@ -59,25 +59,28 @@ public final class ErrorMessages {
   }
 
   private static int findLineStart(StringReader reader) {
-    return findLineEndStart(reader, reader.getCursor(), -1);
+    return findLineEndStart(reader, -1);
   }
 
   private static int findLineEnd(StringReader reader) {
-    return findLineEndStart(reader, reader.getCursor(), 1);
+    return findLineEndStart(reader, 1);
   }
 
-  private static int findLineEndStart(
-      StringReader reader,
-      int pos,
-      int direction
-  ) {
-    int r = pos;
+  private static int findLineEndStart(StringReader reader, int direction) {
+    int r = reader.getCursor();
 
     while (r >= 0 && r < reader.getTotalLength()) {
       char c = reader.getString().charAt(r);
 
       if (c == '\n' || c == '\r') {
-        return direction == -1 ? r + 1 : r;
+        int inverseDir = -direction;
+
+        while (Character.isWhitespace(c)) {
+          r += inverseDir;
+          c = reader.getString().charAt(r);
+        }
+
+        return direction == -1 ? r : r + 1;
       }
 
       r += direction;

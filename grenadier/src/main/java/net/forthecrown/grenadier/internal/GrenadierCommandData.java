@@ -39,6 +39,11 @@ class GrenadierCommandData {
     //registerIntoVanilla(server.getCommands());
   }
 
+  public void registerCurrentVanilla() {
+    MinecraftServer server = DedicatedServer.getServer();
+    registerIntoVanilla(server.getCommands());
+  }
+
   private void registerIntoVanilla(Commands commands) {
     unregisterFrom(commands);
 
@@ -77,6 +82,24 @@ class GrenadierCommandData {
     map.register(fallback, bukkitWrapper);
   }
 
+  /**
+   * Produces a vanilla command tree that corresponds to
+   * {@link GrenadierCommandNode#isPlainTranslation()}
+   *
+   * @param label Command label
+   * @return Created command tree
+   */
+  public LiteralCommandNode<CommandSourceStack> getVanillaTree(String label) {
+    var tree = createSimpleTree(label);
+
+    if (node.isPlainTranslation()) {
+      return tree;
+    }
+
+    tree.clientNode = nmsTreeWith(label);
+    return tree;
+  }
+
   public LiteralCommandNode<CommandSourceStack> nmsTreeWith(String label) {
     return withLabel(vanillaTree, label);
   }
@@ -87,7 +110,7 @@ class GrenadierCommandData {
     LiteralArgumentBuilder<CommandSourceStack> literal
         = LiteralArgumentBuilder.literal(label);
 
-    literal.executes(vanillaTree.getCommand())
+    literal.executes(TreeTranslator.COMMAND)
         .requires(vanillaTree.getRequirement());
 
     RequiredArgumentBuilder<CommandSourceStack, String> req

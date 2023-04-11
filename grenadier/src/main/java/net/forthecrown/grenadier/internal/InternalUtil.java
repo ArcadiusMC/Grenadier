@@ -10,6 +10,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import net.forthecrown.grenadier.CommandSource;
@@ -77,6 +78,18 @@ public final class InternalUtil {
     return tag == null ? null : TagTranslators.COMPOUND.toApiType(tag);
   }
 
+  public static Predicate<String> createPredicate(ReaderPredicate predicate) {
+    return s -> {
+      StringReader reader = new StringReader(s);
+
+      try {
+        return predicate.parse(reader);
+      } catch (CommandSyntaxException exc) {
+        return false;
+      }
+    };
+  }
+
   public static int execute(CommandSource source, StringReader reader) {
     final StringReader startReader = Readers.copy(reader);
 
@@ -92,5 +105,9 @@ public final class InternalUtil {
 
       return 1;
     }
+  }
+
+  public interface ReaderPredicate {
+    boolean parse(StringReader reader) throws CommandSyntaxException;
   }
 }

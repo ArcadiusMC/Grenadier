@@ -10,6 +10,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Grenadier singleton access
@@ -197,6 +199,14 @@ public final class Grenadier {
    */
   public static GrenadierCommand createCommand(@NotNull String name) {
     return new GrenadierCommand(name);
+  }
+
+  /**
+   * Gets a logger with the name 'Grenadier'
+   * @return Grenadier's logger
+   */
+  public static Logger getLogger() {
+    return LoggerFactory.getLogger("Grenadier");
   }
 
   /**

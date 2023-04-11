@@ -49,6 +49,9 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
   @Getter @Setter
   private SyntaxConsumer syntaxConsumer;
 
+  @Setter
+  private boolean warningsEnabled;
+
   AnnotatedCommandContextImpl() {
     CommandDataLoader defaultLoader
         = CommandDataLoader.resources(getClass().getClassLoader());
@@ -65,6 +68,11 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
   @Override
   public void setTypeRegistry(@NotNull TypeRegistry typeRegistry) {
     this.typeRegistry = Objects.requireNonNull(typeRegistry);
+  }
+
+  @Override
+  public boolean areWarningsEnabled() {
+    return warningsEnabled;
   }
 
   public void setDefaultRule(@NotNull DefaultExecutionRule defaultRule) {
@@ -109,6 +117,10 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         continue;
       }
 
+      if (inputString == null) {
+        continue;
+      }
+
       return new StringReader(inputString);
     }
 
@@ -150,22 +162,31 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     GrenadierCommandNode node = (GrenadierCommandNode)
         tree.accept(CommandCompiler.COMPILER, context);
 
+    String name = node.getName();
+
+    if (name.equals("FAILED")) {
+      name = command.getClass().getSimpleName();
+    }
+
     if (!errors.getErrors().isEmpty()) {
       int error = errors.errorCount();
 
       // The error list contains not only fatal compile errors but also
       // warnings, so only throw if the fatal error count is above 0
       if (error > 0) {
-        throw new CommandCompilationException(errors.getErrors(), reader);
+        throw new CommandCompilationException(errors.getErrors(), reader, name);
       }
 
-      String msg = CommandCompilationException.createMessage(
-          errors.getErrors(),
-          reader
-      );
+      if (areWarningsEnabled()) {
+        String msg = CommandCompilationException.createMessage(
+            errors.getErrors(),
+            reader,
+            name
+        );
 
-      System.out.print(msg);
-      System.out.print("\n");
+        System.out.print(msg);
+        System.out.print("\n");
+      }
     }
 
     CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();

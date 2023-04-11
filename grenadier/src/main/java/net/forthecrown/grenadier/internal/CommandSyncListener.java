@@ -15,6 +15,7 @@ import net.minecraft.commands.CommandSourceStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.command.UnknownCommandEvent;
+import org.slf4j.Logger;
 
 // Dear lord I absolutely hate this part of Grenadier, not the grenadier part,
 // but the absolute sh*t I've had to work around to make it work in Bukkit.
@@ -49,6 +50,8 @@ import org.bukkit.event.command.UnknownCommandEvent;
 // - Jules
 class CommandSyncListener implements Listener {
 
+  private static final Logger LOGGER = Grenadier.getLogger();
+
   private final GrenadierRootNode rootNode;
 
   public CommandSyncListener(GrenadierProvider provider) {
@@ -69,7 +72,7 @@ class CommandSyncListener implements Listener {
     GrenadierCommandData data = wrapper.getData();
 
     LiteralCommandNode<CommandSourceStack> tree
-        = data.nmsTreeWith(event.getCommandLabel());
+        = data.getVanillaTree(event.getCommandLabel());
 
     event.setLiteral(tree);
     rootNode.syncVanilla();

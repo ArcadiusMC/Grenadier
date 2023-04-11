@@ -13,6 +13,8 @@ public class RootTree extends AbstractCmdTree {
 
   private List<Name> aliases;
 
+  private boolean plainTranslation;
+
   @Override
   public <R, C> R accept(TreeVisitor<R, C> visitor, C context) {
     return visitor.visitRoot(this, context);

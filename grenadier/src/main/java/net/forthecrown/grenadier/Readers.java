@@ -1,6 +1,7 @@
 package net.forthecrown.grenadier;
 
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.regex.Pattern;
@@ -190,6 +191,19 @@ public class Readers {
 
   private static boolean isIntegerDigit(char c) {
     return c >= '0' && c <= '9';
+  }
+
+  /**
+   * Creates a string reader from the input of the specified {@code context} and
+   * sets the readers cursor to the start of {@link CommandContext#getRange()}
+   *
+   * @param context Command context
+   * @return Context's reader
+   */
+  public static StringReader fromContextInput(CommandContext<?> context) {
+    StringReader reader = new StringReader(context.getInput());
+    reader.setCursor(context.getRange().getStart());
+    return reader;
   }
 
   /**
