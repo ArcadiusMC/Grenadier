@@ -147,7 +147,7 @@ class ParamFillers {
 
     if (sourceIndex == UNSET && contextIndex == UNSET) {
       context.getErrors().warning(pos,
-          "No CommandSource or CommandContext paramater set"
+          "No CommandSource or CommandContext parameters set"
       );
     }
 

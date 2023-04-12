@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -74,9 +76,17 @@ public record MemberChainTree(
     }
   }
 
+  public Stream<Method> findMatching(Class<?> declaring,
+                                     Predicate<Method> methodPredicate
+  ) {
+    List<Method> matching = new ArrayList<>();
+    addMethods(declaring, matching, name, methodPredicate);
+    return matching.stream();
+  }
+
   public Result<Method> findUniqueMethod(Class<?> declaring) {
     List<Method> matching = new ArrayList<>();
-    addMethods(declaring, matching, name);
+    addMethods(declaring, matching, name, null);
 
     if (matching.isEmpty()) {
       return Result.fail("No method named '%s' found in %s", name, declaring);
@@ -95,22 +105,28 @@ public record MemberChainTree(
 
   private static void addMethods(Class<?> c,
                                  List<Method> methods,
-                                 String name
+                                 String name,
+                                 Predicate<Method> predicate
   ) {
-    Arrays.stream(c.getDeclaredMethods())
-        .filter(method -> method.getName().equals(name))
-        .forEach(methods::add);
+    var stream = Arrays.stream(c.getDeclaredMethods())
+        .filter(method -> method.getName().equals(name));
+
+    if (predicate != null) {
+      stream = stream.filter(predicate);
+    }
+
+    stream.forEach(methods::add);
 
     Class<?>   superClass = c.getSuperclass();
     Class<?>[] interfaces = c.getInterfaces();
 
     if (superClass != null) {
-      addMethods(superClass, methods, name);
+      addMethods(superClass, methods, name, predicate);
     }
 
-    if (interfaces.length > 1) {
+    if (interfaces.length > 0) {
       for (Class<?> anInterface : interfaces) {
-        addMethods(anInterface, methods, name);
+        addMethods(anInterface, methods, name, predicate);
       }
     }
   }

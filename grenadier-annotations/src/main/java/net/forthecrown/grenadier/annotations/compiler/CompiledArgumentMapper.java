@@ -30,75 +30,74 @@ class CompiledArgumentMapper implements ArgumentModifier<Object, Object> {
     Object lastValue = lastPair.left();
 
     if (lastRef.kind() == Kind.FIELD) {
-      Object o = lastRef.resolve(lastValue);
+      Object fieldValue = lastRef.resolve(lastValue);
 
-      if (o instanceof ArgumentModifier modifier) {
+      if (handle != null && fieldValue instanceof ArgumentModifier modifier) {
         return modifier.apply(context, input);
       }
 
-      return o;
+      return fieldValue;
     }
 
     Class<?> lastType = lastValue.getClass();
+    Method[] methods = lastRef.findMatching(lastType, null)
+        .toArray(Method[]::new);
 
-    Method method = lastRef.findUniqueMethod(lastType).orThrow((pos, msg) -> {
-      return new IllegalStateException(String.format(
-          "Found no methods matching '%s'. Valid methods must have more than 1 "
-              + "parameter, not return void and have all parameters be either the "
-              + "input value, a CommandSource or a CommandContext<CommandSource>",
-
-          ref.path()
-      ));
-    });
-
-    if (method.getReturnType() == Void.class) {
-      throw new IllegalStateException(String.format(
-          "Method '%s' has illegal return type for argument result mapper (%s)",
-          method.getName(),
-          method.getReturnType()
-      ));
-    }
-
-
-    Parameter[] params = method.getParameters();
-    Object[] invocationMethods = new Object[params.length];
-
-    for (int i = 0; i < method.getParameterCount(); i++) {
-      Parameter p = params[i];
-      Class<?> pType = p.getType();
-
-      if (CommandSource.class.isAssignableFrom(pType)) {
-        invocationMethods[i] = context.getSource();
+    outer: for (Method m : methods) {
+      if (!m.getName().equals(lastRef.name())) {
         continue;
       }
 
-      if (CommandContext.class.isAssignableFrom(pType)) {
-        invocationMethods[i] = context;
+      if (m.getParameterCount() <= 0
+          || m.getReturnType() == Void.TYPE
+      ) {
         continue;
       }
 
-      if (pType.isAssignableFrom(input.getClass())) {
-        invocationMethods[i] = input;
-        continue;
+      Parameter[] params = m.getParameters();
+      Object[] invokeParams = new Object[params.length];
+
+      for (int i = 0; i < m.getParameterCount(); i++) {
+        Parameter p = params[i];
+        Class<?> pType = p.getType();
+
+        if (CommandSource.class == pType) {
+          invokeParams[i] = context.getSource();
+          continue;
+        }
+
+        if (CommandContext.class == pType) {
+          invokeParams[i] = context;
+          continue;
+        }
+
+        if (pType.isInstance(input)) {
+          invokeParams[i] = input;
+          continue;
+        }
+
+        continue outer;
       }
 
-      throw new IllegalStateException(
-          "Unable to determine value for parameter " + i + " (" + p + ")"
-              + "\nCommandSource, CommandContext<CommandSource> and input "
-              + "parameters are assigned automatically"
-      );
+      boolean override = m.isAccessible();
+      m.setAccessible(true);
+
+      try {
+        return m.invoke(lastValue, invokeParams);
+      } catch (ReflectiveOperationException exc) {
+        Utils.sneakyThrow(exc);
+        return null;
+      } finally {
+        m.setAccessible(override);
+      }
     }
 
-    boolean override = method.isAccessible();
-    method.setAccessible(true);
+    throw new IllegalStateException(String.format(
+        "Found no methods matching '%s'. Valid methods must have more than 1 "
+            + "parameter, not return void and have all parameters be either the "
+            + "input value, a CommandSource or a CommandContext<CommandSource>",
 
-    try {
-      return method.invoke(lastValue, invocationMethods);
-    } catch (ReflectiveOperationException exc) {
-      Utils.sneakyThrow(exc);
-      return null;
-    } finally {
-      method.setAccessible(override);
-    }
+        ref.path()
+    ));
   }
 }

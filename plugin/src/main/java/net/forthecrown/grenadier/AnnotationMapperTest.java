@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.forthecrown.grenadier.annotations.Argument;
 import net.forthecrown.grenadier.annotations.CommandData;
 import net.forthecrown.grenadier.types.EntitySelector;
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -22,6 +23,11 @@ argument('entity_arg', entity) {
     map_result('entity_arg') = result.findPlayer()
     executes = run3()
   }
+}
+
+argument('location', vec3d) {
+  map_result = result.apply()
+  executes = runLocation()
 }
 """)
 public class AnnotationMapperTest {
@@ -41,10 +47,16 @@ public class AnnotationMapperTest {
   }
 
   public void run3(CommandContext<CommandSource> context,
-                         @Argument("entity_arg") Player selector
+                   @Argument("entity_arg") Player selector
   ) throws CommandSyntaxException {
     context.getSource().sendMessage(
         selector.toString()
     );
+  }
+
+  public void runLocation(CommandSource source,
+                          @Argument("location") Location location
+  ) {
+    source.sendMessage(location.toString());
   }
 }

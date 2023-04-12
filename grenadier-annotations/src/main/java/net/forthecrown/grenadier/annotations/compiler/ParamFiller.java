@@ -4,10 +4,10 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.forthecrown.grenadier.annotations.util.ExpandedCommandContext;
 import org.jetbrains.annotations.Nullable;
 
-public interface ParamFiller {
+interface ParamFiller {
 
-  ParamFiller CONTEXT = (context, builder) -> context;
-  ParamFiller SOURCE = (context, builder)  -> context.getSource();
+  ParamFiller CONTEXT = (context, builder) -> context.getBase();
+  ParamFiller SOURCE  = (context, builder) -> context.getSource();
   ParamFiller BUILDER = (context, builder) -> builder;
 
   Object getValue(
