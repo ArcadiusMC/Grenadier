@@ -1,6 +1,6 @@
 plugins {
   `java-library`
-  id("io.papermc.paperweight.userdev") version "1.5.3"
+  id("io.papermc.paperweight.userdev") version "1.5.5"
 
   // Maven publishing
   id("maven-publish")
@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.0.9"
+version = "2.1.0"
 
 repositories {
   mavenCentral()
@@ -27,10 +27,10 @@ dependencies {
 
   api("com.mojang:brigadier:1.0.18")
 
-  api("net.forthecrown:nbt:latest.release")
-  api("net.forthecrown:paper-nbt:latest.release")
+  api("net.forthecrown:nbt:1.4.0")
+  api("net.forthecrown:paper-nbt:1.4.0")
 
-  paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT")
+  paperweight.paperDevBundle("1.20-R0.1-SNAPSHOT")
 }
 
 tasks {

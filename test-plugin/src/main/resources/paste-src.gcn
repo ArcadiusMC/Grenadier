@@ -1,0 +1,4 @@
+
+argument('an_argument', int(min=1, max=2)) {
+  executes = an_argument()
+}

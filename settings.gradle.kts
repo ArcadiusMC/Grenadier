@@ -1,4 +1,4 @@
 rootProject.name = "Grenadier"
 include("grenadier")
-include("plugin")
+include("test-plugin")
 include("grenadier-annotations")

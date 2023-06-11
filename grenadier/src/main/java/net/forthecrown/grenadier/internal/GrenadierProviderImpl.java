@@ -12,7 +12,7 @@ import net.forthecrown.grenadier.GrenadierProvider;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_19_R3.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_20_R1.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
 import org.jetbrains.annotations.ApiStatus.Internal;

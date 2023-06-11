@@ -48,6 +48,7 @@ literal('double_range') {
   argument('doubleRange', double_range) = testDoubleRange()
 }
 
+literal('double_suffix').argument('suffix', @suffixed) = testSuffixed()
 """)
 public class TestAnnotatedCommand {
 
@@ -120,5 +121,9 @@ public class TestAnnotatedCommand {
     }
 
     return 0;
+  }
+
+  void testSuffixed(CommandSource source, @Argument("suffix") double suffix) {
+    source.sendMessage(String.format("value=%s", suffix));
   }
 }

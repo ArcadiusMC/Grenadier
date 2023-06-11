@@ -1,4 +1,4 @@
-package net.forthecrown.grenadier.internal;
+package net.forthecrown.grenadier.types;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -11,11 +11,12 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import net.forthecrown.grenadier.internal.VanillaMappedArgument;
 import net.minecraft.commands.CommandBuildContext;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
-public class ArgumentTypeMapper {
+class ArgumentTypeMapper {
 
   public static <F, T> ArgumentType<T> mapType(ArgumentType<F> from,
                                         Function<F, T> translator

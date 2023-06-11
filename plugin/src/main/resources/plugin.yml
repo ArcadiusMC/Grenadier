@@ -1,8 +1,0 @@
-name: "Grenadier"
-main: "net.forthecrown.grenadier.GrenadierPlugin"
-version: "${version}"
-api-version: "1.19"
-
-libraries:
-  - "net.forthecrown:nbt:1.2.1"
-  - "net.forthecrown:paper-nbt:1.2.2"

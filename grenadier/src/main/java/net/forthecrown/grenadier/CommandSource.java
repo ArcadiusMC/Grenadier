@@ -75,11 +75,8 @@ public interface CommandSource
    * @return The sender as the type
    * @throws CommandSyntaxException If the sender is not of the specified type
    */
-  default <T extends CommandSender> T as(Class<T> clazz)
-      throws CommandSyntaxException
-  {
-    return optionalAs(clazz)
-        .orElseThrow(() -> Grenadier.exceptions().sourceMustBe(clazz));
+  default <T extends CommandSender> T as(Class<T> clazz) throws CommandSyntaxException {
+    return optionalAs(clazz).orElseThrow(() -> Grenadier.exceptions().sourceMustBe(clazz));
   }
 
   /**
@@ -107,12 +104,8 @@ public interface CommandSource
    * @return The created optional, empty if sender isn't an instance of the
    * given class, otherwise, contains the sender cast to that type.
    */
-  default @NotNull <T extends CommandSender> Optional<T> optionalAs(
-      Class<T> clazz
-  ) {
-    return is(clazz)
-        ? Optional.of(clazz.cast(asBukkit()))
-        : Optional.empty();
+  default @NotNull <T extends CommandSender> Optional<T> optionalAs(Class<T> clazz) {
+    return is(clazz) ? Optional.of(clazz.cast(asBukkit())) : Optional.empty();
   }
 
   /**

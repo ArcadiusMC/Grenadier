@@ -13,6 +13,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.storage.loot.LootDataType;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.loot.LootTable;
@@ -44,7 +45,7 @@ class LootTableArgumentImpl
       SuggestionsBuilder builder
   ) {
     MinecraftServer server = MinecraftServer.getServer();
-    var idSet = server.getLootTables().getIds();
+    var idSet = server.getLootData().getKeys(LootDataType.TABLE);
 
     return SharedSuggestionProvider.suggestResource(idSet, builder);
   }

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.0.0"
+version = "2.1.0"
 
 repositories {
   mavenCentral()
@@ -15,14 +15,14 @@ repositories {
 dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
 
-  compileOnly("com.mojang:brigadier:1.0.500")
+  compileOnly("com.mojang:brigadier:1.0.18")
   implementation(project(":grenadier", "reobf"))
   implementation(project(":grenadier-annotations"))
 
-  compileOnly("net.forthecrown:nbt:1.2.1")
-  compileOnly("net.forthecrown:paper-nbt:1.2.2")
+  compileOnly("net.forthecrown:nbt:1.4.0")
+  compileOnly("net.forthecrown:paper-nbt:1.4.0")
 
-  compileOnly("io.papermc.paper:paper-api:1.19.3-R0.1-SNAPSHOT")
+  compileOnly("io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT")
 }
 
 tasks {
@@ -32,6 +32,10 @@ tasks {
 
   processResources {
     expand("version" to version)
+  }
+
+  shadowJar {
+    exclude("net/forthecrown/nbt/**")
   }
 }
 

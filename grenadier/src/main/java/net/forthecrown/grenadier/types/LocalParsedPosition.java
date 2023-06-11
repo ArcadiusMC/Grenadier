@@ -4,7 +4,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_19_R3.util.CraftVector;
+import org.bukkit.craftbukkit.v1_20_R1.util.CraftVector;
 
 class LocalParsedPosition implements ParsedPosition {
 

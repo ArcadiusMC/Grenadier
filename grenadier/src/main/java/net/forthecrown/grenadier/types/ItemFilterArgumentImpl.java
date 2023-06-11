@@ -22,7 +22,7 @@ import net.minecraft.commands.arguments.item.ItemPredicateArgument;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_19_R3.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_20_R1.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
 
 class ItemFilterArgumentImpl

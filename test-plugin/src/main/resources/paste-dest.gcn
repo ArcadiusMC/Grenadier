@@ -1,0 +1,5 @@
+name = "annot_paste_test"
+
+#paste(paste-src.gcn)
+
+executes = defaultExec()

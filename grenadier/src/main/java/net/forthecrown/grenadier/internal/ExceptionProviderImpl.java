@@ -3,8 +3,6 @@ package net.forthecrown.grenadier.internal;
 import com.mojang.brigadier.ImmutableStringReader;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import java.io.IOException;
-import java.util.Arrays;
 import net.forthecrown.grenadier.ExceptionProvider;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.types.options.ArgumentOption;
@@ -20,6 +18,9 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 class ExceptionProviderImpl implements ExceptionProvider {
 
@@ -300,5 +301,10 @@ class ExceptionProviderImpl implements ExceptionProvider {
   @Override
   public CommandSyntaxException rangeInverted(StringReader reader) {
     return translatableWithContext("argument.range.swapped", reader);
+  }
+
+  @Override
+  public CommandSyntaxException unknownSuffix(StringReader reader, String suffix) {
+    return translatableWithContext("argument.enum.invalid", reader, suffix);
   }
 }

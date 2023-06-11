@@ -7,11 +7,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
-import net.forthecrown.grenadier.internal.ArgumentTypeMapper;
 import net.forthecrown.grenadier.types.RegistryArgument.UnknownFactory;
+import net.forthecrown.grenadier.types.SuffixedNumberArgumentImpl.NumberType;
 import net.forthecrown.nbt.BinaryTag;
 import net.forthecrown.nbt.CompoundTag;
 import net.kyori.adventure.util.Ticks;
@@ -562,5 +563,125 @@ public final class ArgumentTypes {
                                            Function<F, T> translator
   ) {
     return ArgumentTypeMapper.mapType(fromType, translator);
+  }
+
+  /**
+   * Creates an argument type that parses a number followed by an optional suffix.
+   * <p>
+   * For example, you can make a parser for standard metric units like so: <pre><code>
+   * // Assuming the base unit here is millimetres
+   * Map&lt;String, Double&gt; units = new HashMap&lt;&gt;();
+   * units.put("mm", 1);
+   * units.put("cm", 10);
+   * units.put("dm", 100);
+   * units.put( "m", 1000);
+   * units.put("km", 1_000_000);
+   *
+   * SuffixedNumberArgument&lt;Double&gt; argument
+   *     = ArgumentTypes.suffixedDouble(units);
+   * </code></pre>
+   * An example of input for this argument type: {@code 10.45m}, {@code 100km}, {@code 24.2cm}
+   *
+   * @param suffixes Suffix to value-multiplier map
+   *
+   * @return Created argument
+   */
+  public static SuffixedNumberArgument<Double> suffixedDouble(Map<String, Double> suffixes) {
+    return suffixedDouble(suffixes, Double.MIN_VALUE, Double.MAX_VALUE);
+  }
+
+  /**
+   * Creates an argument type that parses a number followed by an optional suffix.
+   * <p>
+   * For example, you can make a parser for standard metric units like so: <pre><code>
+   * // Assuming the base unit here is millimetres
+   * Map&lt;String, Double&gt; units = new HashMap&lt;&gt;();
+   * units.put("mm", 1);
+   * units.put("cm", 10);
+   * units.put("dm", 100);
+   * units.put( "m", 1000);
+   * units.put("km", 1_000_000);
+   *
+   * SuffixedNumberArgument&lt;Double&gt; argument
+   *     = ArgumentTypes.suffixedDouble(units);
+   * </code></pre>
+   * An example of input for this argument type: {@code 10.45m}, {@code 100km}, {@code 24.2cm}
+   * <p>
+   * The {@code min} and {@code max} parameters are tested against the final result of the
+   * argument, not the initial number,
+   *
+   * @param suffixes Suffix to value-multiplier map
+   * @param min Minimum value that can be returned by the created argument
+   * @param max Maximum value that can be returned by the created argument
+   *
+   * @return Created argument
+   */
+  public static SuffixedNumberArgument<Double> suffixedDouble(
+      Map<String, Double> suffixes,
+      double min,
+      double max
+  ) {
+    Objects.requireNonNull(suffixes, "Null suffix map");
+    return new SuffixedNumberArgumentImpl<>(suffixes, NumberType.DOUBLE, min, max);
+  }
+
+  /**
+   * Creates an argument type that parses a number followed by an optional suffix.
+   * <p>
+   * For example, you can make a parser for standard metric units like so: <pre><code>
+   * // Assuming the base unit here is millimetres
+   * Map&lt;String, Integer&gt; units = new HashMap&lt;&gt;();
+   * units.put("mm", 1);
+   * units.put("cm", 10);
+   * units.put("dm", 100);
+   * units.put( "m", 1000);
+   * units.put("km", 1_000_000);
+   *
+   * SuffixedNumberArgument&lt;Integer&gt; argument
+   *     = ArgumentTypes.suffixedDouble(units);
+   * </code></pre>
+   * An example of input for this argument type: {@code 10m}, {@code 100km}, {@code 242cm}
+   *
+   * @param suffixes Suffix to value-multiplier map
+   *
+   * @return Created argument
+   */
+  public static SuffixedNumberArgument<Integer> suffixedInt(Map<String, Integer> suffixes) {
+    return suffixedInt(suffixes, Integer.MIN_VALUE, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Creates an argument type that parses a number followed by an optional suffix.
+   * <p>
+   * For example, you can make a parser for standard metric units like so: <pre><code>
+   * // Assuming the base unit here is millimetres
+   * Map&lt;String, Integer&gt; units = new HashMap&lt;&gt;();
+   * units.put("mm", 1);
+   * units.put("cm", 10);
+   * units.put("dm", 100);
+   * units.put( "m", 1000);
+   * units.put("km", 1_000_000);
+   *
+   * SuffixedNumberArgument&lt;Integer&gt; argument
+   *     = ArgumentTypes.suffixedDouble(units);
+   * </code></pre>
+   * An example of input for this argument type: {@code 10m}, {@code 100km}, {@code 242cm}
+   * <p>
+   * The {@code min} and {@code max} parameters are tested against the final result of the
+   * argument, not the initial number,
+   *
+   * @param suffixes Suffix to value-multiplier map
+   * @param min Minimum value that can be returned by the created argument
+   * @param max Maximum value that can be returned by the created argument
+   *
+   * @return Created argument
+   */
+  public static SuffixedNumberArgument<Integer> suffixedInt(
+      Map<String, Integer> suffixes,
+      int min,
+      int max
+  ) {
+    Objects.requireNonNull(suffixes, "Null suffix map");
+    return new SuffixedNumberArgumentImpl<>(suffixes, NumberType.INT, min, max);
   }
 }

@@ -26,8 +26,8 @@ public enum TokenType {
   TRANSLATABLE    ("translatable"),
   PLAIN_TRANS     ("translate_plain"),
 
-  TRUE            ("true"),  // Currently unused
-  FALSE           ("false"), // Currently unused
+  TRUE            ("true"),
+  FALSE           ("false"),
 
   // Single character tokens
   ASSIGN          ('='),

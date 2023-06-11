@@ -91,4 +91,6 @@ public interface ExceptionProvider extends CommandExceptionType {
   CommandSyntaxException rangeEmpty(StringReader reader);
 
   CommandSyntaxException rangeInverted(StringReader reader);
+
+  CommandSyntaxException unknownSuffix(StringReader reader, String suffix);
 }

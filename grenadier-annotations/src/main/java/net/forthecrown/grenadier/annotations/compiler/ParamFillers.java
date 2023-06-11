@@ -98,7 +98,7 @@ class ParamFillers {
           context.getErrors().warning(pos,
               "Parameter %s in method '%s' is missing the original parameter "
                   + "name, this likely means the parameter name doesn't line "
-                  + "up with the parameter name",
+                  + "up with the command's argument name",
 
               param, method
           );

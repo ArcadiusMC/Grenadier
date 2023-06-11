@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "1.1.1"
+version = "1.2.0"
 
 repositories {
   mavenCentral()
@@ -23,7 +23,7 @@ dependencies {
   api(project(":grenadier"))
   api("com.mojang:brigadier:1.0.18")
 
-  compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
+  compileOnly("io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT")
 
   compileOnly("org.projectlombok:lombok:1.18.22")
   annotationProcessor("org.projectlombok:lombok:1.18.22")

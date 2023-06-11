@@ -3,10 +3,14 @@ package net.forthecrown.grenadier;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import java.util.HashMap;
+import java.util.Map;
 import net.forthecrown.grenadier.annotations.AnnotatedCommandContext;
+import net.forthecrown.grenadier.types.ArgumentTypes;
+import net.forthecrown.grenadier.types.SuffixedNumberArgument;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class GrenadierPlugin extends JavaPlugin {
+public class GrenadierTestPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
@@ -34,9 +38,16 @@ public class GrenadierPlugin extends JavaPlugin {
     vars.put("int_arg", IntegerArgumentType.integer(1, 5));
     vars.put("int_arg_name", "integer_arg");
 
+    Map<String, Double> units = new HashMap<>();
+    units.put("unit_1", 10.0);
+    units.put("unit_2", 100.0);
+
+    SuffixedNumberArgument<Double> suffixed = ArgumentTypes.suffixedDouble(units, 1, 10000);
+    vars.put("suffixed", suffixed);
+
     ctx.setDefaultPermissionFormat("grenadier.test.{command}");
     ctx.setDefaultExecutes("defRun");
-    ctx.setWarningsEnabled(false);
+    ctx.setWarningsEnabled(true);
 
     ctx.registerCommand(new TestAnnotatedCommand());
     ctx.registerCommand(new TestCommand2());
@@ -45,6 +56,7 @@ public class GrenadierPlugin extends JavaPlugin {
     ctx.registerCommand(new AnnotationMapperTest());
     ctx.registerCommand(new ResourcedCommandTest());
     ctx.registerCommand(new SignEditCommand());
+    ctx.registerCommand(new PasteAnnotationTest());
   }
 
   @Override

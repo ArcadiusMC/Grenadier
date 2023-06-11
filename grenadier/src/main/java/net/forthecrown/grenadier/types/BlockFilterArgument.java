@@ -87,7 +87,7 @@ public interface BlockFilterArgument extends ArgumentType<Result> {
      * {@link BlockState#getBlockData()}, if that returns {@code false}, then so
      * does this method.
      * <p>
-     * Next, if {@link #getTag()} is {@code null}, then this method returns \
+     * Next, if {@link #getTag()} is {@code null}, then this method returns
      * {@code true}. Otherwise, it checks if the input is a tile entity, if it
      * isn't, returns {@code false}. Finally, the NBT of this result and the NBT
      * of the tile entity are compared with

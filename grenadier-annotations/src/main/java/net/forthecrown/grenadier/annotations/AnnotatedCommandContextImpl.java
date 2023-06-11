@@ -1,6 +1,9 @@
 package net.forthecrown.grenadier.annotations;
 
+import static net.forthecrown.grenadier.annotations.ParseExceptionFactory.NO_POS;
+
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -13,6 +16,8 @@ import java.util.Objects;
 import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 import net.forthecrown.grenadier.CommandSource;
@@ -28,6 +33,12 @@ import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
 final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
+
+  private static final Pattern PRE_PROCESS_PATTERN
+      = Pattern.compile("#([a-zA-Z_$][a-zA-Z0-9_$]*)(?:\\((.*)\\))?");
+
+  static final int GROUP_DIRECTIVE = 1;
+  static final int GROUP_ARGUMENTS = 2;
 
   @Getter
   private final Map<String, Object> variables = new VariableMap();
@@ -107,6 +118,10 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       throw exceptions.wrap(exc);
     }
 
+    return new StringReader(findLoaderFile(path, exceptions, NO_POS));
+  }
+
+  String findLoaderFile(String path, ParseExceptionFactory exceptions, int pos) {
     for (var l: loaders) {
       String inputString;
 
@@ -121,19 +136,21 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         continue;
       }
 
-      return new StringReader(inputString);
+      return inputString;
     }
 
-    throw exceptions.create("No valid loader path '%s' found", path);
+    throw exceptions.create(pos, "No valid loader path '%s' found", path);
   }
 
   @Override
-  public GrenadierCommandNode registerCommand(Object command,
-                                              ClassLoader loader
+  public GrenadierCommandNode registerCommand(
+      Object command,
+      ClassLoader loader
   ) throws CommandParseException, CommandCompilationException {
     CommandData data = findData(command);
     String value = data.value();
     StringReader reader = getReader(value);
+    reader = resolvePreProcessTokens(reader);
 
     ParseExceptionFactory exceptions = new ParseExceptionFactory(reader);
 
@@ -253,18 +270,70 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     return variables;
   }
 
+  StringReader resolvePreProcessTokens(StringReader reader) {
+    ParseExceptionFactory factory = new ParseExceptionFactory(reader);
+
+    String str = reader.getString();
+    StringBuilder result = new StringBuilder();
+
+    Matcher matcher = PRE_PROCESS_PATTERN.matcher(str);
+
+    while (matcher.find()) {
+      String directive = matcher.group(GROUP_DIRECTIVE);
+      String arguments = matcher.group(GROUP_ARGUMENTS);
+
+      String replacement = executePreProcess(
+          directive,
+          arguments,
+          matcher.start(),
+          factory
+      );
+
+      matcher.appendReplacement(result, replacement);
+    }
+
+    matcher.appendTail(result);
+
+    return new StringReader(result.toString());
+  }
+
+  String executePreProcess(
+      String dir,
+      String args,
+      int start,
+      ParseExceptionFactory exceptions
+  ) {
+    return switch (dir) {
+      case "paste" -> {
+        if (Strings.isNullOrEmpty(args)) {
+          throw exceptions.create(start,
+              "'paste' preprocessor requires filename to paste from"
+          );
+        }
+
+        yield findLoaderFile(args, exceptions, start);
+      }
+
+      default -> {
+        throw exceptions.create(start,
+            "Invalid preprocessor directive '%s'", dir
+        );
+      }
+    };
+  }
+
   static class VariableMap extends HashMap<String, Object> {
 
     void validateKey(String s) {
       Objects.requireNonNull(s, "Null key");
-
       Preconditions.checkArgument(!s.isBlank(), "'%s' is blank");
 
       char first = s.charAt(0);
 
       Preconditions.checkArgument(
           Character.isJavaIdentifierStart(first),
-          "Illegal starting character '%s'", first
+          "Illegal starting character '%s', must be a-z, A-Z, '_' or '$'",
+          first
       );
 
       if (s.length() > 1) {
@@ -273,7 +342,10 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         for (int i = 1; i < s.length(); i++) {
           Preconditions.checkArgument(
               Character.isJavaIdentifierPart(chars[i]),
-              "Illegal character '%s' at index %s", chars[i], i
+
+              "Illegal character '%s' at index %s, must be a-z, A-Z, 0-9, '_' "
+                  + "or '$",
+              chars[i], i
           );
         }
       }

@@ -49,7 +49,8 @@ class TreeTranslator {
       ParseResults<CommandSource> parseResults = dispatcher.parse(reader, source);
       return dispatcher.getCompletionSuggestions(parseResults);
     } catch (Throwable t) {
-      Grenadier.getProvider().getExceptionHandler()
+      Grenadier.getProvider()
+          .getExceptionHandler()
           .onSuggestionException(reader.getString(), t, source);
 
       return Suggestions.empty();
