@@ -67,7 +67,7 @@ Maven:
 If you're intending on shading Grenadier into your plugin, then you can ignore this part. This is intended for using the 
 `config.yml` for Bukkit plugins and the `PluginLoader` for Paper plugins
   
-**Bukkit plugins**  
+### Bukkit plugins
 Simply add this line to your `plugin.yml`
 ```yml
 libraries:
@@ -77,7 +77,7 @@ libraries:
   # the one above, Bukkit will download it automatically
   - "net.forthecrown:grenadier-annotations:<version goes here>"
 ```
-**Paper plugins**  
+### Paper plugins
 You'll need to create an implementation of `PluginLoader`, example: 
 ```java
 package me.loaderexample;
