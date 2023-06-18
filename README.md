@@ -89,14 +89,14 @@ public class LoaderExample implements PluginLoader {
     MavenLibraryResolver resolver = new MavenLibraryResolver();
 
     resolver.addDependency(
-      new Dependency("net.forthecrown:grenadier:<version goes here>")
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:<version goes here>"), null)
     );
 
     // Optional annotations library
     // If you include this, you can skip the one above, Paper downloads
     // it automatically
     resolver.addDependency(
-      new Dependency("net.forthecrown:grenadier-annotations:<version goes here>")
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier-annotations:<version goes here>"), null)
     );
 
     classpathBuilder.addLibrary(resolver);
