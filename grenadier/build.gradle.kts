@@ -25,7 +25,7 @@ dependencies {
   compileOnly("org.projectlombok:lombok:1.18.22")
   annotationProcessor("org.projectlombok:lombok:1.18.22")
 
-  api("com.mojang:brigadier:1.0.18")
+  compileOnly("com.mojang:brigadier:1.0.18")
 
   api("net.forthecrown:nbt:1.4.0")
   api("net.forthecrown:paper-nbt:1.4.0")
