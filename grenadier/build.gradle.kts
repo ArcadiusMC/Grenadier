@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.1.0"
+version = "2.1.1"
 
 repositories {
   mavenCentral()
@@ -78,16 +78,22 @@ publishing {
     create<MavenPublication>("maven") {
       from(components["java"])
 
+      // Apparently, the output of the reobfJar task is the `-dev` jar, not the remapped jar
+      // So do this hack to include 2 extra jar files, the remapped jar itself with no extension
+      // and a '-reobf' jar that can be shaded without the '-dev' jar interfering
+      //
+      // Man, I wish I wasn't this dumb
+      //
+      artifact("build/libs/${project.name}-$version.jar")
+      artifact("build/libs/${project.name}-$version.jar") {
+        classifier = "reobf"
+        extension = "jar"
+      }
+
       pom {
         name.set("grenadier")
         description.set("Command engine made with Mojang's Brigadier for PaperMC")
         url.set("https://github.com/ForTheCrown/Grenadier")
-
-        // For some reason the normal jar file gets forgotten lol,
-        // so gotta do this to include it
-        val jarPath = buildDir.path + "/libs/${project.name}-${project.version}.jar"
-        val jarFile = file(jarPath)
-        artifact(jarFile)
 
         licenses {
           license {
