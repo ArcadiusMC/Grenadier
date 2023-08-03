@@ -102,6 +102,12 @@ public class TestCommand extends AbstractCommand {
                     .executes(c -> {
                       Location location = ArgumentTypes.getLocation(c, "p");
                       c.getSource().sendMessage(location.toString());
+
+                      if (c.getSource().isPlayer()) {
+                        var player = c.getSource().asPlayer();
+                        player.teleport(location);
+                      }
+
                       return 0;
                     })
                 )

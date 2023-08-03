@@ -37,6 +37,8 @@ tasks {
   java {
     withSourcesJar()
     withJavadocJar()
+
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
   }
 
   javadoc {

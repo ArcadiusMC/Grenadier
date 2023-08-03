@@ -1,10 +1,7 @@
 package net.forthecrown.grenadier.types;
 
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_20_R1.util.CraftVector;
+import org.bukkit.util.Vector;
 
 class LocalParsedPosition implements ParsedPosition {
 
@@ -27,51 +24,26 @@ class LocalParsedPosition implements ParsedPosition {
 
   @Override
   public Location apply(Location base) {
-    var pos = CraftVector.toNMS(base.toVector());
-    var rot = new Vec2(base.getYaw(), base.getPitch());
+    // Shamelessly stolen from:
+    // https://www.spigotmc.org/threads/local-coordinates.529011/#post-4280379
 
-    var newPos = applyLocal(pos, rot);
+    // Firstly a vector facing YAW = 0, on the XZ plane as start base
+    Vector axisBase = new Vector(0, 0, 1);
 
-    base.setX(newPos.x);
-    base.setY(newPos.y);
-    base.setZ(newPos.z);
+    // This one pointing YAW + 90° should be the relative "left" of the field of
+    // view, isn't it (since ROLL always is 0°)?
+    Vector axisLeft = axisBase.clone().rotateAroundY(Math.toRadians(-base.getYaw() + 90.0f));
 
-    return base;
-  }
+    // Left axis should be the rotation axis for going up, too, since it's perpendicular...
+    Vector axisUp = base.getDirection().rotateAroundNonUnitAxis(axisLeft, Math.toRadians(-90f));
 
-  private Vec3 applyLocal(Vec3 pos, Vec2 rot) {
-    // I won't even lie, I copy-pasted all of this code from
-    // LocalCoordinates, aka from NMS code, in my defence,
-    // I don't know trigonometry, or whatever type of math
-    // this is, so uhhh... I had to
-    //    - Jules <3
+    // Based on these directions, we got all we need
+    Vector sway = axisLeft.clone().normalize().multiply(left);
+    Vector heave = axisUp.clone().normalize().multiply(up);
+    Vector surge = base.getDirection().multiply(forwards);
 
-    var x = left;
-    var y = up;
-    var z = forwards;
-
-    float f = Mth.cos((rot.y + 90.0F) * ((float)Math.PI / 180F));
-    float g = Mth.sin((rot.y + 90.0F) * ((float)Math.PI / 180F));
-
-    float h = Mth.cos(-rot.x * ((float)Math.PI / 180F));
-    float i = Mth.sin(-rot.x * ((float)Math.PI / 180F));
-
-    float j = Mth.cos((-rot.x + 90.0F) * ((float)Math.PI / 180F));
-    float k = Mth.sin((-rot.x + 90.0F) * ((float)Math.PI / 180F));
-
-    Vec3 vec32 = new Vec3(f * h, i, g * h);
-    Vec3 vec33 = new Vec3(f * j, k, g * j);
-    Vec3 vec34 = vec32.cross(vec33).scale(-1.0D);
-
-    double d = vec32.x * x + vec33.x * y + vec34.x * z;
-    double e = vec32.y * x + vec33.y * y + vec34.y * z;
-    double l = vec32.z * x + vec33.z * y + vec34.z * z;
-
-    return new Vec3(
-        pos.x + d,
-        pos.y + e,
-        pos.z + l
-    );
+    // Add up the global reference based result
+    return base.add(sway).add(heave).add(surge);
   }
 
   @Override
