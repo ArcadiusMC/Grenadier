@@ -27,6 +27,42 @@ public interface ParsedPosition {
   ParsedPosition IDENTITY = new IdentityPosition();
 
   /**
+   * Creates a new local parsed position
+   * <p>
+   * The returned position will return a location based on the direction of the input
+   *
+   * @param left Left axis
+   * @param up Upwards axis
+   * @param forward Forwards axis
+   *
+   * @return Created position
+   */
+  static ParsedPosition local(double left, double up, double forward) {
+    return new LocalParsedPosition(left, up, forward);
+  }
+
+  /**
+   * Creates a new 3D parsed position
+   * @param x X coordinate
+   * @param y Y coordinate
+   * @param z Z coordinate
+   * @return Created position
+   */
+  static ParsedPosition global(Coordinate x, Coordinate y, Coordinate z) {
+    return new ParsedPositionImpl(x, y, z);
+  }
+
+  /**
+   * Creates a new 2D parsed position
+   * @param x X coordinate
+   * @param z Z coordinate
+   * @return Created position
+   */
+  static ParsedPosition global(Coordinate x, Coordinate z) {
+    return new ParsedPositionImpl(x, null, z);
+  }
+
+  /**
    * Applies this position's data to the anchored location of the specified
    * {@code source}
    * <p>

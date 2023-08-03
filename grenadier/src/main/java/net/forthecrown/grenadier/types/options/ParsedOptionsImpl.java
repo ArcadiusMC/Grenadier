@@ -50,11 +50,32 @@ class ParsedOptionsImpl implements ParsedOptions {
   }
 
   @Override
-  public ParsedOptions checkAccess(CommandSource source)
-      throws CommandSyntaxException
-  {
+  public ParsedOptions checkAccess(CommandSource source) throws CommandSyntaxException {
     for (var parsed: options.values()) {
       parsed.checkAccess(source);
+    }
+
+    for (ParsedOption value : options.values()) {
+      if (!(value.option() instanceof ArgumentOption<?> arg)) {
+        continue;
+      }
+
+      for (var excl : arg.getMutuallyExclusive()) {
+        if (!has(excl)) {
+          continue;
+        }
+
+        String label = value.usedLabel();
+        throw Grenadier.exceptions().exclusiveOption(label, excl);
+      }
+
+      for (var req : arg.getRequired()) {
+        if (has(req)) {
+          continue;
+        }
+
+        throw Grenadier.exceptions().missingRequired(value.usedLabel(), req);
+      }
     }
 
     return this;

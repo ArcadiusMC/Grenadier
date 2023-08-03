@@ -307,4 +307,20 @@ class ExceptionProviderImpl implements ExceptionProvider {
   public CommandSyntaxException unknownSuffix(StringReader reader, String suffix) {
     return translatableWithContext("argument.enum.invalid", reader, suffix);
   }
+
+  @Override
+  public CommandSyntaxException exclusiveOption(String label, ArgumentOption<?> excl) {
+    return create("Option '%s' and '%s' are mutually exclusive",
+        label,
+        excl.getLabels().iterator().next()
+    );
+  }
+
+  @Override
+  public CommandSyntaxException missingRequired(String label, ArgumentOption<?> req) {
+    return create("Option '%s' requires that option '%s' also be set",
+        label,
+        req.getLabels().iterator().next()
+    );
+  }
 }

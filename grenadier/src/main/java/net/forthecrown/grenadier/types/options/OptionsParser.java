@@ -167,9 +167,20 @@ class OptionsParser implements Suggester<CommandSource> {
     return (builder, source) -> {
       var remaining = builder.getRemainingLowerCase();
 
-      for (var o: argument.getOptions()) {
+      outer: for (var o: argument.getOptions()) {
         if (!o.test(source) || options.has(o)) {
           continue;
+        }
+
+        // Filter this option out if we've already parsed an exclusive option
+        if (o instanceof ArgumentOption<?> arg) {
+          for (ArgumentOption<?> excl : arg.getMutuallyExclusive()) {
+            if (!options.has(excl)) {
+              continue;
+            }
+
+            continue outer;
+          }
         }
 
         String prefix = o instanceof FlagOption ? "-" : "";
