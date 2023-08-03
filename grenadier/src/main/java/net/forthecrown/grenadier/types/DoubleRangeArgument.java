@@ -8,6 +8,7 @@ import java.util.OptionalDouble;
 import net.forthecrown.grenadier.types.DoubleRangeArgument.DoubleRange;
 import net.forthecrown.grenadier.types.DoubleRangeArgumentImpl.DoubleRangeImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Argument type that returns a range between 2 double values. The range
@@ -36,6 +37,46 @@ public interface DoubleRangeArgument extends ArgumentType<DoubleRange> {
      * Unlimited range
      */
     DoubleRange UNLIMITED = DoubleRangeImpl.UNLIMITED;
+
+    /**
+     * Creates a new double range
+     * @param min The minimum bound, may be null
+     * @param max The maximum bound, may be null
+     * @return Created range
+     */
+    static DoubleRange range(@Nullable Double min, @Nullable Double max) {
+      if (min == null && max == null) {
+        return UNLIMITED;
+      }
+      return new DoubleRangeImpl(min, max);
+    }
+
+    /**
+     * Creates a double range that only matches the specified {@code value}
+     * @param value Range value
+     * @return Created range
+     */
+    static DoubleRange exactly(double value) {
+      return range(value, value);
+    }
+
+    /**
+     * Creates a new max-limited double range
+     * @param max The maximum range value
+     * @return Created range
+     */
+    static DoubleRange atMost(double max) {
+      return range(null, max);
+    }
+
+    /**
+     * Creates a new min-limited double range
+     * @param min The minimum range value
+     * @return Created range
+     */
+    static DoubleRange atLeast(double min) {
+      return range(min, null);
+    }
 
     /**
      * Gets the minimum value

@@ -8,6 +8,7 @@ import java.util.OptionalInt;
 import net.forthecrown.grenadier.types.IntRangeArgument.IntRange;
 import net.forthecrown.grenadier.types.IntRangeArgumentImpl.IntRangeImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Argument type that returns a range between 2 integer values. The range
@@ -35,6 +36,46 @@ public interface IntRangeArgument extends ArgumentType<IntRange> {
      * Unlimited range
      */
     IntRange UNLIMITED = IntRangeImpl.UNLIMITED;
+
+    /**
+     * Creates a new integer range
+     * @param min The minimum bound, may be null
+     * @param max The maximum bound, may be null
+     * @return Created range
+     */
+    static IntRange range(@Nullable Integer min, @Nullable Integer max) {
+      if (min == null && max == null) {
+        return UNLIMITED;
+      }
+      return new IntRangeImpl(min, max);
+    }
+
+    /**
+     * Creates an integer range that only matches the specified {@code value}
+     * @param value Range value
+     * @return Created range
+     */
+    static IntRange exactly(int value) {
+      return range(value, value);
+    }
+
+    /**
+     * Creates a new max-limited integer range
+     * @param max The maximum range value
+     * @return Created range
+     */
+    static IntRange atMost(int max) {
+      return range(null, max);
+    }
+
+    /**
+     * Creates a new min-limited integer range
+     * @param min The minimum range value
+     * @return Created range
+     */
+    static IntRange atLeast(int min) {
+      return range(min, null);
+    }
 
     /**
      * Gets the minimum value
