@@ -57,9 +57,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   /* ------------------------------- NODES -------------------------------- */
 
   @Override
-  public CommandNode<CommandSource> visitLiteral(LiteralTree tree,
-                                                 CompileContext context
-  ) {
+  public CommandNode<CommandSource> visitLiteral(LiteralTree tree, CompileContext context) {
     Result<String> nameResult = (Result<String>)
         tree.getName().accept(this, context);
 
@@ -74,9 +72,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   }
 
   @Override
-  public CommandNode<CommandSource> visitArgument(ArgumentTree tree,
-                                                  CompileContext context
-  ) {
+  public CommandNode<CommandSource> visitArgument(ArgumentTree tree, CompileContext context) {
     Result<ArgumentType> typeResult = (Result<ArgumentType>)
         tree.getTypeInfo().accept(this, context);
 
@@ -94,6 +90,12 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     String name = nameResult.orElse(FAILED);
 
     if (!nameResult.isError()) {
+      if (context.getAvailableArguments().contains(name)) {
+        context.getErrors().error(tree.getName().tokenStart(),
+            "Duplicate argument name, %s already declared", name
+        );
+      }
+
       context.pushArgument(name);
     }
 
