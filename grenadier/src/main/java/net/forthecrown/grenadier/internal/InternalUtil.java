@@ -97,13 +97,13 @@ public final class InternalUtil {
       return Grenadier.dispatcher().execute(reader, source);
     } catch (CommandSyntaxException exc) {
       SyntaxExceptions.handle(exc, source);
-      return 1;
+      return 0;
     } catch (Throwable t) {
       Grenadier.getProvider()
           .getExceptionHandler()
           .onCommandException(startReader, t, source);
 
-      return 1;
+      return 0;
     }
   }
 
