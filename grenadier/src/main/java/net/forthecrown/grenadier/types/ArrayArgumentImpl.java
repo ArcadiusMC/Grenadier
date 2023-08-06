@@ -72,10 +72,11 @@ class ArrayArgumentImpl<T>
       lastSuggestionStart = reader.getCursor();
 
       while (true) {
+        reader.skipWhitespace();
+
         suggestSeparator = false;
         lastSuggestionStart = reader.getCursor();
 
-        reader.skipWhitespace();
         T value = listType.parse(reader);
         list.add(value);
 
@@ -100,6 +101,8 @@ class ArrayArgumentImpl<T>
           }
 
           reader.setCursor(beforeSkip);
+          suggestSeparator = false;
+
           break;
         }
 
