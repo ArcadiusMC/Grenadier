@@ -228,23 +228,28 @@ class TreeTranslator {
       return type;
     }
 
+    ArgumentType<?> vanillaType;
+
     if (type instanceof VanillaMappedArgument vanilla) {
-      var vanillaType = vanilla.getVanillaType(InternalUtil.CONTEXT);
-      Objects.requireNonNull(vanillaType, "getVanillaType returned null");
-
-      if (!ArgumentTypeInfos.isClassRecognized(vanillaType.getClass())) {
-        throw new IllegalArgumentException(
-            String.format(
-                "getVanillaType returned a non-vanilla argument type: %s",
-                vanillaType
-            )
-        );
-      }
-
-      return vanillaType;
+      vanillaType = vanilla.getVanillaType(InternalUtil.CONTEXT);
+    } else if (type instanceof SimpleVanillaMapped simple) {
+      vanillaType = simple.getVanillaType();
+    } else {
+      return GameProfileArgument.gameProfile();
     }
 
-    return GameProfileArgument.gameProfile();
+    Objects.requireNonNull(vanillaType, "getVanillaType returned null");
+
+    if (!ArgumentTypeInfos.isClassRecognized(vanillaType.getClass())) {
+      throw new IllegalArgumentException(
+          String.format(
+              "getVanillaType returned a non-vanilla argument type: %s",
+              vanillaType
+          )
+      );
+    }
+
+    return vanillaType;
   }
 
 }
