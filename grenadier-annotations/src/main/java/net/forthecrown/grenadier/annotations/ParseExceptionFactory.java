@@ -40,6 +40,10 @@ public class ParseExceptionFactory
     return create(NO_POS, format, args);
   }
 
+  public String format(int pos, String message) {
+    return ErrorMessages.formatError(input, pos, message);
+  }
+
   public CommandParseException wrap(CommandSyntaxException exc) {
     Component msg = Grenadier.fromMessage(exc.getRawMessage());
     Component rendered = GlobalTranslator.render(msg, Locale.ENGLISH);

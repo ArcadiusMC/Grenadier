@@ -41,8 +41,8 @@ public enum TokenType {
   SCOPE_END       ('}'),
   BRACKET_OPEN    ('('),
   BRACKET_CLOSE   (')'),
-  SQUARE_OPEN     ('['), // Currently unused
-  SQUARE_CLOSE    (']'), // Currently unused
+  SQUARE_OPEN     ('['),
+  SQUARE_CLOSE    (']'),
 
   // Values
   QUOTED_STRING,

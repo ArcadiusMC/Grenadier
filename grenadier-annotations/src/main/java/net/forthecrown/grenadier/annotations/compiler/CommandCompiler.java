@@ -47,6 +47,7 @@ import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestio
 import net.forthecrown.grenadier.annotations.tree.TreeVisitor;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.kyori.adventure.text.Component;
+import org.bukkit.permissions.Permission;
 
 public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
 
@@ -341,9 +342,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     Result<String> permissionResult
         = (Result<String>) tree.name().accept(this, context);
 
-    return permissionResult.map(permission -> {
-      return source -> source.hasPermission(permission);
-    });
+    return permissionResult.map(PermissionPredicate::new);
   }
 
   @Override
@@ -414,23 +413,18 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   /* ------------------------------- NAMES -------------------------------- */
 
   @Override
-  public Result<String> visitVariableName(VariableName tree,
-                                          CompileContext context
-  ) {
-    return context.getVariable(tree, String.class);
+  public Result<String> visitVariableName(VariableName tree, CompileContext context) {
+    return context.getVariable(tree, String.class)
+        .or(() -> context.getVariable(tree, Permission.class).map(Permission::getName));
   }
 
   @Override
-  public Result<String> visitDirectName(DirectName tree,
-                                        CompileContext context
-  ) {
+  public Result<String> visitDirectName(DirectName tree, CompileContext context) {
     return Result.success(tree.value());
   }
 
   @Override
-  public Result<String> visitFieldName(FieldReferenceName tree,
-                                       CompileContext context
-  ) {
+  public Result<String> visitFieldName(FieldReferenceName tree, CompileContext context) {
     int start = tree.tokenStart();
     Class<?> cmdClass = context.getCommandClass().getClass();
     Field nameField;
@@ -493,16 +487,12 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   /* --------------------------- RESULT MAPPERS --------------------------- */
 
   @Override
-  public Result<ArgumentModifier> visitVariableMapper(VariableMapper tree,
-                                                      CompileContext context
-  ) {
+  public Result<ArgumentModifier> visitVariableMapper(VariableMapper tree, CompileContext context) {
     return context.getVariable(tree, ArgumentModifier.class);
   }
 
   @Override
-  public Result<ArgumentModifier> visitMemberMapper(MemberMapper tree,
-                                                    CompileContext context
-  ) {
+  public Result<ArgumentModifier> visitMemberMapper(MemberMapper tree, CompileContext context) {
     // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledArgumentMapper(context.getCommandClass(), tree.ref())
@@ -510,9 +500,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
   }
 
   @Override
-  public Object visitResultMemberMapper(ResultMemberMapper tree,
-                                        CompileContext context
-  ) {
+  public Object visitResultMemberMapper(ResultMemberMapper tree, CompileContext context) {
     // TODO perform validation of reference before returning success
     return Result.success(
         new CompiledArgumentMapper(null, tree.ref())

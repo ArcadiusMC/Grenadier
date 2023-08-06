@@ -38,11 +38,11 @@ public interface CommandDataLoader {
         return null;
       }
 
-      InputStreamReader reader
-          = new InputStreamReader(stream, StandardCharsets.UTF_8);
-
+      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
       StringWriter writer = new StringWriter();
+
       reader.transferTo(writer);
+      reader.close();
 
       return writer.toString();
     };

@@ -198,7 +198,9 @@ class Parser {
 
     var name = parseName(false);
 
-    lexer.expect(COMMA);
+    if (lexer.peek().is(COMMA)) {
+      lexer.next();
+    }
 
     ArgumentTypeTree typeInfo = parseTypeInfo();
 

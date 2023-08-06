@@ -1,7 +1,5 @@
 package net.forthecrown.grenadier.annotations;
 
-import static net.forthecrown.grenadier.annotations.ParseExceptionFactory.NO_POS;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.mojang.brigadier.CommandDispatcher;
@@ -29,6 +27,8 @@ import net.forthecrown.grenadier.annotations.compiler.CommandCompiler;
 import net.forthecrown.grenadier.annotations.compiler.CompileContext;
 import net.forthecrown.grenadier.annotations.compiler.CompileErrors;
 import net.forthecrown.grenadier.annotations.tree.RootTree;
+import net.forthecrown.grenadier.annotations.util.ErrorMessages;
+import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,14 +90,16 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     this.defaultRule = Objects.requireNonNull(defaultRule);
   }
 
-  private StringReader getReader(String value) {
+  private Result<StringReader> getReader(String value) {
     StringReader reader = new StringReader(value);
 
-    if (!Readers.startsWith(reader, "file")) {
-      return reader;
+    if (value.isEmpty()) {
+      return Result.fail("Empty input");
     }
 
-    ParseExceptionFactory exceptions = new ParseExceptionFactory(reader);
+    if (!Readers.startsWith(reader, "file")) {
+      return Result.success(reader);
+    }
 
     reader.setCursor(reader.getCursor() + "file".length());
     reader.skipWhitespace();
@@ -105,23 +107,23 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     try {
       reader.expect('=');
     } catch (CommandSyntaxException e) {
-      throw exceptions.wrap(e);
+      return Result.fail(reader.getCursor(), "'file' token must be proceeded by '=' token")
+          .mapError((pos, message) -> ErrorMessages.formatError(reader, pos, message))
+          .cast();
     }
 
     reader.skipWhitespace();
 
-    String path;
+    int c = reader.getCursor();
+    String path = reader.getRemaining();
+    reader.setCursor(reader.getTotalLength());
 
-    try {
-      path = reader.readString();
-    } catch (CommandSyntaxException exc) {
-      throw exceptions.wrap(exc);
-    }
-
-    return new StringReader(findLoaderFile(path, exceptions, NO_POS));
+    return findLoaderFile(path, c)
+        .mapError((pos, message) -> ErrorMessages.formatError(reader, pos, message))
+        .map(StringReader::new);
   }
 
-  String findLoaderFile(String path, ParseExceptionFactory exceptions, int pos) {
+  Result<String> findLoaderFile(String path, int pos) {
     for (var l: loaders) {
       String inputString;
 
@@ -132,14 +134,45 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         continue;
       }
 
-      if (inputString == null) {
+      if (inputString == null || inputString.isEmpty()) {
         continue;
       }
 
-      return inputString;
+      return Result.success(inputString);
     }
 
-    throw exceptions.create(pos, "No valid loader path '%s' found", path);
+    return Result.fail(pos, "No valid loader path '%s' found", path);
+  }
+
+  Result<StringReader> getInput(Object commandObject) {
+    Class<?> type = commandObject.getClass();
+    CommandData data = type.getAnnotation(CommandData.class);
+
+    Result<StringReader> input;
+
+    if (data != null) {
+      input = getReader(data.value());
+    } else {
+      CommandFile file = type.getAnnotation(CommandFile.class);
+
+      if (file == null) {
+        return Result.fail("No CommandData or CommandFile annotation present");
+      }
+
+      String path = file.value();
+
+      if (path.isEmpty()) {
+        return Result.fail("No file path set");
+      }
+
+      input = findLoaderFile(path, 0)
+          .mapError((pos, message) -> {
+            return ErrorMessages.formatError(new StringReader(path), pos, message);
+          })
+          .map(StringReader::new);
+    }
+
+    return input.flatMap(this::resolvePreProcessTokens);
   }
 
   @Override
@@ -147,10 +180,11 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       Object command,
       ClassLoader loader
   ) throws CommandParseException, CommandCompilationException {
-    CommandData data = findData(command);
-    String value = data.value();
-    StringReader reader = getReader(value);
-    reader = resolvePreProcessTokens(reader);
+    StringReader reader = getInput(command).orThrow((position, message) -> {
+      return new CommandParseException(
+          "Error getting command input for " + command + ": " + message
+      );
+    });
 
     ParseExceptionFactory exceptions = new ParseExceptionFactory(reader);
 
@@ -216,19 +250,6 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     return node;
   }
 
-  CommandData findData(Object o) {
-    Class<?> type = o.getClass();
-    CommandData data = type.getAnnotation(CommandData.class);
-
-    Preconditions.checkState(
-        data != null,
-        "Class '%s' had no CommandData annotation",
-        type.getName()
-    );
-
-    return data;
-  }
-
   @SuppressWarnings("deprecation")
   Map<String, Object> initializeLocalVariables(Object o) {
     Class<?> type = o.getClass();
@@ -270,7 +291,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
     return variables;
   }
 
-  StringReader resolvePreProcessTokens(StringReader reader) {
+  Result<StringReader> resolvePreProcessTokens(StringReader reader) {
     ParseExceptionFactory factory = new ParseExceptionFactory(reader);
 
     String str = reader.getString();
@@ -282,43 +303,39 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       String directive = matcher.group(GROUP_DIRECTIVE);
       String arguments = matcher.group(GROUP_ARGUMENTS);
 
-      String replacement = executePreProcess(
+      Result<String> replacement = executePreProcess(
           directive,
           arguments,
-          matcher.start(),
-          factory
+          matcher.start()
       );
 
-      matcher.appendReplacement(result, replacement);
+      if (replacement.isError()) {
+        return replacement.mapError(factory::format).cast();
+      }
+
+      matcher.appendReplacement(result, replacement.getValue());
     }
 
     matcher.appendTail(result);
 
-    return new StringReader(result.toString());
+    return Result.success(new StringReader(result.toString()));
   }
 
-  String executePreProcess(
+  Result<String> executePreProcess(
       String dir,
       String args,
-      int start,
-      ParseExceptionFactory exceptions
+      int start
   ) {
     return switch (dir) {
       case "paste" -> {
         if (Strings.isNullOrEmpty(args)) {
-          throw exceptions.create(start,
-              "'paste' preprocessor requires filename to paste from"
-          );
+          yield Result.fail(start, "'paste' preprocessor requires filename to paste from");
         }
 
-        yield findLoaderFile(args, exceptions, start);
+        yield findLoaderFile(args, start);
       }
 
-      default -> {
-        throw exceptions.create(start,
-            "Invalid preprocessor directive '%s'", dir
-        );
-      }
+      default -> Result.fail(start, "Invalid preprocessor directive '%s'", dir);
     };
   }
 

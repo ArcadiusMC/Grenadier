@@ -3,6 +3,7 @@ package net.forthecrown.grenadier.annotations.util;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Container object which may either contain a value or an error message with an
@@ -78,10 +79,7 @@ public class Result<V> {
    * @param args Message arguments
    * @return Created result
    */
-  public static <V> Result<V> fail(int position,
-                                   String message,
-                                   Object... args
-  ) {
+  public static <V> Result<V> fail(int position, String message, Object... args) {
     Objects.requireNonNull(message, "Null message");
     return new Result<>(null, message.formatted(args), position);
   }
@@ -223,6 +221,54 @@ public class Result<V> {
     }
 
     consumer.accept(value);
+  }
+
+  public <T> Result<T> cast() {
+    if (!isError()) {
+      throw new IllegalStateException("Not an error result");
+    }
+    return (Result<T>) this;
+  }
+
+  /**
+   * Maps this result's error message.
+   * <p>
+   * Calling this function will create a new error result with the mapped message. The error
+   * position will also be disregarded
+   * <p>
+   * If this is NOT an error result, returns {@code this}
+   *
+   * @param mapper Mapping function
+   * @return Created result
+   */
+  public Result<V> mapError(ErrorMapper mapper) {
+    Objects.requireNonNull(mapper, "Null mapper");
+    if (!isError()) {
+      return this;
+    }
+    return Result.fail(mapper.mapError(errorPosition, error));
+  }
+
+  public Result<V> or(Supplier<Result<V>> supplier) {
+    if (!isError()) {
+      return this;
+    }
+
+    return supplier.get();
+  }
+
+  /**
+   * Function used to map an error message
+   */
+  public interface ErrorMapper {
+
+    /**
+     * Maps an error message and an error position
+     * @param pos Error position
+     * @param message Error message
+     * @return Mapped message
+     */
+    String mapError(int pos, String message);
   }
 
   /**

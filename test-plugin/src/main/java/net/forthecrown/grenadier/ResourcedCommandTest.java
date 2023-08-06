@@ -3,14 +3,14 @@ package net.forthecrown.grenadier;
 import java.util.List;
 import java.util.Map;
 import net.forthecrown.grenadier.annotations.Argument;
-import net.forthecrown.grenadier.annotations.CommandData;
+import net.forthecrown.grenadier.annotations.CommandFile;
 import net.forthecrown.grenadier.annotations.VariableInitializer;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@CommandData("file = resource.gcn")
+@CommandFile("resource.gcn")
 public class ResourcedCommandTest {
 
   static final String POS_ARG = "position";
