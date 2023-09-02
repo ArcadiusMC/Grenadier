@@ -92,6 +92,9 @@ class ArrayArgumentImpl<T>
           reader.skipWhitespace();
 
           if (!reader.canRead()) {
+            reader.setCursor(beforeSkip);
+            suggestSeparator = true;
+
             break;
           }
 
