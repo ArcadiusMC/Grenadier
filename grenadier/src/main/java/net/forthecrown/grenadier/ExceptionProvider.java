@@ -4,7 +4,8 @@ import com.mojang.brigadier.ImmutableStringReader;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.forthecrown.grenadier.types.options.ArgumentOption;
+import java.util.Collection;
+import net.forthecrown.grenadier.types.options.Option;
 import net.forthecrown.nbt.path.PathParseException;
 import net.forthecrown.nbt.string.TagParseException;
 import net.kyori.adventure.text.Component;
@@ -86,7 +87,11 @@ public interface ExceptionProvider extends CommandExceptionType {
 
   CommandSyntaxException flagAlreadySet(String word, StringReader reader);
 
-  CommandSyntaxException missingOption(ArgumentOption<?> option);
+  CommandSyntaxException missingOption(
+      Option option,
+      Collection<Option> exclusive,
+      Collection<Option> requires
+  );
 
   CommandSyntaxException rangeEmpty(StringReader reader);
 
@@ -94,7 +99,7 @@ public interface ExceptionProvider extends CommandExceptionType {
 
   CommandSyntaxException unknownSuffix(StringReader reader, String suffix);
 
-  CommandSyntaxException exclusiveOption(String label, ArgumentOption<?> excl);
+  CommandSyntaxException exclusiveOption(String label, Collection<Option> excl);
 
-  CommandSyntaxException missingRequired(String label, ArgumentOption<?> req);
+  CommandSyntaxException missingRequired(String label, Collection<Option> req);
 }

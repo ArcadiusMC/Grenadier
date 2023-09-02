@@ -1,7 +1,6 @@
 package net.forthecrown.grenadier.types.options;
 
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.CommandSource;
 import net.kyori.adventure.text.Component;
@@ -15,11 +14,14 @@ import org.jetbrains.annotations.Nullable;
 public interface Option extends Predicate<CommandSource> {
 
   /**
-   * Gets labels that can be used to parse this option
-   * @return Option labels
+   * Gets the option's label.
+   * <p>
+   * This label will be used to parse the option
+   *
+   * @return Option's label
    */
   @NotNull
-  Set<String> getLabels();
+  String getLabel();
 
   /**
    * Gets the condition that must be passed in order to use this option and to
@@ -57,17 +59,6 @@ public interface Option extends Predicate<CommandSource> {
   interface OptionBuilder<T extends OptionBuilder<T>> {
 
     /**
-     * Adds a label
-     * @param labels Labels to add
-     * @return this
-     *
-     * @throws IllegalArgumentException If any of the labels failed the
-     *                                  {@link Options#validateLabel(String)}
-     *                                  check
-     */
-    T addLabel(String... labels) throws IllegalArgumentException;
-
-    /**
      * Sets this option's labels
      * @param labels Option labels
      * @return this
@@ -75,7 +66,7 @@ public interface Option extends Predicate<CommandSource> {
      *                                  {@link Options#validateLabel(String)}
      *                                  check
      */
-    T setLabels(String... labels) throws IllegalArgumentException;
+    T setLabel(String label) throws IllegalArgumentException;
 
     /**
      * Sets the option's use condition

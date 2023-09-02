@@ -4,7 +4,6 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Suggester;
@@ -53,26 +52,6 @@ public interface ArgumentOption<T> extends Option, Suggester<CommandSource> {
   @Nullable
   Suggester<CommandSource> getSuggester();
 
-  /**
-   * Gets an immutable set of argument options this option is mutually exclusive with
-   * <p>
-   * <b>Note:</b> To validate if no exclusive options were actually parsed, you must call
-   * {@link ParsedOptions#checkAccess(CommandSource)}
-   *
-   * @return Mutually exclusive options
-   */
-  Set<ArgumentOption<?>> getMutuallyExclusive();
-
-  /**
-   * Gets an immutable set of options this option requires also be set
-   * <p>
-   * <b>Note:</b> To validate if all required options were actually parsed, you must call
-   * {@link ParsedOptions#checkAccess(CommandSource)}
-   *
-   * @return Required options
-   */
-  Set<ArgumentOption<?>> getRequired();
-
   @Override
   default CompletableFuture<Suggestions> getSuggestions(
       CommandContext<CommandSource> context,
@@ -111,31 +90,9 @@ public interface ArgumentOption<T> extends Option, Suggester<CommandSource> {
     Builder<T> setSuggester(@Nullable Suggester<CommandSource> suggester);
 
     /**
-     * Adds an argument option that this option will require
-     * <p>
-     * <b>Note:</b> To validate if all required options were actually parsed, you must call
-     * {@link ParsedOptions#checkAccess(CommandSource)}
-     *
-     * @param other Required option
-     * @return this
-     */
-    Builder<T> requires(ArgumentOption<?> other);
-
-    /**
-     * Adds an argument option that is mutually exclusive with this one
-     * <p>
-     * <b>Note:</b> To validate if no exclusive options were actually parsed, you must call
-     * {@link ParsedOptions#checkAccess(CommandSource)}
-     *
-     * @param option Option
-     * @return this
-     */
-    Builder<T> mutuallyExclusiveWith(ArgumentOption<?> option);
-
-    /**
      * Creates the argument option
      * @return Created option
-     * @throws IllegalArgumentException If no labels were specified
+     * @throws IllegalArgumentException If an option label was not specified
      */
     ArgumentOption<T> build() throws IllegalArgumentException;
   }

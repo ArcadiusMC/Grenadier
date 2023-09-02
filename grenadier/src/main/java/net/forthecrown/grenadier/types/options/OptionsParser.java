@@ -1,17 +1,21 @@
 package net.forthecrown.grenadier.types.options;
 
+import com.google.common.collect.ImmutableSet;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Completions;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.Suggester;
+import net.forthecrown.grenadier.types.options.OptionsArgumentImpl.Entry;
 
 @Getter
 class OptionsParser implements Suggester<CommandSource> {
@@ -33,6 +37,11 @@ class OptionsParser implements Suggester<CommandSource> {
 
     while (true) {
       reader.skipWhitespace();
+
+      if (reader.canRead() && !StringReader.isAllowedInUnquotedString(reader.peek())) {
+        break;
+      }
+
       parseOption();
 
       if (reader.canRead()) {
@@ -41,17 +50,50 @@ class OptionsParser implements Suggester<CommandSource> {
               .dispatcherExpectedArgumentSeparator()
               .createWithContext(reader);
         }
+
+        suggest(reader.getCursor() + 1, suggestLabels());
       } else {
         break;
       }
     }
 
-    for (var e: argument.getEntries()) {
-      if (!e.required() || options.has(e.option())) {
+    validate();
+  }
+
+  private void validate() throws CommandSyntaxException {
+    ImmutableSet<Entry> entries = argument.options;
+    Set<Option> validatedRequired = new HashSet<>();
+
+    outer:
+    for (Entry entry : entries) {
+      if (!entry.required()) {
         continue;
       }
 
-      throw Grenadier.exceptions().missingOption(e.option());
+      var o = entry.option();
+
+      if (validatedRequired.contains(o)) {
+        continue;
+      }
+
+      if (options.has(o)) {
+        validatedRequired.addAll(entry.exclusive());
+        validatedRequired.add(o);
+        continue;
+      }
+
+      for (Option option : entry.exclusive()) {
+        if (options.has(option)) {
+          validatedRequired.addAll(entry.exclusive());
+          validatedRequired.add(o);
+          continue outer;
+        }
+      }
+
+      Set<Option> requires = new HashSet<>(entry.requires());
+      requires.removeIf(options::has);
+
+      throw Grenadier.exceptions().missingOption(o, entry.exclusive(), requires);
     }
   }
 
@@ -67,12 +109,14 @@ class OptionsParser implements Suggester<CommandSource> {
           .createWithContext(reader);
     }
 
-    Option option = findOption(word);
+    Entry entry = findOption(word);
 
-    if (option == null) {
+    if (entry == null) {
       reader.setCursor(start);
       throw Grenadier.exceptions().unknownOption(reader, word);
     }
+
+    Option option = entry.option();
 
     if (option instanceof FlagOption flag) {
       if (options.has(flag)) {
@@ -81,7 +125,7 @@ class OptionsParser implements Suggester<CommandSource> {
       }
 
       StringRange range = StringRange.between(start, reader.getCursor());
-      options.addFlag(flag, word, range);
+      options.addFlag(entry, word, range);
     } else {
       ArgumentOption<Object> arg = (ArgumentOption<Object>) option;
 
@@ -100,6 +144,12 @@ class OptionsParser implements Suggester<CommandSource> {
         throw Grenadier.exceptions().optionAlreadySet(word, reader);
       }
 
+      if (!reader.canRead()) {
+        throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
+            .dispatcherParseException()
+            .createWithContext(reader, "?");
+      }
+
       Object value = arg.getArgumentType().parse(reader);
 
       if (reader.canRead() && !Character.isWhitespace(reader.peek())) {
@@ -109,16 +159,16 @@ class OptionsParser implements Suggester<CommandSource> {
       }
 
       StringRange range = StringRange.between(start, reader.getCursor());
-      options.addValue(arg, value, word, range);
+      options.addValue(entry, value, word, range);
     }
   }
 
-  private Option findOption(String label) {
-    Option option = argument.getOption(label);
+  private Entry findOption(String label) {
+    Entry option = argument.optionLookup.get(label);
 
     if (option == null && label.startsWith("-")) {
       label = label.substring(1);
-      option = argument.getOption(label);
+      option = argument.optionLookup.get(label);
     }
 
     return option;
@@ -167,34 +217,33 @@ class OptionsParser implements Suggester<CommandSource> {
     return (builder, source) -> {
       var remaining = builder.getRemainingLowerCase();
 
-      outer: for (var o: argument.getOptions()) {
+      outer: for (var e: argument.options) {
+        var o = e.option();
+
         if (!o.test(source) || options.has(o)) {
           continue;
         }
 
         // Filter this option out if we've already parsed an exclusive option
-        if (o instanceof ArgumentOption<?> arg) {
-          for (ArgumentOption<?> excl : arg.getMutuallyExclusive()) {
-            if (!options.has(excl)) {
-              continue;
-            }
-
-            continue outer;
-          }
-        }
-
-        String prefix = o instanceof FlagOption ? "-" : "";
-
-        for (var l: o.getLabels()) {
-          if (!Completions.matches(remaining, l)) {
+        for (Option excl : e.exclusive()) {
+          if (!options.has(excl)) {
             continue;
           }
 
-          if (o.getTooltip() == null) {
-            builder.suggest(prefix + l);
-          } else {
-            builder.suggest(prefix + l, Grenadier.toMessage(o.getTooltip()));
-          }
+          continue outer;
+        }
+
+        String prefix = o instanceof FlagOption ? "-" : "";
+        var label = prefix + o.getLabel();
+
+        if (!Completions.matches(remaining, label)) {
+          continue;
+        }
+
+        if (o.getTooltip() == null) {
+          builder.suggest(label);
+        } else {
+          builder.suggest(label, Grenadier.toMessage(o.getTooltip()));
         }
       }
     };

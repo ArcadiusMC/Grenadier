@@ -15,7 +15,7 @@ public interface FlagOption extends Option {
     /**
      * Builds the flag option
      * @return Created option
-     * @throws IllegalArgumentException If no labels were specified
+     * @throws IllegalArgumentException If an option label was not specified
      */
     FlagOption build() throws IllegalArgumentException;
   }

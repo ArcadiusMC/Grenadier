@@ -28,7 +28,7 @@ public final class Options {
    * @return Created flag option
    */
   public static FlagOption flag(String label) {
-    return flag().addLabel(label).build();
+    return flag().setLabel(label).build();
   }
 
   /**
@@ -48,10 +48,8 @@ public final class Options {
    * @return Created option
    * @param <T> Option value's type
    */
-  public static <T> ArgumentOption<T> argument(ArgumentType<T> type,
-                                               String label
-  ) {
-    return argument(type).addLabel(label).build();
+  public static <T> ArgumentOption<T> argument(ArgumentType<T> type, String label) {
+    return argument(type).setLabel(label).build();
   }
 
   /**

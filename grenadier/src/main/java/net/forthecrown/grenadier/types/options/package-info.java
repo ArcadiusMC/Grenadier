@@ -38,11 +38,7 @@
  * CommandSource source = context.getSource();
  *
  * ParsedOptions options
- *    = context.getArgument("argument name", ParsedOptions.class);
- *
- * // Ensure the source executing the command is allowed to access
- * // all of the parsed options
- * options.checkAccess(source);
+ *    = ArgumentTypes.getOptions(context, "argument name");
  *
  * int intValue = options.getValue(ARGUMENT);
  * boolean flag = options.hasFlag(EXAMPLE_FLAG);
@@ -53,10 +49,11 @@
  * Each option can have a specific use condition that command source objects
  * must pass in order to use the option. For example, if we wanted to limit a
  * specific option to a single world, (for example, the 'command_world' world),
- * we could do so like this: <pre><code>
+ * we could do so like this:
+ * <pre><code>
  * static final ArgumentOption&lt;Integer> integerOption
  *     = Options.argument(IntegerArgumentType.integer())
- *     .addLabel("integerOption")
+ *     .setLabel("integerOption")
  *
  *     .setCondition(source -> {
  *       World world = source.getWorld();
@@ -71,10 +68,11 @@
  * <h3>Custom suggestions for argument options</h3>
  * Most of the time, {@link net.forthecrown.grenadier.types.options.ArgumentOption}s
  * will use the suggestions provided by their argument type, this behaviour can
- * be overridden, like so: <pre><code>
+ * be overridden, like so:
+ * <pre><code>
  * final ArgumentOption&lt;Integer> integerOption
  *     = Options.argument(IntegerArgumentType.integer())
- *     .addLabel("integerOption")
+ *     .setLabel("integerOption")
  *
  *     .setSuggester((context, builder) -> {
  *       return Completions.suggest(builder, "1", "2", "3");
@@ -82,6 +80,46 @@
  *
  *     .build();
  * </code></pre>
+ *
+ * <h3>Dependant and Mutually Exclusive Options</h3>
+ * Dependent options are options which depend on each other, simple as that. You can declare which
+ * options are dependent on what options using the {@link net.forthecrown.grenadier.types.options.OptionsArgumentBuilder}
+ * like so:
+ * <pre><code>
+ * ArgumentOption&lt;Integer> integerOption = // ...
+ * ArgumentOption&lt;String> stringOption = // ...
+ * ArgumentOption&lt;Boolean> booleanOption = // ...
+ *
+ * OptionsArgument options = OptionsArgument.builder()
+ *     .allOf(integerOption, stringOption)
+ *     .addOptional(booleanOption)
+ *     .build();
+ * </code></pre>
+ *
+ * In that example, the {@code integerOption} and {@code stringOption} depend on each other, meaning
+ * if one is specified in a command, the must be as well.
+ * <p>
+ * The opposite of that are mutually exclusive options, meaning that of a given set of options, only
+ * one is allowed to be specified, like so:
+ * <pre><code>
+ *  ArgumentOption&lt;Integer> integerOption = // ...
+ *  ArgumentOption&lt;String> stringOption = // ...
+ *  ArgumentOption&lt;Boolean> booleanOption = // ...
+ *
+ *  OptionsArgument options = OptionsArgument.builder()
+ *      .oneOf(integerOption, stringOption)
+ *      .addOptional(booleanOption)
+ *      .build();
+ * </code></pre>
+ *
+ * In that example, only {@code integerOption} or {@code stringOption} can be specified in command
+ * input, if both are specified, the command will fail to parse.
+ * <p>
+ * If you wish to force one of the options to be specified, then
+ * replace {@link net.forthecrown.grenadier.types.options.OptionsArgumentBuilder#oneOf(net.forthecrown.grenadier.types.options.Option...)}
+ * or {@link net.forthecrown.grenadier.types.options.OptionsArgumentBuilder#allOf(net.forthecrown.grenadier.types.options.Option...)}
+ * with {@link net.forthecrown.grenadier.types.options.OptionsArgumentBuilder#requireOneOf(net.forthecrown.grenadier.types.options.Option...)}
+ * or {@link net.forthecrown.grenadier.types.options.OptionsArgumentBuilder#requireAllOf(net.forthecrown.grenadier.types.options.Option...)}
  *
  * @see net.forthecrown.grenadier.types.options.OptionsArgument
  * Options argument

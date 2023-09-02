@@ -13,6 +13,7 @@ import lombok.experimental.Accessors;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.Readers;
+import net.forthecrown.grenadier.types.options.OptionsArgumentImpl.Entry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,32 +21,29 @@ class ParsedOptionsImpl implements ParsedOptions {
 
   private final String input;
 
-  private final Map<String, ParsedOption> lookup = new HashMap<>();
-  private final Map<Option, ParsedOption> options = new HashMap<>();
+  private final Map<String, ParsedOptionImpl> lookup = new HashMap<>();
+  private final Map<Option, ParsedOptionImpl> options = new HashMap<>();
 
   public ParsedOptionsImpl(String input) {
     this.input = input;
   }
 
-  public void addFlag(Option option, String label, StringRange range) {
-    ParsedOption parsed = new ParsedOptionImpl(option, label, range);
+  public void addFlag(Entry option, String label, StringRange range) {
+    ParsedOptionImpl parsed = new ParsedOptionImpl(option, label, range);
     add(parsed);
   }
 
-  public <T> void addValue(ArgumentOption<T> option,
+  public <T> void addValue(Entry option,
                            T value,
                            String label,
                            StringRange range
   ) {
-    ParsedValue<T> parsed = new ParsedValueImpl<>(option, label, range, value);
+    ParsedValueImpl<T> parsed = new ParsedValueImpl<>(option, label, range, value);
     add(parsed);
   }
 
-  private void add(ParsedOption option) {
-    option.option().getLabels().forEach(s -> {
-      lookup.put(s, option);
-    });
-
+  private void add(ParsedOptionImpl option) {
+    lookup.put(option.usedLabel(), option);
     options.put(option.option(), option);
   }
 
@@ -55,26 +53,25 @@ class ParsedOptionsImpl implements ParsedOptions {
       parsed.checkAccess(source);
     }
 
-    for (ParsedOption value : options.values()) {
-      if (!(value.option() instanceof ArgumentOption<?> arg)) {
-        continue;
-      }
+    for (ParsedOptionImpl value : options.values()) {
+      var exclusive = value.entry.exclusive();
+      var requires = value.entry.requires();
 
-      for (var excl : arg.getMutuallyExclusive()) {
+      for (var excl : exclusive) {
         if (!has(excl)) {
           continue;
         }
 
         String label = value.usedLabel();
-        throw Grenadier.exceptions().exclusiveOption(label, excl);
+        throw Grenadier.exceptions().exclusiveOption(label, exclusive);
       }
 
-      for (var req : arg.getRequired()) {
+      for (var req : requires) {
         if (has(req)) {
           continue;
         }
 
-        throw Grenadier.exceptions().missingRequired(value.usedLabel(), req);
+        throw Grenadier.exceptions().missingRequired(value.usedLabel(), requires);
       }
     }
 
@@ -106,15 +103,20 @@ class ParsedOptionsImpl implements ParsedOptions {
   @RequiredArgsConstructor
   class ParsedOptionImpl implements ParsedOption {
 
-    final Option option;
+    final Entry entry;
     final String usedLabel;
     final StringRange range;
+
+    @Override
+    public Option option() {
+      return entry.option();
+    }
 
     @Override
     public void checkAccess(CommandSource source)
         throws CommandSyntaxException
     {
-      if (option.test(source)) {
+      if (option().test(source)) {
         return;
       }
 
@@ -137,7 +139,7 @@ class ParsedOptionsImpl implements ParsedOptions {
 
     private final T value;
 
-    public ParsedValueImpl(ArgumentOption<T> option,
+    public ParsedValueImpl(Entry option,
                            String usedLabel,
                            StringRange range,
                            T value

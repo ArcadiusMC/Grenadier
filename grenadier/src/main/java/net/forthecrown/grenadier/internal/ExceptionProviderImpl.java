@@ -3,9 +3,13 @@ package net.forthecrown.grenadier.internal;
 import com.mojang.brigadier.ImmutableStringReader;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.StringJoiner;
 import net.forthecrown.grenadier.ExceptionProvider;
 import net.forthecrown.grenadier.Grenadier;
-import net.forthecrown.grenadier.types.options.ArgumentOption;
+import net.forthecrown.grenadier.types.options.Option;
 import net.forthecrown.nbt.path.PathParseException;
 import net.forthecrown.nbt.string.TagParseException;
 import net.kyori.adventure.text.Component;
@@ -18,9 +22,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 class ExceptionProviderImpl implements ExceptionProvider {
 
@@ -289,8 +290,22 @@ class ExceptionProviderImpl implements ExceptionProvider {
   }
 
   @Override
-  public CommandSyntaxException missingOption(ArgumentOption<?> option) {
-    return create("Missing option '%s'", option.getLabels().iterator().next());
+  public CommandSyntaxException missingOption(
+      Option option,
+      Collection<Option> exclusive,
+      Collection<Option> requires
+  ) {
+    String label = option.getLabel();
+
+    if (!exclusive.isEmpty()) {
+      String joined = joinOptions(exclusive);
+      return create("One of the following options must be present %s or '%s'", joined, label);
+    } else if (!requires.isEmpty()) {
+      String joined = joinOptions(requires);
+      return create("Missing options %s and '%s'", joined, label);
+    } else {
+      return create("Missing option '%s'", label);
+    }
   }
 
   @Override
@@ -309,18 +324,33 @@ class ExceptionProviderImpl implements ExceptionProvider {
   }
 
   @Override
-  public CommandSyntaxException exclusiveOption(String label, ArgumentOption<?> excl) {
-    return create("Option '%s' and '%s' are mutually exclusive",
-        label,
-        excl.getLabels().iterator().next()
-    );
+  public CommandSyntaxException exclusiveOption(String label, Collection<Option> excl) {
+    if (excl.size() == 1) {
+      return create("Option '%s' and '%s' are mutually exclusive",
+          label, excl.iterator().next().getLabel()
+      );
+    }
+
+    String joined = joinOptions(excl);
+    return create("Option '%s' is mutually exclusive with %s", label, joined);
   }
 
   @Override
-  public CommandSyntaxException missingRequired(String label, ArgumentOption<?> req) {
-    return create("Option '%s' requires that option '%s' also be set",
-        label,
-        req.getLabels().iterator().next()
-    );
+  public CommandSyntaxException missingRequired(String label, Collection<Option> req) {
+    if (req.size() == 1) {
+      var opt = req.iterator().next();
+      return create("Option '%s' requires that option '%s' also be set", label, opt.getLabel());
+    }
+
+    String joined = joinOptions(req);
+    return create("Option '%s' requires options %s", label, joined);
+  }
+
+  private String joinOptions(Collection<Option> options) {
+    StringJoiner joiner = new StringJoiner("', '", "'", "'");
+    for (Option option : options) {
+      joiner.add(option.getLabel());
+    }
+    return joiner.toString();
   }
 }

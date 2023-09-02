@@ -27,7 +27,7 @@ public interface OptionsArgument extends ArgumentType<ParsedOptions> {
    * Creates a new options argument builder
    * @return Created builder
    */
-  static Builder builder() {
+  static OptionsArgumentBuilder builder() {
     return new BuilderImpl();
   }
 
@@ -45,16 +45,15 @@ public interface OptionsArgument extends ArgumentType<ParsedOptions> {
    * @param option Option to get the entry for
    * @return Found entry, or {@code null}, if no entry exists for the
    *         provided option
-   * @param <T> Option's type
    */
   @Nullable
-  <T> ArgumentEntry<T> getEntry(ArgumentOption<T> option);
+  ArgumentEntry getEntry(Option option);
 
   /**
    * Gets an unmodifiable collection of all argument entries
    * @return Argument entries
    */
-  Collection<ArgumentEntry<?>> getEntries();
+  Collection<ArgumentEntry> getEntries();
 
   /**
    * Gets an unmodifiable set of all options added to this argument
@@ -71,15 +70,14 @@ public interface OptionsArgument extends ArgumentType<ParsedOptions> {
 
   /**
    * A single {@link ArgumentOption} entry
-   * @param <T> Option's value type
    */
-  interface ArgumentEntry<T> {
+  interface ArgumentEntry {
 
     /**
      * Gets the option
      * @return option
      */
-    ArgumentOption<T> option();
+    Option option();
 
     /**
      * Gets if a value for the {@link #option()} is required
@@ -87,55 +85,18 @@ public interface OptionsArgument extends ArgumentType<ParsedOptions> {
      *         {@code false} otherwise
      */
     boolean required();
+
+    /**
+     * Gets an unmodifiable set of options this entry is mutually exclusive with
+     * @return Mutually exclusive options
+     */
+    Set<Option> exclusive();
+
+    /**
+     * Gets an unmodifiable set of options required by this entry
+     * @return Required options
+     */
+    Set<Option> requires();
   }
 
-  /**
-   * Options argument builder
-   */
-  interface Builder {
-
-    /**
-     * Adds a flag option
-     * @param option Option to add
-     * @return this
-     */
-    Builder addFlag(FlagOption option);
-
-    /**
-     * Adds an argument option
-     * @param option Option to add
-     * @param required {@code true}, if a value for the specified {@code option}
-     *                 must always be given, {@code false} otherwise
-     * @return this
-     * @param <T> Option's value type
-     */
-    <T> Builder addOption(ArgumentOption<T> option, boolean required);
-
-    /**
-     * Delegate for {@link #addOption(ArgumentOption, boolean)} with
-     * {@code false} for the 'required' parameter
-     *
-     * @see #addOption(ArgumentOption, boolean)
-     */
-    default <T> Builder addOptional(ArgumentOption<T> option) {
-      return addOption(option, false);
-    }
-
-    /**
-     * Delegate for {@link #addOption(ArgumentOption, boolean)} with
-     * {@code true} for the 'required' parameter
-     *
-     * @see #addOption(ArgumentOption, boolean)
-     */
-    default <T> Builder addRequired(ArgumentOption<T> option) {
-      return addOption(option, true);
-    }
-
-    /**
-     * Creates the options argument
-     * @return Created argument
-     * @throws IllegalArgumentException If no options were specified
-     */
-    OptionsArgument build() throws IllegalArgumentException;
-  }
 }

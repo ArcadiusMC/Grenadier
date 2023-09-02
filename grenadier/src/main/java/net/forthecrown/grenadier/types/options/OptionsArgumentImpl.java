@@ -13,20 +13,29 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.Readers;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
+import net.forthecrown.grenadier.types.options.OptionsArgumentBuilder.EntryBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 class OptionsArgumentImpl implements OptionsArgument, VanillaMappedArgument {
 
-  final ImmutableMap<String, Option> optionLookup;
-  final ImmutableMap<ArgumentOption<?>, ArgumentEntry<?>> entries;
-  final ImmutableSet<Option> options;
+  private static final Logger LOGGER = Grenadier.getLogger();
+
+  final ImmutableMap<String, Entry> optionLookup;
+  final ImmutableMap<Option, Entry> entries;
+  final ImmutableSet<Entry> options;
 
   public OptionsArgumentImpl(BuilderImpl builder) {
     this.optionLookup = ImmutableMap.copyOf(builder.options);
@@ -34,6 +43,20 @@ class OptionsArgumentImpl implements OptionsArgument, VanillaMappedArgument {
     this.options = ImmutableSet.copyOf(optionLookup.values());
 
     Preconditions.checkArgument(options.size() > 1, "No options given");
+
+    for (Entry option : options) {
+      for (Option excl : option.exclusive) {
+        Entry exclEntry = entries.get(excl);
+
+        // Can happen if 'option' was registered,
+        // but 'excl' itself was not
+        if (exclEntry == null) {
+          continue;
+        }
+
+        exclEntry.exclusive.add(option.option);
+      }
+    }
   }
 
   @Override
@@ -70,23 +93,31 @@ class OptionsArgumentImpl implements OptionsArgument, VanillaMappedArgument {
   }
 
   @Override
-  public @Nullable <T> ArgumentEntry<T> getEntry(ArgumentOption<T> option) {
-    return (ArgumentEntry<T>) entries.get(option);
+  public @Nullable ArgumentEntry getEntry(Option option) {
+    return entries.get(option);
   }
 
   @Override
-  public Collection<ArgumentEntry<?>> getEntries() {
+  public Collection<ArgumentEntry> getEntries() {
     return Collections.unmodifiableCollection(entries.values());
   }
 
   @Override
   public Option getOption(String label) {
-    return optionLookup.get(label);
+    var entry = optionLookup.get(label);
+
+    if (entry == null) {
+      return null;
+    }
+
+    return entry.option();
   }
 
   @Override
   public Set<Option> getOptions() {
-    return options;
+    return options.stream()
+        .map(ArgumentEntry::option)
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   @Override
@@ -94,44 +125,85 @@ class OptionsArgumentImpl implements OptionsArgument, VanillaMappedArgument {
     return StringArgumentType.greedyString();
   }
 
-  record Entry<T>(ArgumentOption<T> option, boolean required)
-      implements ArgumentEntry<T>
-  {
+  record Entry(
+      Option option,
+      boolean required,
+      Set<Option> requires,
+      Set<Option> exclusive
+  ) implements ArgumentEntry {
 
+    @Override
+    public Set<Option> requires() {
+      return Collections.unmodifiableSet(requires);
+    }
+
+    @Override
+    public Set<Option> exclusive() {
+      return Collections.unmodifiableSet(exclusive);
+    }
   }
 
-  static class BuilderImpl implements Builder {
+  static class BuilderImpl implements OptionsArgumentBuilder {
 
-    final Map<String, Option> options = new HashMap<>();
-    final Map<ArgumentOption<?>, ArgumentEntry<?>> entries = new HashMap<>();
+    final Map<String, Entry> options = new HashMap<>();
+    final Map<Option, Entry> entries = new HashMap<>();
 
     @Override
-    public Builder addFlag(FlagOption option) {
-      return addOption(option);
+    public OptionsArgumentBuilder addFlag(FlagOption option) {
+      return addOptional(option);
     }
 
     @Override
-    public <T> Builder addOption(ArgumentOption<T> option, boolean required) {
-      addOption(option);
+    public OptionsArgumentBuilder addOptional(Option option, Consumer<EntryBuilder> consumer) {
+      Objects.requireNonNull(consumer, "Null consumer");
+      return addOption(option, false, consumer);
+    }
 
-      Entry<T> entry = new Entry<>(option, required);
+    @Override
+    public OptionsArgumentBuilder addRequired(Option option, Consumer<EntryBuilder> consumer) {
+      Objects.requireNonNull(consumer, "Null consumer");
+      return addOption(option, true, consumer);
+    }
+
+    @Override
+    public OptionsArgumentBuilder addOptional(Option option) {
+      return addOption(option, false, null);
+    }
+
+    @Override
+    public OptionsArgumentBuilder addRequired(Option option) {
+      return addOption(option, true, null);
+    }
+
+    private OptionsArgumentBuilder addOption(
+        Option option,
+        boolean required,
+        Consumer<EntryBuilder> consumer
+    ) {
+      EntryBuilderImpl builder = new EntryBuilderImpl(required, option);
+
+      if (consumer != null) {
+        consumer.accept(builder);
+      }
+
+      return addOption(builder.build());
+    }
+
+    private OptionsArgumentBuilder addOption(Entry entry) {
+      var option = entry.option;
+
+      var label = option.getLabel();
+      var existing = options.get(label);
+
+      Preconditions.checkArgument(
+          existing == null,
+          "Conflicting option labels! "
+              + "'%s' is already in use by another option",
+          label
+      );
+
+      options.put(label, entry);
       entries.put(option, entry);
-      return this;
-    }
-
-    private Builder addOption(Option option) {
-      option.getLabels().forEach(s -> {
-        var existing = options.get(s);
-
-        Preconditions.checkArgument(
-            existing == null,
-            "Conflicting option labels! "
-                + "'%s' is already in use by another option",
-            s
-        );
-
-        options.put(s, option);
-      });
 
       return this;
     }
@@ -139,6 +211,45 @@ class OptionsArgumentImpl implements OptionsArgument, VanillaMappedArgument {
     @Override
     public OptionsArgument build() {
       return new OptionsArgumentImpl(this);
+    }
+  }
+
+  static class EntryBuilderImpl implements EntryBuilder {
+
+    private final boolean required;
+    private final Option option;
+
+    private final Set<Option> requires = new HashSet<>();
+    private final Set<Option> exclusive = new HashSet<>();
+
+    public EntryBuilderImpl(boolean required, Option option) {
+      this.required = required;
+      this.option = option;
+    }
+
+    @Override
+    public Option option() {
+      return option;
+    }
+
+    @Override
+    public EntryBuilder requires(Option... options) {
+      Objects.requireNonNull(options, "Null option");
+      Collections.addAll(requires, options);
+      requires.remove(option);
+      return this;
+    }
+
+    @Override
+    public EntryBuilder exclusiveWith(Option... options) {
+      Objects.requireNonNull(options, "Null option");
+      Collections.addAll(exclusive, options);
+      exclusive.remove(option);
+      return this;
+    }
+
+    public Entry build() {
+      return new Entry(option, required, requires, exclusive);
     }
   }
 }
