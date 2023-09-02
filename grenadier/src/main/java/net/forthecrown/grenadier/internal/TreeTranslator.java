@@ -220,6 +220,10 @@ class TreeTranslator {
       return vanilla.useVanillaSuggestions();
     }
 
+    if (type instanceof SimpleVanillaMapped simple) {
+      return simple.useVanillaSuggestions();
+    }
+
     return false;
   }
 
