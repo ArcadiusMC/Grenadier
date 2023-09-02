@@ -7,4 +7,8 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 public interface SimpleVanillaMapped {
 
   ArgumentType<?> getVanillaType();
+
+  default boolean useVanillaSuggestions() {
+    return false;
+  }
 }
