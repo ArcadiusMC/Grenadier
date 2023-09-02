@@ -9,23 +9,53 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import net.forthecrown.grenadier.internal.SimpleVanillaMapped;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
+import net.forthecrown.grenadier.types.ArgumentTypes.ArgumentTypeTranslator;
 import net.minecraft.commands.CommandBuildContext;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
 class ArgumentTypeMapper {
 
-  public static <F, T> ArgumentType<T> mapType(ArgumentType<F> from,
-                                        Function<F, T> translator
+  public static <F, T> ArgumentType<T> mapType(
+      ArgumentType<F> from,
+      ArgumentTypeTranslator<F, T> translator
   ) {
     if (from instanceof VanillaMappedArgument) {
       return new MappedArgumentTypeVanilla<>(from, translator);
     }
 
+    if (from instanceof SimpleVanillaMapped) {
+      return new MappedArgumentTypeSimpleVanilla<>(from, translator);
+    }
+
     return new SimpleMappedArgumentType<>(from, translator);
+  }
+
+  static class MappedArgumentTypeSimpleVanilla<F, T>
+      extends SimpleMappedArgumentType<F, T>
+      implements SimpleVanillaMapped
+  {
+
+    public MappedArgumentTypeSimpleVanilla(
+        ArgumentType<F> baseType,
+        ArgumentTypeTranslator<F, T> translator
+    ) {
+      super(baseType, translator);
+      assert baseType instanceof SimpleVanillaMapped;
+    }
+
+    @Override
+    public ArgumentType<?> getVanillaType() {
+      return ((SimpleVanillaMapped) baseType).getVanillaType();
+    }
+
+    @Override
+    public boolean useVanillaSuggestions() {
+      return ((SimpleVanillaMapped) baseType).useVanillaSuggestions();
+    }
   }
 
   static class MappedArgumentTypeVanilla<F, T>
@@ -33,8 +63,9 @@ class ArgumentTypeMapper {
       implements VanillaMappedArgument
   {
 
-    public MappedArgumentTypeVanilla(ArgumentType<F> baseType,
-                                     Function<F, T> translator
+    public MappedArgumentTypeVanilla(
+        ArgumentType<F> baseType,
+        ArgumentTypeTranslator<F, T> translator
     ) {
       super(baseType, translator);
       assert baseType instanceof VanillaMappedArgument;
@@ -55,7 +86,7 @@ class ArgumentTypeMapper {
   static class SimpleMappedArgumentType<F, T> implements ArgumentType<T> {
 
     final ArgumentType<F> baseType;
-    final Function<F, T> translator;
+    final ArgumentTypeTranslator<F, T> translator;
 
     @Override
     public T parse(StringReader reader) throws CommandSyntaxException {

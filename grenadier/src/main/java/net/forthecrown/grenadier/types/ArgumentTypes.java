@@ -8,11 +8,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.types.RegistryArgument.UnknownFactory;
 import net.forthecrown.grenadier.types.SuffixedNumberArgumentImpl.NumberType;
+import net.forthecrown.grenadier.types.options.ParsedOptions;
 import net.forthecrown.nbt.BinaryTag;
 import net.forthecrown.nbt.CompoundTag;
 import net.kyori.adventure.util.Ticks;
@@ -559,10 +559,30 @@ public final class ArgumentTypes {
    * @param <F> Base type that will be mapped
    * @param <T> Target type
    */
-  public static <F, T> ArgumentType<T> map(ArgumentType<F> fromType,
-                                           Function<F, T> translator
+  public static <F, T> ArgumentType<T> map(
+      ArgumentType<F> fromType,
+      ArgumentTypeTranslator<F, T> translator
   ) {
     return ArgumentTypeMapper.mapType(fromType, translator);
+  }
+
+  /**
+   * Argument type translation function
+   * @param <F> From type
+   * @param <T> Target type
+   */
+  public interface ArgumentTypeTranslator<F, T> {
+
+    /**
+     * Translates the input to a target type
+     *
+     * @param f Source value
+     * @return Target value
+     *
+     * @throws CommandSyntaxException If the types cannot be converted, or if any user-defined
+     *                                error is thrown
+     */
+    T apply(F f) throws CommandSyntaxException;
   }
 
   /**
@@ -683,5 +703,29 @@ public final class ArgumentTypes {
   ) {
     Objects.requireNonNull(suffixes, "Null suffix map");
     return new SuffixedNumberArgumentImpl<>(suffixes, NumberType.INT, min, max);
+  }
+
+  /**
+   * Gets a {@link ParsedOptions} instance from the specified {@code context}
+   * <p>
+   * On top of returning the parsed options instance, this function will also call
+   * {@link ParsedOptions#checkAccess(CommandSource)} to validate the returned instance
+   *
+   * @param context Command context
+   * @param argument Argument name the options are under
+   *
+   * @return Gotten parsed options
+   *
+   * @throws CommandSyntaxException If {@link ParsedOptions#checkAccess(CommandSource)} fails
+   * @throws IllegalArgumentException If the specified {@code argument} doesn't
+   *                                  exist, or if it isn't a
+   *                                  {@link ParsedPosition}
+   */
+  public static ParsedOptions getOptions(CommandContext<CommandSource> context, String argument)
+      throws CommandSyntaxException, IllegalArgumentException
+  {
+    ParsedOptions options = context.getArgument(argument, ParsedOptions.class);
+    options.checkAccess(context.getSource());
+    return options;
   }
 }
