@@ -44,11 +44,13 @@ class SuffixedNumberArgumentImpl<N extends Number>
   @Override
   public N parse(StringReader reader) throws CommandSyntaxException {
     final int start = reader.getCursor();
-    N number = this.type.parseNumber(reader);
+    double number = reader.readDouble();
 
     if (!reader.canRead() || Character.isWhitespace(reader.peek())) {
-      validateSize(number, reader, start);
-      return number;
+      N result = type.fromDouble(number);
+
+      validateSize(result, reader, start);
+      return result;
     }
 
     String word = reader.readUnquotedString();
@@ -58,7 +60,7 @@ class SuffixedNumberArgumentImpl<N extends Number>
       throw Grenadier.exceptions().unknownSuffix(reader, word);
     }
 
-    N finalValue = type.mul(number, multiplier);
+    N finalValue = type.fromDouble(number * multiplier.doubleValue());
     validateSize(finalValue, reader, start);
 
     return finalValue;
@@ -114,13 +116,8 @@ class SuffixedNumberArgumentImpl<N extends Number>
 
     NumberType<Double> DOUBLE = new NumberType<>() {
       @Override
-      public Double parseNumber(StringReader reader) throws CommandSyntaxException {
-        return reader.readDouble();
-      }
-
-      @Override
-      public Double mul(Double x, Double y) {
-        return x * y;
+      public Double fromDouble(double d) {
+        return d;
       }
 
       @Override
@@ -140,13 +137,8 @@ class SuffixedNumberArgumentImpl<N extends Number>
 
     NumberType<Integer> INT = new NumberType<>() {
       @Override
-      public Integer parseNumber(StringReader reader) throws CommandSyntaxException {
-        return reader.readInt();
-      }
-
-      @Override
-      public Integer mul(Integer x, Integer y) {
-        return x * y;
+      public Integer fromDouble(double d) {
+        return (int) d;
       }
 
       @Override
@@ -164,9 +156,7 @@ class SuffixedNumberArgumentImpl<N extends Number>
       }
     };
 
-    N parseNumber(StringReader reader) throws CommandSyntaxException;
-
-    N mul(N x, N y);
+    N fromDouble(double d);
 
     CommandSyntaxException tooLow(StringReader reader, N min, N value);
 
