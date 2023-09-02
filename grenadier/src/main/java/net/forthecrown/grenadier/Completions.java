@@ -1,14 +1,18 @@
 package net.forthecrown.grenadier;
 
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import net.forthecrown.grenadier.types.CoordinateSuggestion;
 import net.kyori.adventure.key.Key;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.generator.WorldInfo;
@@ -136,6 +140,36 @@ public final class Completions {
     return builder.buildFuture();
   }
 
+  public static CompletableFuture<Suggestions> suggestKeys(
+      SuggestionsBuilder builder,
+      Iterable<? extends Key> iterable
+  ) {
+    var token = builder.getRemainingLowerCase();
+
+    for (var k: iterable) {
+      if (!matches(token, k)) {
+        continue;
+      }
+
+      builder.suggest(k.asString());
+    }
+
+    return builder.buildFuture();
+  }
+
+  public static CompletableFuture<Suggestions> suggestKeys(
+      SuggestionsBuilder builder,
+      Stream<? extends Key> stream
+  ) {
+    String token = builder.getRemainingLowerCase();
+
+    stream.filter(key -> matches(token, key))
+        .map(Key::asString)
+        .forEach(builder::suggest);
+
+    return builder.buildFuture();
+  }
+
   /**
    * Suggests all currently loaded worlds
    * @param builder Builder to suggest to
@@ -144,10 +178,7 @@ public final class Completions {
   public static CompletableFuture<Suggestions> suggestWorlds(
       SuggestionsBuilder builder
   ) {
-    return suggest(
-        builder,
-        Bukkit.getWorlds().stream().map(WorldInfo::getName)
-    );
+    return suggest(builder, Bukkit.getWorlds().stream().map(WorldInfo::getName));
   }
 
   /**
@@ -198,5 +229,53 @@ public final class Completions {
   ) {
     suggestions.forEach(s -> s.applySuggestions(builder));
     return builder.buildFuture();
+  }
+
+  /**
+   * Combines several suggestion providers into 1 by merging all their outputs using
+   * {@link Suggestions#merge(String, Collection)}
+   *
+   * @param providers Providers to merge
+   * @return Merged providers
+   */
+  @SafeVarargs
+  public static <S> SuggestionProvider<S> combine(SuggestionProvider<S>... providers) {
+    Objects.requireNonNull(providers, "Null providers");
+    Validate.noNullElements(providers);
+    return combine(Arrays.asList(providers));
+  }
+
+  /**
+   * Combines several suggestion providers into 1 by merging all their outputs using
+   * {@link Suggestions#merge(String, Collection)}
+   *
+   * @param providers Providers to merge
+   * @return Merged providers
+   */
+  public static <S> SuggestionProvider<S> combine(Collection<SuggestionProvider<S>> providers) {
+    Objects.requireNonNull(providers, "Null providers");
+
+    if (providers.isEmpty()) {
+      return (context, builder) -> Suggestions.empty();
+    }
+
+    if (providers.size() == 1) {
+      return providers.iterator().next();
+    }
+
+    return (context, builder) -> {
+      CompletableFuture<Suggestions> future = Suggestions.empty();
+      String input = context.getInput();
+
+      for (SuggestionProvider<S> provider : providers) {
+        CompletableFuture<Suggestions> providerFuture = provider.getSuggestions(context, builder);
+
+        future = providerFuture.thenCombine(future, (suggestions, suggestions2) -> {
+          return Suggestions.merge(input, List.of(suggestions, suggestions2));
+        });
+      }
+
+      return future;
+    };
   }
 }
