@@ -50,8 +50,8 @@ class GrenadierCommandData {
     var root = commands.getDispatcher().getRoot();
 
     node.forEachLabel(s -> {
-      root.addChild(createSimpleTree(s));
-      root.addChild(createSimpleTree(fallback + ":" + s));
+      root.addChild(getVanillaTree(s, false));
+      root.addChild(getVanillaTree(fallback + ":" + s, false));
     });
   }
 
@@ -90,9 +90,13 @@ class GrenadierCommandData {
    * @return Created command tree
    */
   public LiteralCommandNode<CommandSourceStack> getVanillaTree(String label) {
+    return getVanillaTree(label, node.isPlainTranslation());
+  }
+
+  public LiteralCommandNode<CommandSourceStack> getVanillaTree(String label, boolean plain) {
     var tree = createSimpleTree(label);
 
-    if (node.isPlainTranslation()) {
+    if (plain) {
       return tree;
     }
 

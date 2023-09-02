@@ -59,9 +59,7 @@ class CommandSyncListener implements Listener {
   }
 
   @EventHandler(ignoreCancelled = true)
-  public void onCommandRegistered(
-      CommandRegisteredEvent<CommandSourceStack> event
-  ) {
+  public void onCommandRegistered(CommandRegisteredEvent<CommandSourceStack> event) {
     if (!(event.getCommand() instanceof GrenadierBukkitWrapper wrapper)) {
       return;
     }

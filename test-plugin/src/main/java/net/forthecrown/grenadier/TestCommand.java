@@ -3,8 +3,11 @@ package net.forthecrown.grenadier;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.time.LocalDate;
 import java.util.List;
 import net.forthecrown.grenadier.types.ArgumentTypes;
@@ -23,6 +26,7 @@ import net.forthecrown.nbt.paper.PaperNbt;
 import net.forthecrown.nbt.path.TagPath;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
@@ -34,9 +38,14 @@ public class TestCommand extends AbstractCommand {
   private static final ArrayArgument<ItemArgument.Result> ITEM_ARRAY
       = ArgumentTypes.array(ArgumentTypes.item());
 
+  private static final ArgumentOption<List<String>> stringList
+      = Options.argument(ArgumentTypes.array(StringArgumentType.string()))
+      .setLabel("string_list")
+      .build();
+
   public static final ArgumentOption<Integer> integerArgument
       = Options.argument(IntegerArgumentType.integer())
-      .addLabel("an_integer")
+      .setLabel("an_integer")
       .setSuggester((context, builder) -> {
         return Completions.suggest(builder, "1", "2", "13");
       })
@@ -44,12 +53,20 @@ public class TestCommand extends AbstractCommand {
 
   public static final ArgumentOption<String> stringArgument
       = Options.argument(StringArgumentType.word())
-      .addLabel("a_string")
-      .addLabel("string_2")
+      .setLabel("a_string")
       .setSuggester((context, builder) -> {
         return Completions.suggest(builder, "word", "world", "thing");
       })
       .build();
+
+  public static final ArgumentOption<Boolean> booleanArgument
+      = Options.argument(BoolArgumentType.bool(), "bool");
+
+  public static final ArgumentOption<Material> materialArgument
+      = Options.argument(ArgumentTypes.enumType(Material.class), "material");
+
+  public static final ArgumentOption<Double> doubleArgument
+      = Options.argument(DoubleArgumentType.doubleArg(), "double");
 
   public static final FlagOption flag = Options.flag("flag");
 
@@ -58,6 +75,20 @@ public class TestCommand extends AbstractCommand {
       .addRequired(integerArgument)
       .addFlag(flag)
       .build();
+
+  public static final OptionsArgument options2 = OptionsArgument.builder()
+      .requireOneOf(stringList, stringArgument, materialArgument)
+      .addRequired(booleanArgument, entryBuilder -> {
+        entryBuilder
+            .requires(doubleArgument)
+            .exclusiveWith(stringArgument, stringList, materialArgument);
+      })
+      .addOptional(doubleArgument)
+      .addFlag(flag)
+      .build();
+
+  public static final SuggestionProvider<CommandSource> COMBINED
+      = Completions.combine(booleanArgument, materialArgument, options2::listSuggestions);
 
   public TestCommand() {
     super("grenadier_test");
@@ -75,6 +106,13 @@ public class TestCommand extends AbstractCommand {
           context.getSource().sendMessage("Hello, world!");
           return 0;
         })
+
+        .then(literal("combined_suggestions")
+            .then(argument("greedy", StringArgumentType.greedyString())
+                .suggests(COMBINED)
+                .executes(c -> 0)
+            )
+        )
 
         .then(literal("positions")
             .then(literal("vec2d")
@@ -127,9 +165,17 @@ public class TestCommand extends AbstractCommand {
         .then(literal("options")
             .then(argument("args", options)
                 .executes(c -> {
-                  ParsedOptions parsedOptions
-                      = c.getArgument("args", ParsedOptions.class);
+                  ParsedOptions parsedOptions = ArgumentTypes.getOptions(c, "args");
+                  c.getSource().sendSuccess(text(parsedOptions.toString()));
+                  return 0;
+                })
+            )
+        )
 
+        .then(literal("options2")
+            .then(argument("args", options2)
+                .executes(c -> {
+                  ParsedOptions parsedOptions = ArgumentTypes.getOptions(c, "args");
                   c.getSource().sendSuccess(text(parsedOptions.toString()));
                   return 0;
                 })

@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.suggestion.Suggestion;
 import java.util.ArrayList;
 import java.util.List;
 import net.forthecrown.grenadier.CommandSource;
@@ -86,9 +87,19 @@ class GrenadierBukkitWrapper extends Command {
     List<String> result = new ArrayList<>();
 
     dispatcher.getCompletionSuggestions(results).thenAccept(suggestions -> {
-      suggestions.getList().forEach(suggestion -> {
-        result.add(suggestion.getText());
-      });
+      String input = reader.getString();
+
+      for (Suggestion suggestion : suggestions.getList()) {
+        String before = suggestion.getRange().get(input);
+
+        if (before.endsWith(" ")) {
+          result.add(suggestion.getText());
+        } else {
+          int lastSpace = before.lastIndexOf(' ');
+          String prefix = input.substring(lastSpace + 1);
+          result.add(prefix + suggestion.getText());
+        }
+      }
     });
 
     return result;
