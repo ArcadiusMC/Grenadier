@@ -31,9 +31,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.craftbukkit.v1_20_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_20_R1.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R1.util.CraftVector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class CommandSourceImpl implements CommandSource {
@@ -92,9 +95,7 @@ class CommandSourceImpl implements CommandSource {
     return with(stack, consumer);
   }
 
-  private CommandSourceImpl with(CommandSourceStack stack,
-                                 ResultConsumer<CommandSource> consumer
-  ) {
+  private CommandSourceImpl with(CommandSourceStack stack, ResultConsumer<CommandSource> consumer) {
     CommandSourceImpl source = new CommandSourceImpl(stack);
     source.consumer = consumer;
     return source;
@@ -102,6 +103,15 @@ class CommandSourceImpl implements CommandSource {
 
   @Override
   public CommandSender asBukkit() {
+    if (stack.getEntity() == null) {
+      return output();
+    }
+
+    return stack.getEntity().getBukkitEntity();
+  }
+
+  @Override
+  public CommandSender output() {
     return stack.getBukkitSender();
   }
 
@@ -296,17 +306,20 @@ class CommandSourceImpl implements CommandSource {
   }
 
   @Override
-  public CommandSource withPosition(Vector vector) {
+  public CommandSource withPosition(@NotNull Vector vector) {
+    Objects.requireNonNull(vector, "Null position");
     return with(stack.withPosition(CraftVector.toNMS(vector)));
   }
 
   @Override
-  public CommandSource withWorld(World world) {
+  public CommandSource withWorld(@NotNull World world) {
+    Objects.requireNonNull(world, "Null world");
     return with(stack.withLevel(((CraftWorld) world).getHandle()));
   }
 
   @Override
-  public CommandSource facing(Vector vector) {
+  public CommandSource facing(@NotNull Vector vector) {
+    Objects.requireNonNull(vector, "Null vector");
     return with(stack.facing(CraftVector.toNMS(vector)));
   }
 
@@ -316,21 +329,27 @@ class CommandSourceImpl implements CommandSource {
   }
 
   @Override
-  public CommandSource withOutput(CommandSender sender) {
-    return with(
-        stack.withSource(
-            VanillaCommandWrapper.getListener(sender).source
-        )
-    );
+  public CommandSource withOutput(@NotNull CommandSender sender) {
+    Objects.requireNonNull(sender, "Null sender");
+    return with(stack.withSource(VanillaCommandWrapper.getListener(sender).source));
   }
 
   @Override
-  public CommandSource withPermissionLevel(PermissionLevel level) {
+  public CommandSource withEntity(@NotNull Entity entity) {
+    Objects.requireNonNull(entity, "Null entity");
+    return with(stack.withEntity(((CraftEntity) entity).getHandle()));
+  }
+
+  @Override
+  public CommandSource withPermissionLevel(@NotNull PermissionLevel level) {
+    Objects.requireNonNull(level, "Null permission level");
     return with(stack.withPermission(level.ordinal()));
   }
 
   @Override
   public CommandSource addCallback(ResultConsumer<CommandSource> consumer) {
+    Objects.requireNonNull(consumer, "Null callback");
+
     if (this.consumer == null) {
       return with(stack, consumer);
     }

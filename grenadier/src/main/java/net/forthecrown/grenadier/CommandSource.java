@@ -43,11 +43,23 @@ public interface CommandSource
 {
 
   /**
-   * Gets the normal Bukkit CommandSender
+   * Gets the normal Bukkit CommandSender.
+   * <p>
+   * In the case {@code /execute as} This will return the entity selected in the "as" argument
+   * instead of the original command executor. To get the original command executor,
+   * use {@link #output()}
    *
    * @return the CommandSender of this source
    */
   CommandSender asBukkit();
+
+  /**
+   * Text output command sender, will always return the executor of the command even in
+   * {@code /execute as} commands
+   *
+   * @return Output command sender
+   */
+  CommandSender output();
 
   /**
    * Checks if the sender is of the type
@@ -459,7 +471,7 @@ public interface CommandSource
       return Audience.empty();
     }
 
-    return asBukkit();
+    return output();
   }
 
   /**
@@ -495,7 +507,7 @@ public interface CommandSource
    * @param vector The position to move the source to
    * @return A source at the given position
    */
-  CommandSource withPosition(Vector vector);
+  CommandSource withPosition(@NotNull Vector vector);
 
   /**
    * Creates a command source in the given world. If the given world is already
@@ -507,7 +519,7 @@ public interface CommandSource
    * @param world The world the source is in
    * @return A source in the given world
    */
-  CommandSource withWorld(World world);
+  CommandSource withWorld(@NotNull World world);
 
   /**
    * Creates a command source that's facing the given vector.
@@ -518,7 +530,7 @@ public interface CommandSource
    * @param vector The Position the source should be facing
    * @return A source facing the given vector.
    */
-  CommandSource facing(Vector vector);
+  CommandSource facing(@NotNull Vector vector);
 
   /**
    * Creates a command source that's rotated with the given yaw and pitch
@@ -535,20 +547,31 @@ public interface CommandSource
   /**
    * Creates a command sender with the given command sender.
    * <p>
-   * If the given sender is already returned by {@link #asBukkit()}, then this
-   * will return itself
+   * If the given sender is already returned by {@link #output()}, then this
+   * will return {@code this}
    *
    * @param sender The sender to use
    * @return A command sender with the given sender
    */
-  CommandSource withOutput(CommandSender sender);
+  CommandSource withOutput(@NotNull CommandSender sender);
+
+  /**
+   * Creates a command sender with the specified {@code entity}. This is the equivalent of doing
+   * {@code /execute as <entity>}.
+   * <p>
+   * This method will change the returned result of {@link #asBukkit()}
+   *
+   * @param entity Entity to use
+   * @return A source with the specified entity
+   */
+  CommandSource withEntity(@NotNull Entity entity);
 
   /**
    * Creates a copy of this command source that has the specified {@code level}
    * @param level new permission level
    * @return Copied command source with the specified level
    */
-  CommandSource withPermissionLevel(PermissionLevel level);
+  CommandSource withPermissionLevel(@NotNull PermissionLevel level);
 
   /**
    * Returns either a new source with the specified permission level, or this
@@ -557,7 +580,7 @@ public interface CommandSource
    * @return This, or a new source, if {@link #hasPermission(PermissionLevel)}
    *         failed
    */
-  default CommandSource withMaximumLevel(PermissionLevel level) {
+  default CommandSource withMaximumLevel(@NotNull PermissionLevel level) {
     if (hasPermission(level))  {
       return this;
     }
