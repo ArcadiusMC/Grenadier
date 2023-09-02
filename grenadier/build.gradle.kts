@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.1.3"
+version = "2.1.4"
 
 repositories {
   mavenCentral()
