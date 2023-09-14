@@ -59,12 +59,11 @@ public interface Option extends Predicate<CommandSource> {
   interface OptionBuilder<T extends OptionBuilder<T>> {
 
     /**
-     * Sets this option's labels
-     * @param labels Option labels
+     * Sets this option's label
+     * @param label Option label
      * @return this
-     * @throws IllegalArgumentException If any of the labels failed the
-     *                                  {@link Options#validateLabel(String)}
-     *                                  check
+     * @throws IllegalArgumentException If the label failed the
+     *                                  {@link Options#validateLabel(String)} check
      */
     T setLabel(String label) throws IllegalArgumentException;
 

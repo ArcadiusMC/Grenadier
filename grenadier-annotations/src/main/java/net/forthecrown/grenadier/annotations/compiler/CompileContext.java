@@ -7,11 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.function.Predicate;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.With;
 import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.SyntaxConsumer;
@@ -21,10 +20,10 @@ import net.forthecrown.grenadier.annotations.tree.VariableHolder;
 import net.forthecrown.grenadier.annotations.util.Result;
 
 @Getter
-@With
 @RequiredArgsConstructor
-@AllArgsConstructor
 public class CompileContext {
+
+  static final boolean DEBUG_LOGGING = true;
 
   private final Map<String, Object> variables;
   private final ClassLoader loader;
@@ -33,14 +32,13 @@ public class CompileContext {
   private final Object commandClass;
   private final String defaultPermission;
 
-  private final CompileErrors errors;
+  final CompileErrors errors;
 
-  private final Stack<String> availableArguments;
-  private final Map<String, List<ArgumentModifier>> mappers;
-
-  private SyntaxList syntaxList = new SyntaxList();
-  private final List<String> syntaxPrefixes;
-  private Stack<Predicate<CommandSource>> predicateStack = new Stack<>();
+  final SyntaxList syntaxList                      = new SyntaxList();
+  final Stack<String> availableArguments           = new Stack<>();
+  final Stack<MapperEntry> mappers                 = new Stack<>();
+  final Stack<String> syntaxPrefixes               = new Stack<>();
+  final Stack<Predicate<CommandSource>> conditions = new Stack<>();
 
   public <T> Result<T> getVariable(VariableHolder variable, Class<T> type) {
     return getVariable(variable.tokenStart(), variable.variable(), type);
@@ -93,56 +91,17 @@ public class CompileContext {
     return defaultPermission.replace("{command}", commandName);
   }
 
-  public void pushArgument(String argument) {
-    availableArguments.push(argument);
-  }
-
-  public void popArgument() {
-    availableArguments.pop();
-  }
-
-  public void pushPrefix(String syntaxPrefix) {
-    syntaxPrefixes.add(syntaxPrefix);
-  }
-
-  public void popPrefix() {
-    syntaxPrefixes.remove(syntaxPrefixes.size() - 1);
-  }
-
-  public void pushCondition(Predicate<CommandSource> predicate) {
-    predicateStack.push(predicate);
-  }
-
-  public void popCondition() {
-    predicateStack.pop();
-  }
-
   public Predicate<CommandSource> buildConditions() {
-    if (predicateStack.isEmpty()) {
+    if (conditions.isEmpty()) {
       return null;
     }
 
-    if (predicateStack.size() == 1) {
-      return predicateStack.get(0);
+    if (conditions.size() == 1) {
+      return conditions.get(0);
     }
 
-    Predicate<CommandSource>[] predicates = new Predicate[predicateStack.size()];
-    return new PredicateList(predicateStack.toArray(predicates));
-  }
-
-  public CompileContext withModifier(String argumentName,
-                                     ArgumentModifier<?, ?> modifier
-  ) {
-    Map<String, List<ArgumentModifier>> map = new HashMap<>();
-
-    mappers.forEach((s, argumentModifiers) -> {
-      map.put(s, new ArrayList<>(argumentModifiers));
-    });
-
-    var list = map.computeIfAbsent(argumentName, s -> new ArrayList<>());
-    list.add(modifier);
-
-    return withMappers(map);
+    Predicate<CommandSource>[] predicates = new Predicate[conditions.size()];
+    return new PredicateList(conditions.toArray(predicates));
   }
 
   public void consumeSyntax(GrenadierCommandNode node, SyntaxConsumer consumer) {
@@ -153,8 +112,23 @@ public class CompileContext {
     return Joiner.on(' ').join(syntaxPrefixes);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   public ContextFactory createFactory() {
-    return new ContextFactory((Map) mappers);
+    Map<String, List<ArgumentModifier<?, ?>>> map = new HashMap<>();
+
+    for (MapperEntry mapper : mappers) {
+      var list = map.computeIfAbsent(
+          mapper.name(), string -> new ArrayList<>()
+      );
+
+      list.add(mapper.modifier());
+    }
+
+    if (DEBUG_LOGGING) {
+      Grenadier.getLogger().info("Creating context factory, path='{}', mappers.keys={}",
+          syntaxPrefix(), map.keySet()
+      );
+    }
+
+    return new ContextFactory(map);
   }
 }

@@ -25,10 +25,11 @@ class CompiledSuggester implements SuggestionProvider<CommandSource> {
 
   private final ContextFactory factory;
 
-  public CompiledSuggester(MemberChain chain,
-                           Object commandClass,
-                           ParamFiller[] fillers,
-                           ContextFactory factory
+  public CompiledSuggester(
+      MemberChain chain,
+      Object commandClass,
+      ParamFiller[] fillers,
+      ContextFactory factory
   ) {
     this.chain = chain;
     this.commandClass = commandClass;

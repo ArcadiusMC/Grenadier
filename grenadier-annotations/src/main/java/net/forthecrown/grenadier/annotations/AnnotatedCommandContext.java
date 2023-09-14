@@ -107,6 +107,20 @@ public interface AnnotatedCommandContext {
   void setWarningsEnabled(boolean enabled);
 
   /**
+   * Tests if errors occurring during command parsing should be thrown as exceptions or logged
+   * without distributing the caller of the {@link #registerCommand(Object)} method
+   *
+   * @return {@code true}, if errors are fatal, {@code false}, otherwise
+   */
+  boolean fatalErrors();
+
+  /**
+   * Sets if errors durring command parsing will be thrown as exceptions or just logged to console
+   * @param fatalErrors {@code true}, if errors are fatal, {@code false}, otherwise
+   */
+  void setFatalErrors(boolean fatalErrors);
+
+  /**
    * Gets the context's type registry
    * @return Type registry
    */
@@ -147,7 +161,8 @@ public interface AnnotatedCommandContext {
   /**
    * Registers the specified {@code command}
    * @param command Command to register
-   * @return Registered command node
+   * @return Registered command node, or {@code null}, if parsing failed and {@link #fatalErrors()}
+   *         was disabled
    *
    * @throws CommandParseException If the command data couldn't be parsed
    * @throws CommandCompilationException If the command couldn't be compiled
@@ -168,17 +183,16 @@ public interface AnnotatedCommandContext {
    * @param loader Class loader potentially used by {@link net.forthecrown.grenadier.types.EnumArgument}'s
    *               type parser to find its enum class
    *
-   * @return Registered command node
+   * @return Registered command node, or {@code null}, if parsing failed and {@link #fatalErrors()}
+   *         was disabled
    *
    * @throws CommandParseException If the command data couldn't be parsed
    * @throws CommandCompilationException If the command couldn't be compiled
    *
    * @see #registerCommand(Object, ClassLoader)
    */
-  GrenadierCommandNode registerCommand(
-      Object command,
-      ClassLoader loader
-  ) throws CommandParseException, CommandCompilationException;
+  GrenadierCommandNode registerCommand(Object command, ClassLoader loader)
+      throws CommandParseException, CommandCompilationException;
 
   /**
    * Defines the rule for the {@link #getDefaultExecutes()} method being used

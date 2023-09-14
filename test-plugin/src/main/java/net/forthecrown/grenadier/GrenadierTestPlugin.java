@@ -48,6 +48,7 @@ public class GrenadierTestPlugin extends JavaPlugin {
     ctx.setDefaultPermissionFormat("grenadier.test.{command}");
     ctx.setDefaultExecutes("defRun");
     ctx.setWarningsEnabled(true);
+    ctx.setFatalErrors(false);
 
     ctx.registerCommand(new TestAnnotatedCommand());
     ctx.registerCommand(new TestCommand2());
@@ -57,6 +58,7 @@ public class GrenadierTestPlugin extends JavaPlugin {
     ctx.registerCommand(new ResourcedCommandTest());
     ctx.registerCommand(new SignEditCommand());
     ctx.registerCommand(new PasteAnnotationTest());
+    ctx.registerCommand(new MapperTestCommand());
   }
 
   @Override

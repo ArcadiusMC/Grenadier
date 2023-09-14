@@ -538,10 +538,13 @@ class Parser {
     if (lexer.peek().is(BRACKET_OPEN)) {
       lexer.expect(BRACKET_OPEN);
 
-      if (lexer.peek().is(QUOTED_STRING, VARIABLE)) {
+      if (lexer.peek().is(QUOTED_STRING, VARIABLE, IDENTIFIER)) {
         name = parseName(false);
-      } else {
+      } else if (lexer.peek().is(BRACKET_CLOSE)) {
         name = null;
+      } else {
+        lexer.expect(BRACKET_CLOSE, QUOTED_STRING, VARIABLE, IDENTIFIER);
+        return null;
       }
 
       lexer.expect(BRACKET_CLOSE);

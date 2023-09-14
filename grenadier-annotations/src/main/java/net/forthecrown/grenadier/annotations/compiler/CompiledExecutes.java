@@ -22,16 +22,17 @@ class CompiledExecutes implements Command<CommandSource> {
 
   private final Object[] parameterBuffer;
 
-  public CompiledExecutes(Object commandClass,
-                          MemberChain chain,
-                          ContextFactory factory,
-                          ParamFiller[] fillers
+  public CompiledExecutes(
+      Object commandClass,
+      MemberChain chain,
+      ContextFactory factory,
+      ParamFiller[] fillers
   ) {
     this.commandClass = commandClass;
     this.chain = chain;
     this.factory = factory;
     this.fillers = fillers;
-    this.parameterBuffer = new Object[fillers.length];
+    this.parameterBuffer = fillers == null ? null : new Object[fillers.length];
   }
 
   @Override

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -31,11 +30,15 @@ import net.forthecrown.grenadier.annotations.util.ErrorMessages;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.forthecrown.grenadier.annotations.util.Utils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
 
   private static final Pattern PRE_PROCESS_PATTERN
       = Pattern.compile("#([a-zA-Z_$][a-zA-Z0-9_$]*)(?:\\((.*)\\))?");
+
+  private static final Logger LOGGER = LoggerFactory.getLogger("AnnotatedCommandContext");
 
   static final int GROUP_DIRECTIVE = 1;
   static final int GROUP_ARGUMENTS = 2;
@@ -63,6 +66,9 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
   @Setter
   private boolean warningsEnabled;
 
+  @Setter
+  private boolean fatalErrors = true;
+
   AnnotatedCommandContextImpl() {
     CommandDataLoader defaultLoader
         = CommandDataLoader.resources(getClass().getClassLoader());
@@ -84,6 +90,11 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
   @Override
   public boolean areWarningsEnabled() {
     return warningsEnabled;
+  }
+
+  @Override
+  public boolean fatalErrors() {
+    return fatalErrors;
   }
 
   public void setDefaultRule(@NotNull DefaultExecutionRule defaultRule) {
@@ -190,7 +201,18 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
 
     Lexer lexer = new Lexer(reader, exceptions);
     Parser parser = new Parser(lexer, defaultExecutes, defaultRule);
-    RootTree tree = parser.parse();
+    RootTree tree;
+
+    try {
+      tree = parser.parse();
+    } catch (CommandParseException exc) {
+      if (fatalErrors) {
+        throw exc;
+      }
+
+      LOGGER.error("Error parsing command", exc);
+      return null;
+    }
 
     Map<String, Object> variables = new HashMap<>();
     variables.putAll(this.variables);
@@ -204,10 +226,7 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
         typeRegistry,
         command,
         defaultPermissionFormat,
-        errors,
-        new Stack<>(),
-        new HashMap<>(),
-        new ArrayList<>()
+        errors
     );
 
     GrenadierCommandNode node = (GrenadierCommandNode)
@@ -225,18 +244,16 @@ final class AnnotatedCommandContextImpl implements AnnotatedCommandContext {
       // The error list contains not only fatal compile errors but also
       // warnings, so only throw if the fatal error count is above 0
       if (error > 0) {
-        throw new CommandCompilationException(errors.getErrors(), reader, name);
+        if (fatalErrors) {
+          throw new CommandCompilationException(errors.getErrors(), reader, name);
+        }
+
+        CommandCompilationException.print(errors.getErrors(), reader, name, System.err);
+        return null;
       }
 
       if (areWarningsEnabled()) {
-        String msg = CommandCompilationException.createMessage(
-            errors.getErrors(),
-            reader,
-            name
-        );
-
-        System.out.print(msg);
-        System.out.print("\n");
+        CommandCompilationException.print(errors.getErrors(), reader, name, System.out);
       }
     }
 

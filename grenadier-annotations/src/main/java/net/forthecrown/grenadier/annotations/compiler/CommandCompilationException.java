@@ -1,6 +1,7 @@
 package net.forthecrown.grenadier.annotations.compiler;
 
 import com.mojang.brigadier.StringReader;
+import java.io.PrintStream;
 import java.util.List;
 import net.forthecrown.grenadier.annotations.compiler.CompileErrors.Error;
 import net.forthecrown.grenadier.annotations.util.ErrorMessages;
@@ -15,11 +16,14 @@ public class CommandCompilationException extends RuntimeException {
     super(createMessage(errors, reader, name));
   }
 
+  public static void print(List<Error> errors, StringReader input, String name, PrintStream out) {
+    String message = createMessage(errors, input, name);
+    out.print(message);
+    out.print("\n");
+  }
+
   @Internal
-  public static String createMessage(List<Error> errors,
-                                     StringReader input,
-                                     String name
-  ) {
+  public static String createMessage(List<Error> errors, StringReader input, String name) {
     StringBuilder builder = new StringBuilder();
 
     builder.append("Errors/Warnings during compilation of command '")

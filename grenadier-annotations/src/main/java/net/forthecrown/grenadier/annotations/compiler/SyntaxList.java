@@ -13,18 +13,12 @@ class SyntaxList {
 
   private final List<SyntaxElement> elements = new ArrayList<>();
 
-  public void add(String arguments,
-                  Component info,
-                  Predicate<CommandSource> predicate
-  ) {
+  public void add(String arguments, Component info, Predicate<CommandSource> predicate) {
     SyntaxElement element = new SyntaxElement(arguments, info, predicate);
     elements.add(element);
   }
 
-  public void consume(GrenadierCommandNode node,
-                      SyntaxConsumer consumer,
-                      Object commandClass
-  ) {
+  public void consume(GrenadierCommandNode node, SyntaxConsumer consumer, Object commandClass) {
     for (SyntaxElement syntaxElement : elements) {
       consumer.accept(
           node,

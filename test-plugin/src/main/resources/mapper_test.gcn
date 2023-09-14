@@ -1,0 +1,7 @@
+name = "map_result_test"
+
+literal("arg").argument("first", vec3d).argument("second", entities) {
+  map_result("first") = result.apply()
+  map_result("second") = result.findEntities()
+  executes = runTest()
+}
