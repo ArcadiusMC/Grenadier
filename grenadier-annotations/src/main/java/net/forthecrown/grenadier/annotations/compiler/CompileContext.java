@@ -10,7 +10,6 @@ import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.forthecrown.grenadier.CommandSource;
-import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
 import net.forthecrown.grenadier.annotations.SyntaxConsumer;
@@ -22,8 +21,6 @@ import net.forthecrown.grenadier.annotations.util.Result;
 @Getter
 @RequiredArgsConstructor
 public class CompileContext {
-
-  static final boolean DEBUG_LOGGING = true;
 
   private final Map<String, Object> variables;
   private final ClassLoader loader;
@@ -121,12 +118,6 @@ public class CompileContext {
       );
 
       list.add(mapper.modifier());
-    }
-
-    if (DEBUG_LOGGING) {
-      Grenadier.getLogger().info("Creating context factory, path='{}', mappers.keys={}",
-          syntaxPrefix(), map.keySet()
-      );
     }
 
     return new ContextFactory(map);

@@ -25,7 +25,7 @@ dependencies {
   implementation("net.forthecrown:grenadier:2.1.4")
   
   // Get the annotation library with
-  implementation("net.forthecrown:grenadier-annotations:1.2.2")
+  implementation("net.forthecrown:grenadier-annotations:1.2.4")
   
   // Mojang's Brigadier engine
   compileOnly("com.mojang:brigadier:1.0.18")
@@ -52,7 +52,7 @@ Maven:
   <dependency>
     <groupId>net.forthecrown</groupId>
     <artifactId>grenadier-annotations</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.4</version>
   </dependency>
 
   <!-- Brigadier itself -->
