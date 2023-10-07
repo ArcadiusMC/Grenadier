@@ -48,9 +48,11 @@ class CompiledArgumentMapper implements ArgumentModifier<Object, Object> {
         continue;
       }
 
-      if (m.getParameterCount() <= 0
-          || m.getReturnType() == Void.TYPE
-      ) {
+      if (m.getReturnType() == Void.TYPE) {
+        continue;
+      }
+
+      if (handle != null && m.getParameterCount() < 1) {
         continue;
       }
 
