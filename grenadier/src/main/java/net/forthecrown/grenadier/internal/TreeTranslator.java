@@ -27,7 +27,7 @@ import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.Readers;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.commands.arguments.ScoreHolderArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 
 class TreeTranslator {
@@ -108,7 +108,12 @@ class TreeTranslator {
       GrenadierCommandNode root
   ) {
     ArgumentType<?> type = translateType(node.getType());
-    boolean useVanillaSuggestions = useVanillaSuggestions(node.getType());
+
+    // Only use vanilla suggestions if type says to, and
+    // there's no suggestions override
+    boolean useVanillaSuggestions
+        = useVanillaSuggestions(node.getType())
+        && node.getCustomSuggestions() == null;
 
     RequiredArgumentBuilder<CommandSourceStack, ?> builder
         = RequiredArgumentBuilder.argument(node.getName(), type);
@@ -239,7 +244,7 @@ class TreeTranslator {
     } else if (type instanceof SimpleVanillaMapped simple) {
       vanillaType = simple.getVanillaType();
     } else {
-      return GameProfileArgument.gameProfile();
+      return ScoreHolderArgument.scoreHolders();
     }
 
     Objects.requireNonNull(vanillaType, "getVanillaType returned null");
