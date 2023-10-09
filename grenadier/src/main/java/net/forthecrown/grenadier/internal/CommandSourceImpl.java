@@ -165,7 +165,7 @@ class CommandSourceImpl implements CommandSource {
 
   @Override
   public boolean hasPermission(String s) {
-    return asBukkit().hasPermission(s);
+    return this.output().hasPermission(s);
   }
 
   @Override
@@ -187,12 +187,12 @@ class CommandSourceImpl implements CommandSource {
 
   @Override
   public boolean isOp() {
-    return asBukkit().isOp();
+    return output().isOp();
   }
 
   @Override
   public void setOp(boolean value) {
-    asBukkit().setOp(value);
+    output().setOp(value);
   }
 
   @Override
