@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "1.2.5"
+version = "1.3.0"
 
 repositories {
   mavenCentral()
@@ -20,7 +20,7 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("com.google.guava:guava:31.1-jre")
 
-  api(project(":grenadier"))
+  compileOnly(project(":grenadier"))
 
   compileOnly("com.mojang:brigadier:1.0.18")
   compileOnly("io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT")

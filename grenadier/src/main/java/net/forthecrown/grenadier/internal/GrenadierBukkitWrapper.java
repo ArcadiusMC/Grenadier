@@ -13,7 +13,6 @@ import net.forthecrown.grenadier.GrenadierCommandNode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class GrenadierBukkitWrapper extends Command {
 
@@ -24,35 +23,15 @@ class GrenadierBukkitWrapper extends Command {
     super(data.getNode().getLiteral());
     this.treeRoot = data.getNode();
     this.data = data;
+
+    setAliases(treeRoot.getAliases());
+    setDescription(Strings.nullToEmpty(treeRoot.getDescription()));
+    setPermission(treeRoot.getPermission());
+    setName(treeRoot.getName());
   }
 
   public GrenadierCommandData getData() {
     return data;
-  }
-
-  @Override
-  public @Nullable String getPermission() {
-    return treeRoot.getPermission();
-  }
-
-  @Override
-  public @NotNull String getDescription() {
-    return Strings.nullToEmpty(treeRoot.getDescription());
-  }
-
-  @Override
-  public @NotNull List<String> getAliases() {
-    return new ArrayList<>(treeRoot.getAliases());
-  }
-
-  @Override
-  public @NotNull String getName() {
-    return treeRoot.getName();
-  }
-
-  @Override
-  public @NotNull String getLabel() {
-    return treeRoot.getLiteral();
   }
 
   @Override
@@ -90,13 +69,13 @@ class GrenadierBukkitWrapper extends Command {
       String input = reader.getString();
 
       for (Suggestion suggestion : suggestions.getList()) {
-        String before = suggestion.getRange().get(input);
+        String before = input.substring(0, suggestion.getRange().getStart());
 
         if (before.endsWith(" ")) {
           result.add(suggestion.getText());
         } else {
           int lastSpace = before.lastIndexOf(' ');
-          String prefix = input.substring(lastSpace + 1);
+          String prefix = before.substring(lastSpace + 1);
           result.add(prefix + suggestion.getText());
         }
       }

@@ -7,6 +7,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.Objects;
 import net.forthecrown.grenadier.internal.GrenadierProviderImpl;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,27 @@ public final class Grenadier {
    */
   public static CommandDispatcher<CommandSource> dispatcher() {
     return getProvider().getDispatcher();
+  }
+
+  /**
+   * Executes a command.
+   * <p>
+   * Preferable over {@link Bukkit#dispatchCommand(CommandSender, String)} due to that method
+   * ignoring values that may have been changed in the source's underlying {@link CommandSender}
+   * object by a command such as
+   * <br> {@code /execute positioned 12 10 12 run <command>}, <br>
+   * which changes the location of the sender, but by using a {@link CommandSender} those modified
+   * values are lost.
+   *
+   * @param source Source executing the command
+   * @param command Command to execute
+   *
+   * @throws NullPointerException If either {@code source} or {@code command} are null
+   *
+   * @return Execution result, defined by {@link CommandDispatcher#execute(String, Object)}
+   */
+  public static int dispatch(@NotNull CommandSource source, @NotNull String command) {
+    return getProvider().dispatch(source, command);
   }
 
   /**

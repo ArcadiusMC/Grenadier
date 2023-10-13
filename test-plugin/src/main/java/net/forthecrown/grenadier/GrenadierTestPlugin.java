@@ -16,6 +16,7 @@ public class GrenadierTestPlugin extends JavaPlugin {
   public void onEnable() {
     Grenadier.plugin(this);
     new TestCommand();
+    new CommandListTests();
 
     AnnotatedCommandContext ctx = AnnotatedCommandContext.create();
 

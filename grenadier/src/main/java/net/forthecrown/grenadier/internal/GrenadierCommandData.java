@@ -1,9 +1,14 @@
 package net.forthecrown.grenadier.internal;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.Getter;
 import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
@@ -12,6 +17,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 
 @Getter
@@ -22,13 +28,14 @@ class GrenadierCommandData {
   private final LiteralCommandNode<CommandSourceStack> vanillaTree;
   private final String fallback;
 
+  private final Set<String> registeredVanillaLabels;
+
   public GrenadierCommandData(GrenadierCommandNode node) {
     this.node = node;
     this.bukkitWrapper = new GrenadierBukkitWrapper(this);
-
     this.vanillaTree = TreeTranslator.translateLiteral(node, node);
-
     this.fallback = Grenadier.fallbackPrefix();
+    this.registeredVanillaLabels = new HashSet<>();
   }
 
   public void registerVanilla() {
@@ -36,45 +43,63 @@ class GrenadierCommandData {
     var vanilla = server.vanillaCommandDispatcher;
 
     registerIntoVanilla(vanilla);
-    //registerIntoVanilla(server.getCommands());
-  }
-
-  public void registerCurrentVanilla() {
-    MinecraftServer server = DedicatedServer.getServer();
-    registerIntoVanilla(server.getCommands());
   }
 
   private void registerIntoVanilla(Commands commands) {
     unregisterFrom(commands);
 
-    var root = commands.getDispatcher().getRoot();
+    var dispatcher = commands.getDispatcher();
 
     node.forEachLabel(s -> {
-      root.addChild(getVanillaTree(s, false));
-      root.addChild(getVanillaTree(fallback + ":" + s, false));
+      String withFallback = fallback + ":" + s;
+
+      if (registerNodeInto(dispatcher, s)) {
+        registeredVanillaLabels.add(s);
+      }
+      if (registerNodeInto(dispatcher, withFallback)) {
+        registeredVanillaLabels.add(withFallback);
+      }
     });
+  }
+
+  private boolean registerNodeInto(CommandDispatcher<CommandSourceStack> dispatcher, String label) {
+    var root = dispatcher.getRoot();
+    var child = root.getChild(label);
+
+    if (child != null) {
+      return false;
+    }
+
+    root.addChild(getVanillaTree(label, false));
+    return true;
   }
 
   public void unregister() {
     CommandMap map = Bukkit.getCommandMap();
+    Map<String, Command> knownCommands = map.getKnownCommands();
+
     MinecraftServer server = DedicatedServer.getServer();
 
-    unregisterFrom(server.vanillaCommandDispatcher);
-    unregisterFrom(server.getCommands());
-
     node.forEachLabel(s -> {
-      map.getKnownCommands().remove(fallback + ":" + s, bukkitWrapper);
-      map.getKnownCommands().remove(s, bukkitWrapper);
+      knownCommands.remove(fallback + ":" + s);
+      Command existing = knownCommands.get(s);
+
+      if (Objects.equals(existing, bukkitWrapper)) {
+        knownCommands.remove(s);
+      }
     });
+
+    unregisterFrom(server.getCommands());
   }
 
   private void unregisterFrom(Commands commands) {
     var root = commands.getDispatcher().getRoot();
 
-    node.forEachLabel(s -> {
-      root.removeCommand(s);
-      root.removeCommand(fallback + ":" + s);
-    });
+    for (String label : registeredVanillaLabels) {
+      root.removeCommand(label);
+    }
+
+    registeredVanillaLabels.clear();
   }
 
   public void register() {

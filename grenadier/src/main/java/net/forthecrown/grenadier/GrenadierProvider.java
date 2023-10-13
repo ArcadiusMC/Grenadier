@@ -32,4 +32,6 @@ public interface GrenadierProvider {
   CommandSource createSource(CommandSender sender);
 
   SuggestionProvider<CommandSource> suggestAllCommands();
+
+  int dispatch(CommandSource source, String command);
 }

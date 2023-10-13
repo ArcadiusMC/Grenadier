@@ -10,13 +10,16 @@ import net.forthecrown.grenadier.CommandExceptionHandler;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierProvider;
 import net.kyori.adventure.text.Component;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_20_R1.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_20_R2.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.spigotmc.AsyncCatcher;
 
 @Getter
 @Internal
@@ -89,5 +92,16 @@ public class GrenadierProviderImpl implements GrenadierProvider {
   @Override
   public SuggestionProvider<CommandSource> suggestAllCommands() {
     return InternalUtil.SUGGEST_ALL_COMMANDS;
+  }
+
+  @Override
+  public int dispatch(CommandSource source, String command) {
+    Objects.requireNonNull(source, "Null source");
+    Objects.requireNonNull(command, "Null command");
+
+    AsyncCatcher.catchOp("Command execution");
+
+    CommandSourceStack stack = InternalUtil.unwrap(source);
+    return MinecraftServer.getServer().getCommands().dispatchServerCommand(stack, command);
   }
 }
