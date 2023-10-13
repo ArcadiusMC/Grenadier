@@ -22,10 +22,10 @@ repositories {
 
 dependencies {
   // Grenadier itself
-  implementation("net.forthecrown:grenadier:2.1.4")
+  implementation("net.forthecrown:grenadier:2.2.0")
   
   // Get the annotation library with
-  implementation("net.forthecrown:grenadier-annotations:1.2.4")
+  implementation("net.forthecrown:grenadier-annotations:1.3.0")
   
   // Mojang's Brigadier engine
   compileOnly("com.mojang:brigadier:1.0.18")
@@ -45,14 +45,14 @@ Maven:
   <dependency>
     <groupId>net.forthecrown</groupId>
     <artifactId>grenadier</artifactId>
-    <version>2.1.4</version>
+    <version>2.2.0</version>
   </dependency>
 
   <!-- Optional annotation library -->
   <dependency>
     <groupId>net.forthecrown</groupId>
     <artifactId>grenadier-annotations</artifactId>
-    <version>1.2.4</version>
+    <version>1.3.0</version>
   </dependency>
 
   <!-- Brigadier itself -->
@@ -71,11 +71,10 @@ If you're intending on shading Grenadier into your plugin, then you can ignore t
 Simply add this line to your `plugin.yml`
 ```yml
 libraries:
-  - "net.forthecrown:grenadier:<version goes here>"
+  - "net.forthecrown:grenadier:2.2.0"
 
-  # Optional annotations library, if you include this, you can skip
-  # the one above, Bukkit will download it automatically
-  - "net.forthecrown:grenadier-annotations:<version goes here>"
+  # Optional annotations library
+  - "net.forthecrown:grenadier-annotations:1.3.0"
 ```
 ### Paper plugins
 You'll need to create an implementation of `PluginLoader`, example: 
@@ -89,15 +88,17 @@ public class LoaderExample implements PluginLoader {
     MavenLibraryResolver resolver = new MavenLibraryResolver();
 
     resolver.addDependency(
-      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:<version goes here>"), null)
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:2.2.0"), null)
+    );
+    
+    // Optional annotations library
+    resolver.addDependency(
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier-annotations:1.3.0"), null)
     );
 
-    // Optional annotations library
-    // If you include this, you can skip the one above, Paper downloads
-    // it automatically
-    resolver.addDependency(
-      new Dependency(new DefaultArtifact("net.forthecrown:grenadier-annotations:<version goes here>"), null)
-    );
+    // Add Maven central repository
+    RemoteRepository repo = new RemoteRepository.Builder("central", "default", "https://repo1.maven.org/maven2/").build();
+    resolver.addRepository(repo);
 
     classpathBuilder.addLibrary(resolver);
   }
