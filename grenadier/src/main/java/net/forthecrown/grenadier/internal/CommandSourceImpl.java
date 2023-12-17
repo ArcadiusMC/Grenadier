@@ -29,10 +29,10 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.craftbukkit.v1_20_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_20_R2.command.VanillaCommandWrapper;
-import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_20_R2.util.CraftVector;
+import org.bukkit.craftbukkit.v1_20_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_20_R3.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_20_R3.util.CraftVector;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
@@ -41,39 +41,23 @@ import org.jetbrains.annotations.Nullable;
 
 class CommandSourceImpl implements CommandSource {
 
-  private static final Field silentField;
   private static final Field permissionLevel;
 
   static {
     Class<CommandSourceStack> stackClass = CommandSourceStack.class;
-    Field silent = null;
     Field permission = null;
 
     for (var f: stackClass.getDeclaredFields()) {
-      if (f.getType() == Boolean.class
-          || f.getType() == Boolean.TYPE
-          || f.getName().equalsIgnoreCase("silent")
-      ) {
-        silent = f;
-      }
-
       if (f.getType() == Integer.class
           || f.getType() == Integer.TYPE
           || f.getName().equalsIgnoreCase("permissionLevel")
       ) {
         permission = f;
-      }
-
-      if (permission != null && silent != null) {
         break;
       }
     }
 
-    Objects.requireNonNull(silent, "Silent field not found");
     Objects.requireNonNull(permission, "permissionLevel field not found");
-
-    silentField = silent;
-    silentField.setAccessible(true);
 
     permissionLevel = permission;
     permissionLevel.setAccessible(true);
@@ -283,11 +267,7 @@ class CommandSourceImpl implements CommandSource {
 
   @Override
   public boolean isSilent() {
-    try {
-      return silentField.getBoolean(stack);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
+    return stack.isSilent();
   }
 
   @Override

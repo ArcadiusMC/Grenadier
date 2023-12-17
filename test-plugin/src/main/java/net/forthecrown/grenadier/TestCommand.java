@@ -14,6 +14,7 @@ import net.forthecrown.grenadier.types.ArgumentTypes;
 import net.forthecrown.grenadier.types.ArrayArgument;
 import net.forthecrown.grenadier.types.BlockArgument;
 import net.forthecrown.grenadier.types.BlockFilterArgument;
+import net.forthecrown.grenadier.types.CoordinateSuggestions;
 import net.forthecrown.grenadier.types.ItemArgument;
 import net.forthecrown.grenadier.types.ItemFilterArgument;
 import net.forthecrown.grenadier.types.options.ArgumentOption;
@@ -106,6 +107,24 @@ public class TestCommand extends AbstractCommand {
           context.getSource().sendMessage("Hello, world!");
           return 0;
         })
+
+        .then(literal("coordinate_suggestions")
+            .then(argument("asd", StringArgumentType.greedyString())
+                .suggests((context, builder) -> {
+                  return Completions.suggestCoordinates(builder,
+                      List.of(
+                          CoordinateSuggestions.create(1, 2, 3),
+                          CoordinateSuggestions.create("~4", "~53", "~4")
+                      )
+                  );
+                })
+
+                .executes(c -> {
+                  c.getSource().sendMessage(":)");
+                  return 0;
+                })
+            )
+        )
 
         .then(literal("combined_suggestions")
             .then(argument("greedy", StringArgumentType.greedyString())

@@ -12,9 +12,11 @@ import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginIdentifiableCommand;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-class GrenadierBukkitWrapper extends Command {
+class GrenadierBukkitWrapper extends Command implements PluginIdentifiableCommand {
 
   private final GrenadierCommandNode treeRoot;
   private final GrenadierCommandData data;
@@ -32,6 +34,11 @@ class GrenadierBukkitWrapper extends Command {
 
   public GrenadierCommandData getData() {
     return data;
+  }
+
+  @Override
+  public @NotNull Plugin getPlugin() {
+    return data.getPlugin();
   }
 
   @Override

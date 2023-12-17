@@ -26,6 +26,9 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.world.flag.FeatureFlags;
+import org.apache.logging.log4j.util.StackLocatorUtil;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
@@ -105,6 +108,11 @@ public final class InternalUtil {
 
       return 0;
     }
+  }
+
+  public static Plugin getCallingPlugin() {
+    Class<?> callerClass = StackLocatorUtil.getCallerClass(3);
+    return JavaPlugin.getProvidingPlugin(callerClass);
   }
 
   public interface ReaderPredicate {

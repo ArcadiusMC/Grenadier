@@ -11,6 +11,7 @@ Documentation and guides on how to use Grenadier are available
 in the grenadier javadoc, located [here](https://www.javadoc.io/doc/net.forthecrown/grenadier/latest/index.html)
 
 ## Version compatibility
+- Grenadier 2.3.x: Minecraft 1.20.4
 - Grenadier 2.2.x: Minecraft 1.20.2
 - Grenadier 2.1.x: Minecraft 1.20 and 1.20.1
 - Grenadier 2.0.x: Minecraft 1.19.3

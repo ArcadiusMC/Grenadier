@@ -102,6 +102,10 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
     if (vanillaSeparated) {
       data.registerVanilla();
     }
+
+    if (provider.getPlugin() == null) {
+      provider.setPlugin(grenadierNode.getPlugin());
+    }
   }
 
   @Override

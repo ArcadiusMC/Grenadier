@@ -2,7 +2,12 @@ package net.forthecrown.grenadier;
 
 import static net.kyori.adventure.text.Component.text;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import java.util.List;
+import net.forthecrown.grenadier.types.options.ArgumentOption;
+import net.forthecrown.grenadier.types.options.Options;
+import net.forthecrown.grenadier.types.options.OptionsArgument;
+import net.forthecrown.grenadier.types.options.ParsedOptions;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class CommandListTests extends AbstractCommand {
@@ -52,8 +57,17 @@ public class CommandListTests extends AbstractCommand {
       "grenadier_test local_date 2023-10-11",
       "grenadier_test block stone_slab[waterlogged=true]",
       "grenadier_test block_filter stone",
-      "grenadier_test enchantment minecraft:sharpness"
+      "grenadier_test enchantment minecraft:sharpness",
+      "transformer-test literal",
+      "transformer-test literal another-literal"
   );
+
+  private static final ArgumentOption<Boolean> SILENT
+      = Options.argument(BoolArgumentType.bool(), "silent");
+
+  private static final OptionsArgument OPTIONS = OptionsArgument.builder()
+      .addRequired(SILENT)
+      .build();
 
   public CommandListTests() {
     super("test_lists");
@@ -62,24 +76,38 @@ public class CommandListTests extends AbstractCommand {
 
   @Override
   public void createCommand(GrenadierCommand command) {
-    command.executes(c -> {
-      CommandSource source = c.getSource();
-      GrenadierProvider provider = Grenadier.getProvider();
+    command
+        .then(argument("options", OPTIONS)
+            .executes(c -> {
 
-      for (String s : COMMANDS) {
-        source.sendMessage(
-            text()
-                .color(NamedTextColor.GRAY)
-                .append(text(">> Executing >> '", NamedTextColor.DARK_GRAY))
-                .append(text(s))
-                .append(text("'", NamedTextColor.DARK_GRAY))
-                .build()
+              CommandSource source = c.getSource();
+              CommandSource cmdExecutor;
+
+              var parsedOptions = c.getArgument("options", ParsedOptions.class);
+
+              if (parsedOptions.getValueOptional(SILENT).orElse(false)) {
+                cmdExecutor = source.silent();
+              } else {
+                cmdExecutor = source;
+              }
+
+              GrenadierProvider provider = Grenadier.getProvider();
+
+              for (String s : COMMANDS) {
+                source.sendMessage(
+                    text()
+                        .color(NamedTextColor.GRAY)
+                        .append(text(">> Executing >> '", NamedTextColor.DARK_GRAY))
+                        .append(text(s))
+                        .append(text("'", NamedTextColor.DARK_GRAY))
+                        .build()
+                );
+
+                provider.dispatch(cmdExecutor, s);
+              }
+
+              return 0;
+            })
         );
-
-        provider.dispatch(source, s);
-      }
-
-      return 0;
-    });
   }
 }

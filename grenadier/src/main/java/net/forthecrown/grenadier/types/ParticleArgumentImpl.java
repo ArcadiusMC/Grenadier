@@ -11,7 +11,7 @@ import net.forthecrown.grenadier.internal.InternalUtil;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
 import net.minecraft.commands.CommandBuildContext;
 import org.bukkit.Particle;
-import org.bukkit.craftbukkit.v1_20_R2.CraftParticle;
+import org.bukkit.craftbukkit.v1_20_R3.CraftParticle;
 
 class ParticleArgumentImpl
     implements ParticleArgument, VanillaMappedArgument

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.2.0"
+version = "2.3.0"
 
 repositories {
   mavenCentral()
@@ -27,10 +27,10 @@ dependencies {
 
   compileOnly("com.mojang:brigadier:1.0.18")
 
-  api("net.forthecrown:nbt:1.5.0")
-  api("net.forthecrown:paper-nbt:1.5.0")
+  api("net.forthecrown:nbt:1.5.1")
+  api("net.forthecrown:paper-nbt:1.6.0")
 
-  paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
+  paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
 }
 
 tasks {

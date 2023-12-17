@@ -42,7 +42,7 @@ class OptionsArgumentImpl implements OptionsArgument, VanillaMappedArgument {
     this.entries = ImmutableMap.copyOf(builder.entries);
     this.options = ImmutableSet.copyOf(optionLookup.values());
 
-    Preconditions.checkArgument(options.size() > 1, "No options given");
+    Preconditions.checkArgument(!options.isEmpty(), "No options given");
 
     for (Entry option : options) {
       for (Option excl : option.exclusive) {

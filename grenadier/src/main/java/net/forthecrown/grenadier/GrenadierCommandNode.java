@@ -19,8 +19,11 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.plugin.Plugin;
 
 public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
+
+  private final Plugin plugin;
 
   private final String permission;
   private final Component description;
@@ -39,15 +42,21 @@ public class GrenadierCommandNode extends LiteralCommandNode<CommandSource> {
       String permission,
       Component description,
       List<String> aliases,
-      boolean plainTranslation
+      boolean plainTranslation,
+      Plugin plugin
   ) {
     super(literal, command, requirement, redirect, modifier, forks);
 
     this.permission = permission;
     this.description = description;
     this.plainTranslation = plainTranslation;
+    this.plugin = plugin;
 
     this.aliases = aliases.stream().map(String::toLowerCase).toList();
+  }
+
+  public Plugin getPlugin() {
+    return plugin;
   }
 
   public boolean isPlainTranslation() {

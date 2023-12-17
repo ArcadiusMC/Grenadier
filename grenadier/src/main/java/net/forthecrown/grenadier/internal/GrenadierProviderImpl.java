@@ -5,16 +5,18 @@ import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.papermc.paper.brigadier.PaperBrigadier;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import net.forthecrown.grenadier.CommandExceptionHandler;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierProvider;
 import net.kyori.adventure.text.Component;
+import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_20_R2.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.v1_20_R3.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -102,6 +104,17 @@ public class GrenadierProviderImpl implements GrenadierProvider {
     AsyncCatcher.catchOp("Command execution");
 
     CommandSourceStack stack = InternalUtil.unwrap(source);
-    return MinecraftServer.getServer().getCommands().dispatchServerCommand(stack, command);
+    AtomicInteger integer = new AtomicInteger();
+
+    stack = stack.withCallback((successful, returnValue) -> {
+      if (!successful) {
+        return;
+      }
+
+      integer.set(returnValue);
+    }, CommandResultCallback::chain);
+
+    MinecraftServer.getServer().getCommands().dispatchServerCommand(stack, command);
+    return integer.get();
   }
 }

@@ -14,7 +14,6 @@ public class GrenadierTestPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    Grenadier.plugin(this);
     new TestCommand();
     new CommandListTests();
 
@@ -60,6 +59,7 @@ public class GrenadierTestPlugin extends JavaPlugin {
     ctx.registerCommand(new SignEditCommand());
     ctx.registerCommand(new PasteAnnotationTest());
     ctx.registerCommand(new MapperTestCommand());
+    ctx.registerCommand(new TransformerTestCommand());
   }
 
   @Override

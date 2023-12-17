@@ -467,11 +467,7 @@ public interface CommandSource
 
   @Override
   default @NotNull Audience audience() {
-    if (isSilent()) {
-      return Audience.empty();
-    }
-
-    return output();
+    return isSilent() ? Audience.empty() : output();
   }
 
   /**

@@ -26,10 +26,7 @@ public final class CoordinateSuggestions {
     return create(null, x, null, z);
   }
 
-  public static CoordinateSuggestion create(@Nullable Component tooltip,
-                                            String x,
-                                            String z
-  ) {
+  public static CoordinateSuggestion create(@Nullable Component tooltip, String x, String z) {
     return create(tooltip, x, null, z);
   }
 
@@ -50,10 +47,7 @@ public final class CoordinateSuggestions {
     return create(null, toString(x), null, toString(z));
   }
 
-  public static CoordinateSuggestion create(@Nullable Component tooltip,
-                                            double x,
-                                            double z
-  ) {
+  public static CoordinateSuggestion create(@Nullable Component tooltip, double x, double z) {
     return create(tooltip, toString(x), null, toString(z));
   }
 

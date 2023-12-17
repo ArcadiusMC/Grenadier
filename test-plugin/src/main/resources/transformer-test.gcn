@@ -1,0 +1,6 @@
+name = "transformer-test"
+
+literal("literal") {
+  executes = execFunc()
+  transformer = transformerFunction()
+}

@@ -15,7 +15,7 @@ import net.forthecrown.nbt.paper.PaperNbt;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.item.ItemParser;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_20_R2.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_20_R3.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
 
 class ItemArgumentImpl

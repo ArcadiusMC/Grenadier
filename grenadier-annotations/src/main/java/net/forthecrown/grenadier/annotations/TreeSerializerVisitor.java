@@ -31,6 +31,8 @@ import net.forthecrown.grenadier.annotations.tree.RootTree;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.MemberTransform;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.VariableTransform;
 import net.forthecrown.grenadier.annotations.tree.Tree;
 import net.forthecrown.grenadier.annotations.tree.TreeVisitor;
 
@@ -291,6 +293,16 @@ public class TreeSerializerVisitor implements TreeVisitor<JsonElement, Void> {
 
     obj.add("value", array);
     return obj;
+  }
+
+  @Override
+  public JsonElement visitMemberTransform(MemberTransform tree, Void unused) {
+    return createTreeObject(tree, "member_transform", tree.tree().path());
+  }
+
+  @Override
+  public JsonElement visitVariableTransform(VariableTransform tree, Void unused) {
+    return createTreeObject(tree, "variable_transform", tree.variable());
   }
 
   private JsonObject createTreeObject(Tree tree, String typeName, Object value) {

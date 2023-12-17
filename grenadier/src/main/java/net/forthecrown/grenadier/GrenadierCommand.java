@@ -9,10 +9,13 @@ import com.mojang.brigadier.tree.CommandNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
+import net.forthecrown.grenadier.internal.InternalUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.permissions.Permission;
+import org.bukkit.plugin.Plugin;
 
 /**
  * Grenadier command builder
@@ -90,6 +93,8 @@ import org.bukkit.permissions.Permission;
  */
 public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
 
+  private final Plugin plugin;
+
   private final List<String> aliases = new ArrayList<>();
   private Component description;
 
@@ -98,8 +103,19 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
   private boolean plainTranslation;
 
   public GrenadierCommand(String literal) {
-    super(literal.toLowerCase());
+    this(literal, InternalUtil.getCallingPlugin());
+  }
+
+  public GrenadierCommand(String literal, Plugin plugin) {
+    super(literal);
+    this.plugin = plugin;
+
+    Objects.requireNonNull(plugin, "Null plugin");
     Grenadier.ensureValidLabel(literal);
+  }
+
+  public Plugin getPlugin() {
+    return plugin;
   }
 
   public String getDescription() {
@@ -253,7 +269,8 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
         permission,
         description,
         aliases,
-        plainTranslation
+        plainTranslation,
+        plugin
     );
 
     for (CommandNode<CommandSource> argument : getArguments()) {

@@ -52,6 +52,21 @@ class LocalParsedPosition implements ParsedPosition {
   }
 
   @Override
+  public Coordinate getXCoordinate() {
+    return coordinates[AXIS_X];
+  }
+
+  @Override
+  public Coordinate getYCoordinate() {
+    return coordinates[AXIS_Y];
+  }
+
+  @Override
+  public Coordinate getZCoordinate() {
+    return coordinates[AXIS_Z];
+  }
+
+  @Override
   public Type getType() {
     return Type.LOCAL;
   }

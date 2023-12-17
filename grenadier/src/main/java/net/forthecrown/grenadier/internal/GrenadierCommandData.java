@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
-import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -19,9 +18,12 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
+import org.bukkit.plugin.Plugin;
 
 @Getter
 class GrenadierCommandData {
+
+  private final Plugin plugin;
 
   private final GrenadierCommandNode node;
   private final GrenadierBukkitWrapper bukkitWrapper;
@@ -32,9 +34,10 @@ class GrenadierCommandData {
 
   public GrenadierCommandData(GrenadierCommandNode node) {
     this.node = node;
+    this.plugin = node.getPlugin();
     this.bukkitWrapper = new GrenadierBukkitWrapper(this);
     this.vanillaTree = TreeTranslator.translateLiteral(node, node);
-    this.fallback = Grenadier.fallbackPrefix();
+    this.fallback = plugin.getName();
     this.registeredVanillaLabels = new HashSet<>();
   }
 
