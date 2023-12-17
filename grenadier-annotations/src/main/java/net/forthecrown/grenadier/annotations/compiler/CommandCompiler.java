@@ -16,6 +16,7 @@ import net.forthecrown.grenadier.GrenadierCommand;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.forthecrown.grenadier.Nodes;
 import net.forthecrown.grenadier.annotations.ArgumentModifier;
+import net.forthecrown.grenadier.annotations.CommandTransformer;
 import net.forthecrown.grenadier.annotations.TypeRegistry.TypeParser;
 import net.forthecrown.grenadier.annotations.tree.AbstractCmdTree;
 import net.forthecrown.grenadier.annotations.tree.ArgumentMapperTree.MemberMapper;
@@ -44,6 +45,9 @@ import net.forthecrown.grenadier.annotations.tree.RootTree;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
+import net.forthecrown.grenadier.annotations.tree.TransformTree;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.MemberTransform;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.VariableTransform;
 import net.forthecrown.grenadier.annotations.tree.TreeVisitor;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.kyori.adventure.text.Component;
@@ -210,6 +214,19 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
       CommandNode<CommandSource> node = (CommandNode<CommandSource>) child.accept(this, context);
       builder.then(node);
     });
+
+    if (!tree.getTransforms().isEmpty()) {
+      var transforms = tree.getTransforms();
+
+      for (TransformTree transform : transforms) {
+        Result<CommandTransformer> compileResult
+            = (Result<CommandTransformer>) transform.accept(this, context);
+
+        compileResult.apply(context.errors, commandTransformer -> {
+          commandTransformer.apply((ArgumentBuilder) builder);
+        });
+      }
+    }
 
     context.syntaxPrefixes.pop();
 
@@ -555,5 +572,21 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
           "Failed to read any elements for description"
       );
     }
+  }
+
+  @Override
+  public Result<CompiledTransformer> visitMemberTransform(
+      MemberTransform tree,
+      CompileContext context
+  ) {
+    return CompiledTransformer.compile(context, tree);
+  }
+
+  @Override
+  public Result<CommandTransformer> visitVariableTransform(
+      VariableTransform tree,
+      CompileContext context
+  ) {
+    return context.getVariable(tree, CommandTransformer.class);
   }
 }

@@ -18,6 +18,8 @@ public abstract class AbstractCmdTree implements Tree {
 
   private RequiresTree requires;
 
+  private final List<TransformTree> transforms = new ArrayList<>();
+
   private final List<ChildCommandTree> children = new ArrayList<>();
 
   private final List<ArgumentMapperTree> mappers = new ArrayList<>();

@@ -67,7 +67,7 @@ public record MemberChainTree(
     assert kind == Kind.METHOD;
 
     try {
-      return Result.success(declaring.getMethod(name, paramTypes));
+      return Result.success(declaring.getDeclaredMethod(name, paramTypes));
     } catch (NoSuchMethodException e) {
       return Result.fail("No such method '%s' in %s with params %s",
           name, declaring,

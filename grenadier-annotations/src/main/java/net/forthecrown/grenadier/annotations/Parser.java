@@ -13,6 +13,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.FALSE;
 import static net.forthecrown.grenadier.annotations.TokenType.IDENTIFIER;
 import static net.forthecrown.grenadier.annotations.TokenType.LITERAL;
 import static net.forthecrown.grenadier.annotations.TokenType.NAME;
+import static net.forthecrown.grenadier.annotations.TokenType.NUMBER;
 import static net.forthecrown.grenadier.annotations.TokenType.PERMISSION;
 import static net.forthecrown.grenadier.annotations.TokenType.PLAIN_TRANS;
 import static net.forthecrown.grenadier.annotations.TokenType.QUOTED_STRING;
@@ -24,6 +25,7 @@ import static net.forthecrown.grenadier.annotations.TokenType.SQUARE_OPEN;
 import static net.forthecrown.grenadier.annotations.TokenType.SUGGESTS;
 import static net.forthecrown.grenadier.annotations.TokenType.SYNTAX_LABEL;
 import static net.forthecrown.grenadier.annotations.TokenType.TRANSLATABLE;
+import static net.forthecrown.grenadier.annotations.TokenType.TREE_TRANSFORMER;
 import static net.forthecrown.grenadier.annotations.TokenType.TRUE;
 import static net.forthecrown.grenadier.annotations.TokenType.TYPE_MAP;
 import static net.forthecrown.grenadier.annotations.TokenType.VARIABLE;
@@ -72,6 +74,9 @@ import net.forthecrown.grenadier.annotations.tree.SuggestsTree;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
+import net.forthecrown.grenadier.annotations.tree.TransformTree;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.MemberTransform;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.VariableTransform;
 
 @Getter
 class Parser {
@@ -121,7 +126,7 @@ class Parser {
            PERMISSION,  ALIASES,  DESCRIPTION,
              ARGUMENT, EXECUTES,     REQUIRES,
               LITERAL, TYPE_MAP, SYNTAX_LABEL,
-          PLAIN_TRANS
+          PLAIN_TRANS, TREE_TRANSFORMER
       );
 
       lexer.expect(ASSIGN);
@@ -232,7 +237,7 @@ class Parser {
       lexer.expect(
              EXECUTES,     SUGGESTS, REQUIRES,
              ARGUMENT,      LITERAL, TYPE_MAP,
-          DESCRIPTION, SYNTAX_LABEL
+          DESCRIPTION, SYNTAX_LABEL, TREE_TRANSFORMER
       );
     });
 
@@ -290,7 +295,7 @@ class Parser {
       var label = lexer.expect(IDENTIFIER);
       lexer.expect(ASSIGN);
 
-      var value = lexer.next();
+      var value = lexer.expect(TRUE, FALSE, IDENTIFIER, QUOTED_STRING, NUMBER, VARIABLE);
       options.put(label.value(), value);
     });
 
@@ -318,23 +323,11 @@ class Parser {
           EXECUTES, REQUIRES, ARGUMENT,
            LITERAL, TYPE_MAP, DESCRIPTION,
 
-          SYNTAX_LABEL
+          SYNTAX_LABEL, TREE_TRANSFORMER
       );
     });
 
     return tree;
-  }
-
-  boolean optionallyParseMapper(AbstractCmdTree tree) {
-    var peek = lexer.peek();
-
-    if (peek.is(TYPE_MAP)) {
-      var modifier = parseArgumentMapper();
-      tree.getMappers().add(modifier);
-      return true;
-    }
-
-    return false;
   }
 
   boolean baseBodyParse(AbstractCmdTree tree) {
@@ -392,7 +385,19 @@ class Parser {
       return true;
     }
 
-    if (optionallyParseMapper(tree)) {
+    if (peek.is(TREE_TRANSFORMER)) {
+      lexer.next();
+      lexer.expect(ASSIGN);
+
+      TransformTree transform = parseTransform();
+      tree.getTransforms().add(transform);
+
+      return true;
+    }
+
+    if (peek.is(TYPE_MAP)) {
+      var modifier = parseArgumentMapper();
+      tree.getMappers().add(modifier);
       return true;
     }
 
@@ -427,6 +432,17 @@ class Parser {
         "Tried to redefine '%s' of node '%s'",
         field, tree.getName()
     );
+  }
+
+  public TransformTree parseTransform() {
+    var peek = lexer.peek();
+    if (peek.is(VARIABLE)) {
+      String varName = lexer.next().value();
+      return new VariableTransform(varName, peek.position());
+    }
+
+    MemberChainTree memberChainTree = parseMemberChain();
+    return new MemberTransform(memberChainTree, peek.position());
   }
 
   public DescriptionTree parseDescription(boolean allowArray) {

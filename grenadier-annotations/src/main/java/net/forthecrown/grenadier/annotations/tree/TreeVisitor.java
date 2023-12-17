@@ -21,6 +21,8 @@ import net.forthecrown.grenadier.annotations.tree.RequiresTree.VariableRequires;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.MemberSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.StringListSuggestions;
 import net.forthecrown.grenadier.annotations.tree.SuggestsTree.VariableSuggestions;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.MemberTransform;
+import net.forthecrown.grenadier.annotations.tree.TransformTree.VariableTransform;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
@@ -89,4 +91,8 @@ public interface TreeVisitor<R, C> {
   R visitTranslatableDescription(TranslatableDescription tree, C c);
 
   R visitArrayDescription(ArrayDescription tree, C c);
+
+  R visitMemberTransform(MemberTransform tree, C c);
+
+  R visitVariableTransform(VariableTransform tree, C c);
 }

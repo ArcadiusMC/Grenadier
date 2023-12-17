@@ -25,6 +25,7 @@ public enum TokenType {
   SYNTAX_LABEL    ("label"),
   TRANSLATABLE    ("translatable"),
   PLAIN_TRANS     ("translate_plain"),
+  TREE_TRANSFORMER("transformer"),
 
   TRUE            ("true"),
   FALSE           ("false"),
