@@ -49,14 +49,14 @@ public final class Completions {
   /**
    * Tests if the given key is a valid suggestion for the given token
    *
-   * @param token The token to test against
+   * @param input The command input to test against
    * @param key   The key to test
    * @return True, if the key is a valid suggestion, false otherwise
    */
-  public static boolean matches(String token, Key key) {
-    return matches(token, key.namespace())
-        || matches(token, key.value())
-        || matches(token, key.asString());
+  public static boolean matches(String input, Key key) {
+    return matches(input, key.namespace())
+        || matches(input, key.value())
+        || matches(input, key.asString());
   }
 
   /**
