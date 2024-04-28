@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
+import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -37,7 +38,7 @@ class GrenadierCommandData {
     this.plugin = node.getPlugin();
     this.bukkitWrapper = new GrenadierBukkitWrapper(this);
     this.vanillaTree = TreeTranslator.translateLiteral(node, node);
-    this.fallback = plugin.getName();
+    this.fallback = plugin == null ? Grenadier.fallbackPrefix() : plugin.getName();
     this.registeredVanillaLabels = new HashSet<>();
   }
 

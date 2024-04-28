@@ -38,7 +38,7 @@ class GrenadierBukkitWrapper extends Command implements PluginIdentifiableComman
 
   @Override
   public @NotNull Plugin getPlugin() {
-    return data.getPlugin();
+    return data.getPlugin() == null ? Grenadier.plugin() : data.getPlugin();
   }
 
   @Override

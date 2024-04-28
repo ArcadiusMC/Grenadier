@@ -9,7 +9,6 @@ import com.mojang.brigadier.tree.CommandNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.internal.InternalUtil;
 import net.kyori.adventure.text.Component;
@@ -109,8 +108,6 @@ public class GrenadierCommand extends LiteralArgumentBuilder<CommandSource> {
   public GrenadierCommand(String literal, Plugin plugin) {
     super(literal);
     this.plugin = plugin;
-
-    Objects.requireNonNull(plugin, "Null plugin");
     Grenadier.ensureValidLabel(literal);
   }
 

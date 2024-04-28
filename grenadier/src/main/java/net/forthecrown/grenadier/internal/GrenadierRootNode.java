@@ -103,7 +103,7 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
       data.registerVanilla();
     }
 
-    if (provider.getPlugin() == null) {
+    if (provider.getPlugin() == null && grenadierNode.getPlugin() != null) {
       provider.setPlugin(grenadierNode.getPlugin());
     }
   }

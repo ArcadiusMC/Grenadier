@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
+import net.forthecrown.grenadier.internal.InternalUtil;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 
@@ -84,7 +85,7 @@ public abstract class AbstractCommand
    * @param name Command name
    */
   public AbstractCommand(String name) {
-    this.command = Grenadier.createCommand(name);
+    this.command = Grenadier.createCommand(name, InternalUtil.getCallingPlugin());
   }
 
   /**

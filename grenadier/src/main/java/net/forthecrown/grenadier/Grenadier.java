@@ -6,6 +6,7 @@ import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.Objects;
 import net.forthecrown.grenadier.internal.GrenadierProviderImpl;
+import net.forthecrown.grenadier.internal.InternalUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -220,7 +221,11 @@ public final class Grenadier {
    * @return Created command
    */
   public static GrenadierCommand createCommand(@NotNull String name) {
-    return new GrenadierCommand(name);
+    return new GrenadierCommand(name, InternalUtil.getCallingPlugin());
+  }
+
+  public static GrenadierCommand createCommand(@NotNull String name, @NotNull Plugin plugin) {
+    return new GrenadierCommand(name, plugin);
   }
 
   /**
