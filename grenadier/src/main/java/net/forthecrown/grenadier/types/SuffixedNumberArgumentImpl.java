@@ -7,12 +7,11 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Collections;
 import java.util.HashMap;
-import net.forthecrown.grenadier.Completions;
-import net.forthecrown.grenadier.Grenadier;
-import net.forthecrown.grenadier.Readers;
-
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.concurrent.CompletableFuture;
+import net.forthecrown.grenadier.Completions;
+import net.forthecrown.grenadier.Readers;
 
 class SuffixedNumberArgumentImpl<N extends Number>
     implements SuffixedNumberArgument<N>
@@ -43,27 +42,15 @@ class SuffixedNumberArgumentImpl<N extends Number>
 
   @Override
   public N parse(StringReader reader) throws CommandSyntaxException {
-    final int start = reader.getCursor();
-    double number = reader.readDouble();
+    int start = reader.getCursor();
 
-    if (!reader.canRead() || Character.isWhitespace(reader.peek())) {
-      N result = type.fromDouble(number);
+    SuffixedParser<?> parser = new SuffixedParser<>(reader);
+    double value = parser.parseNumber();
 
-      validateSize(result, reader, start);
-      return result;
-    }
+    N val = type.fromDouble(value);
+    validateSize(val, reader, start);
 
-    String word = reader.readUnquotedString();
-    N multiplier = suffixes.get(word);
-
-    if (multiplier == null) {
-      throw Grenadier.exceptions().unknownSuffix(reader, word);
-    }
-
-    N finalValue = type.fromDouble(number * multiplier.doubleValue());
-    validateSize(finalValue, reader, start);
-
-    return finalValue;
+    return val;
   }
 
   void validateSize(N value, StringReader reader, int start)
@@ -85,34 +72,16 @@ class SuffixedNumberArgumentImpl<N extends Number>
   }
 
   @Override
-  public CompletableFuture<Suggestions> listSuggestions(
-      CommandContext context,
+  public <S> CompletableFuture<Suggestions> listSuggestions(
+      CommandContext<S> context,
       SuggestionsBuilder builder
   ) {
     StringReader reader = Readers.forSuggestions(builder);
-    final int start = reader.getCursor();
-
-    while (reader.canRead() && StringReader.isAllowedNumber(reader.peek())) {
-      reader.skip();
-    }
-
-    final int end = reader.getCursor();
-    String suggestionsPrefix;
-
-    if (start == end) {
-      suggestionsPrefix = "10";
-    } else {
-      suggestionsPrefix = reader.getString().substring(start, end);
-    }
-
-    return Completions.suggest(builder,
-        suffixes.keySet()
-            .stream()
-            .map(s -> suggestionsPrefix + s)
-    );
+    SuffixedParser<S> parser = new SuffixedParser<>(reader);
+    return parser.suggestTo(context, builder);
   }
 
-  public interface NumberType<N> {
+  interface NumberType<N> {
 
     NumberType<Double> DOUBLE = new NumberType<>() {
       @Override
@@ -161,5 +130,35 @@ class SuffixedNumberArgumentImpl<N extends Number>
     CommandSyntaxException tooLow(StringReader reader, N min, N value);
 
     CommandSyntaxException tooHigh(StringReader reader, N max, N value);
+  }
+
+  class SuffixedParser<S> extends UnitParser<S> {
+
+    public SuffixedParser(StringReader reader) {
+      super(reader);
+    }
+
+    @Override
+    protected void suggestInitial(SuggestionsBuilder builder) {
+      Completions.suggest(builder,
+          suffixes.keySet()
+              .stream()
+              .map(string -> "10" + string)
+      );
+    }
+
+    @Override
+    protected void suggestUnits(SuggestionsBuilder builder) {
+      Completions.suggest(builder, suffixes.keySet());
+    }
+
+    @Override
+    protected OptionalDouble getMultiplier(String unitName) {
+      N value = suffixes.get(unitName);
+      if (value == null) {
+        return OptionalDouble.empty();
+      }
+      return OptionalDouble.of(value.doubleValue());
+    }
   }
 }

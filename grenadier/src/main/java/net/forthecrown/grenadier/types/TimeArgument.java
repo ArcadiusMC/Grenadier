@@ -11,10 +11,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import net.kyori.adventure.util.Ticks;
+import org.apache.commons.lang3.ArrayUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Parses a duration
@@ -22,13 +25,12 @@ import net.kyori.adventure.util.Ticks;
  * Input examples: <pre>
  * 1.02s
  * 1.45seconds
- * 1minute
- * 12min
- * 1.5m
- * 11mo
- * 14months
+ * 2.52days
  * 12months
- * 1000, no time unit given, treated as milliseconds
+ * 1000 (no time unit given, treated as milliseconds)
+ * 3days+1h+20m+20s (Values are all added together)
+ * 5h-20min
+ * 4h;20min (';' == '+')
  * </pre>
  */
 public interface TimeArgument extends ArgumentType<Duration> {
@@ -41,6 +43,47 @@ public interface TimeArgument extends ArgumentType<Duration> {
       CommandContext<S> context,
       SuggestionsBuilder builder
   );
+
+  /**
+   * Converts a duration into a parse-able string
+   * @param duration Duration to convert
+   * @return Parse-able time string
+   */
+  static String toString(@NotNull Duration duration) {
+    Objects.requireNonNull(duration, "Null duration");
+
+    if (duration.isZero()) {
+      return "0";
+    }
+
+    StringBuilder builder = new StringBuilder();
+    boolean negative = duration.isNegative();
+    long millis = Math.abs(duration.toMillis());
+
+    for (Unit unit : Unit.values()) {
+      long unitValue = unit.getMillis();
+
+      if (unitValue > millis) {
+        continue;
+      }
+
+      long value = millis / unitValue;
+      long remainder = millis % unitValue;
+
+      if (!builder.isEmpty()) {
+        builder.append(negative ? '-' : '+');
+      } else if (negative) {
+        builder.append("-");
+      }
+
+      builder.append(value);
+      builder.append(unit.getStrings().iterator().next());
+
+      millis = remainder;
+    }
+
+    return builder.toString();
+  }
 
   /**
    * All supported time units that can be parsed
@@ -92,6 +135,7 @@ public interface TimeArgument extends ArgumentType<Duration> {
         "mil", "millis", "millisecond", "milliseconds"
     );
 
+    private static final Unit[] REVERSE_VALUES;
     public static final Map<String, Unit> LOOKUP;
 
     static {
@@ -102,6 +146,9 @@ public interface TimeArgument extends ArgumentType<Duration> {
       }
 
       LOOKUP = Collections.unmodifiableMap(map);
+
+      REVERSE_VALUES = values();
+      ArrayUtils.reverse(REVERSE_VALUES);
     }
 
     private final long millis;
