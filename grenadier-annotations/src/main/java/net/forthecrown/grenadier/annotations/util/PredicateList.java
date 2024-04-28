@@ -1,14 +1,18 @@
-package net.forthecrown.grenadier.annotations.compiler;
+package net.forthecrown.grenadier.annotations.util;
 
 import java.util.function.Predicate;
 import net.forthecrown.grenadier.CommandSource;
 
-class PredicateList implements Predicate<CommandSource> {
+public class PredicateList implements Predicate<CommandSource> {
 
   private final Predicate<CommandSource>[] predicates;
 
   public PredicateList(Predicate<CommandSource>[] predicates) {
     this.predicates = predicates;
+  }
+
+  public Predicate<CommandSource>[] getPredicates() {
+    return predicates;
   }
 
   @Override

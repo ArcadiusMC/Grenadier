@@ -49,6 +49,7 @@ import net.forthecrown.grenadier.annotations.tree.TransformTree;
 import net.forthecrown.grenadier.annotations.tree.TransformTree.MemberTransform;
 import net.forthecrown.grenadier.annotations.tree.TransformTree.VariableTransform;
 import net.forthecrown.grenadier.annotations.tree.TreeVisitor;
+import net.forthecrown.grenadier.annotations.util.PermissionPredicate;
 import net.forthecrown.grenadier.annotations.util.Result;
 import net.kyori.adventure.text.Component;
 import org.bukkit.permissions.Permission;
@@ -127,7 +128,7 @@ public class CommandCompiler implements TreeVisitor<Object, CompileContext> {
     nameResult.report(context.errors);
 
     String name = nameResult.orElse(FAILED);
-    GrenadierCommand builder = new GrenadierCommand(name);
+    GrenadierCommand builder = new GrenadierCommand(name, context.getPlugin());
 
     builder.withPlainTranslation(tree.isPlainTranslation());
 

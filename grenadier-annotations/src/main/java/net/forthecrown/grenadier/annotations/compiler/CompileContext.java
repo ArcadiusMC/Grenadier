@@ -1,6 +1,7 @@
 package net.forthecrown.grenadier.annotations.compiler;
 
 import com.google.common.base.Joiner;
+import io.papermc.paper.plugin.provider.classloader.ConfiguredPluginClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,9 @@ import net.forthecrown.grenadier.annotations.SyntaxConsumer;
 import net.forthecrown.grenadier.annotations.Token;
 import net.forthecrown.grenadier.annotations.TypeRegistry;
 import net.forthecrown.grenadier.annotations.tree.VariableHolder;
+import net.forthecrown.grenadier.annotations.util.PredicateList;
 import net.forthecrown.grenadier.annotations.util.Result;
+import org.bukkit.plugin.Plugin;
 
 @Getter
 @RequiredArgsConstructor
@@ -121,5 +124,12 @@ public class CompileContext {
     }
 
     return new ContextFactory(map);
+  }
+
+  public Plugin getPlugin() {
+    if (commandClass.getClass().getClassLoader() instanceof ConfiguredPluginClassLoader loader) {
+      return loader.getPlugin();
+    }
+    return null;
   }
 }
