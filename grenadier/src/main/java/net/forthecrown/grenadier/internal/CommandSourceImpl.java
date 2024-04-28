@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import io.papermc.paper.entity.LookAnchor;
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -24,22 +25,28 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.world.phys.Vec2;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.craftbukkit.v1_20_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_20_R3.command.VanillaCommandWrapper;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_20_R3.util.CraftVector;
+import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.entity.CraftEntity;
+import org.bukkit.craftbukkit.util.CraftVector;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class CommandSourceImpl implements CommandSource {
+
+  static final float ENTITY_TARGET_RANGE_CREATIVE = 6.0f;
+  static final float ENTITY_TARGET_RANGE = 4.5f;
 
   private static final Field permissionLevel;
 
@@ -262,7 +269,31 @@ class CommandSourceImpl implements CommandSource {
 
   @Override
   public Collection<String> getEntitySuggestions() {
-    return stack.getSelectedEntities();
+    if (!isPlayer()) {
+      return Collections.emptyList();
+    }
+
+    Player player = asPlayerOrNull();
+
+    float maxDistance = player.getGameMode() == GameMode.CREATIVE
+        ? ENTITY_TARGET_RANGE_CREATIVE
+        : ENTITY_TARGET_RANGE;
+
+    World world = getWorld();
+    Location location = player.getEyeLocation();
+
+    RayTraceResult hit = world.rayTraceEntities(
+        location,
+        location.getDirection(),
+        maxDistance,
+        entity -> !entity.equals(player)
+    );
+
+    if (hit == null || hit.getHitEntity() == null) {
+      return Collections.emptyList();
+    }
+
+    return Collections.singleton(hit.getHitEntity().getUniqueId().toString());
   }
 
   @Override

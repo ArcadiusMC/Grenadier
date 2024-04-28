@@ -94,10 +94,8 @@ class EntityArgumentImpl implements EntityArgument, VanillaMappedArgument {
     }
 
     return parser.fillSuggestions(builder, builder1 -> {
-      var entities = s.getEntitySuggestions();
-
-      Completions.suggest(builder, entities);
-      Completions.suggest(builder, s.getVisiblePlayers().map(Player::getName));
+      Completions.suggest(builder1, s.getEntitySuggestions());
+      Completions.suggest(builder1, s.getVisiblePlayers().map(Player::getName));
     });
   }
 
