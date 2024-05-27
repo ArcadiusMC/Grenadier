@@ -8,14 +8,13 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
-import net.forthecrown.grenadier.Grenadier;
-import net.forthecrown.nbt.BinaryTags;
-import net.forthecrown.nbt.CompoundTag;
-import net.forthecrown.nbt.paper.PaperNbt;
+import net.forthecrown.grenadier.internal.InternalUtil;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_20_R3.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
 
 class ItemArgumentImpl
@@ -25,18 +24,24 @@ class ItemArgumentImpl
 
   static final ItemArgument INSTANCE = new ItemArgumentImpl();
 
+  private final ItemParser parser;
+
+  public ItemArgumentImpl() {
+    this.parser = new ItemParser(InternalUtil.CONTEXT);
+  }
+
   @Override
   public Result parse(StringReader reader) throws CommandSyntaxException {
-    ItemParser.ItemResult result = ItemParser.parseForItem(holderLookup, reader);
-
+    ItemParser.ItemResult result = parser.parse(reader);
     return new ItemResult(result);
   }
 
   @Override
   public <S> CompletableFuture<Suggestions> listSuggestions(
-      CommandContext<S> context, SuggestionsBuilder builder
+      CommandContext<S> context,
+      SuggestionsBuilder builder
   ) {
-    return ItemParser.fillSuggestions(holderLookup, builder, false);
+    return parser.fillSuggestions(builder);
   }
 
   @Override
@@ -45,11 +50,15 @@ class ItemArgumentImpl
   }
 
   @Getter
-  public static class ItemResult extends AbstractItemResult implements Result {
+  public static class ItemResult implements Result {
+
+    private final ItemInput input;
+    private final ItemParser.ItemResult result;
     private final Material material;
 
     public ItemResult(ItemParser.ItemResult result) {
-      super(result.nbt());
+      this.result = result;
+      this.input = new ItemInput(result.item(), result.components(), result.patch());
       this.material = CraftMagicNumbers.getMaterial(result.item().value());
     }
 
@@ -57,30 +66,14 @@ class ItemArgumentImpl
     public ItemStack create(int amount, boolean validateAmount)
         throws CommandSyntaxException
     {
-      var material = getMaterial();
-      int max = material.getMaxStackSize();
-
-      if (validateAmount && amount > max) {
-        throw Grenadier.exceptions().overstacked(material);
-      }
-
-      CompoundTag itemTag = BinaryTags.compoundTag();
-      itemTag.putString("id", material.getKey().asString());
-      itemTag.putInt("Count", amount);
-
-      if (tag != null) {
-        itemTag.put("tag", tag.copy());
-      }
-
-      return PaperNbt.loadItem(itemTag);
+      net.minecraft.world.item.ItemStack nmsItem = input.createItemStack(amount, validateAmount);
+      return CraftItemStack.asCraftMirror(nmsItem);
     }
 
     @Override
     public String toString() {
-      return "Result{" +
-          "material=" + material +
-          ", tag=" + tag +
-          '}';
+      String itemName = material.key().toString();
+      return itemName + input.serialize(InternalUtil.CONTEXT);
     }
   }
 }

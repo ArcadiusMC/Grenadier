@@ -1,8 +1,5 @@
 name: "GrenadierTestPlugin"
 main: "net.forthecrown.grenadier.GrenadierTestPlugin"
 version: "${version}"
-api-version: "1.20"
-
-libraries:
-  - "net.forthecrown:nbt:1.5.0"
-  - "net.forthecrown:paper-nbt:1.5.0"
+api-version: "1.20.5"
+loader: "net.forthecrown.grenadier.TestPluginLoader"

@@ -19,6 +19,10 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
+import org.bukkit.craftbukkit.help.SimpleHelpMap;
+import org.bukkit.help.GenericCommandHelpTopic;
+import org.bukkit.help.HelpMap;
+import org.bukkit.help.HelpTopic;
 import org.bukkit.plugin.Plugin;
 
 @Getter
@@ -30,6 +34,7 @@ class GrenadierCommandData {
   private final GrenadierBukkitWrapper bukkitWrapper;
   private final LiteralCommandNode<CommandSourceStack> vanillaTree;
   private final String fallback;
+  private final GenericCommandHelpTopic helpTopic;
 
   private final Set<String> registeredVanillaLabels;
 
@@ -40,13 +45,12 @@ class GrenadierCommandData {
     this.vanillaTree = TreeTranslator.translateLiteral(node, node);
     this.fallback = plugin == null ? Grenadier.fallbackPrefix() : plugin.getName();
     this.registeredVanillaLabels = new HashSet<>();
+    this.helpTopic = new GenericCommandHelpTopic(bukkitWrapper);
   }
 
   public void registerVanilla() {
     MinecraftServer server = DedicatedServer.getServer();
-    var vanilla = server.vanillaCommandDispatcher;
-
-    registerIntoVanilla(vanilla);
+    registerIntoVanilla(server.getCommands());
   }
 
   private void registerIntoVanilla(Commands commands) {
@@ -79,20 +83,7 @@ class GrenadierCommandData {
   }
 
   public void unregister() {
-    CommandMap map = Bukkit.getCommandMap();
-    Map<String, Command> knownCommands = map.getKnownCommands();
-
     MinecraftServer server = DedicatedServer.getServer();
-
-    node.forEachLabel(s -> {
-      knownCommands.remove(fallback + ":" + s);
-      Command existing = knownCommands.get(s);
-
-      if (Objects.equals(existing, bukkitWrapper)) {
-        knownCommands.remove(s);
-      }
-    });
-
     unregisterFrom(server.getCommands());
   }
 
@@ -107,8 +98,29 @@ class GrenadierCommandData {
   }
 
   public void register() {
+    registerVanilla();
+
+    // Hack used to get the HelpTopic to show up correctly,
+    // changes absolutely nothing (as of 1.20.6) but makes
+    // the command think it's been registered.
     CommandMap map = Bukkit.getCommandMap();
-    map.register(fallback, bukkitWrapper);
+    bukkitWrapper.register(map);
+
+    HelpMap helpMap = Bukkit.getHelpMap();
+
+    node.labels().forEachRemaining(s -> {
+      HelpTopic topic;
+
+      if (helpMap.getHelpTopic(s) == null) {
+        topic = new GrenadierHelpTopic(s, bukkitWrapper);
+        helpMap.addTopic(topic);
+      }
+
+      if (helpMap.getHelpTopic(fallback + ":" + s) == null) {
+        topic = new GrenadierHelpTopic(fallback + ":" + s, bukkitWrapper);
+        helpMap.addTopic(topic);
+      }
+    });
   }
 
   /**

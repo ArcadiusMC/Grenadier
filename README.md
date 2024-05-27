@@ -11,10 +11,13 @@ Documentation and guides on how to use Grenadier are available
 in the grenadier javadoc, located [here](https://www.javadoc.io/doc/net.forthecrown/grenadier/latest/index.html)
 
 ## Version compatibility
-- Grenadier 2.3.x: Minecraft 1.20.4
-- Grenadier 2.2.x: Minecraft 1.20.2
-- Grenadier 2.1.x: Minecraft 1.20 and 1.20.1
-- Grenadier 2.0.x: Minecraft 1.19.3
+| Grenadier Version    | Minecraft Version |
+|----------------------|-------------------|
+| 2.4.x (Latest 2.4.1) | 1.20.5 and 1.20.6 |
+| 2.3.x (Latest 2.3.2) | 1.20.4            |
+| 2.2.x (Latest 2.2.0) | 1.20.2            |
+| 2.1.x (Latest 2.1.6) | 1.20 and 1.20.1   |
+| 2.0.x (Latest 2.0.9) | 1.19.3            |
 
 ## Dependency info
 Kotlin: 
@@ -28,13 +31,13 @@ repositories {
 
 dependencies {
   // Grenadier itself
-  implementation("net.forthecrown:grenadier:2.2.0")
+  implementation("net.forthecrown:grenadier:2.4.1")
   
   // Get the annotation library with
-  implementation("net.forthecrown:grenadier-annotations:1.3.0")
+  implementation("net.forthecrown:grenadier-annotations:1.3.3")
   
   // Mojang's Brigadier engine
-  compileOnly("com.mojang:brigadier:1.0.18")
+  compileOnly("com.mojang:brigadier:1.2.9")
 }
 ```
 Maven:
@@ -51,21 +54,21 @@ Maven:
   <dependency>
     <groupId>net.forthecrown</groupId>
     <artifactId>grenadier</artifactId>
-    <version>2.2.0</version>
+    <version>2.4.1</version>
   </dependency>
 
   <!-- Optional annotation library -->
   <dependency>
     <groupId>net.forthecrown</groupId>
     <artifactId>grenadier-annotations</artifactId>
-    <version>1.3.0</version>
+    <version>1.3.3</version>
   </dependency>
 
   <!-- Brigadier itself -->
   <dependency>
     <groupId>com.mojang</groupId>
     <artifactId>brigadier</artifactId>
-    <version>1.0.18</version>
+    <version>1.2.9</version>
   </dependency>
 </dependencies>
 ```
@@ -77,10 +80,10 @@ If you're intending on shading Grenadier into your plugin, then you can ignore t
 Simply add this line to your `plugin.yml`
 ```yml
 libraries:
-  - "net.forthecrown:grenadier:2.2.0"
+  - "net.forthecrown:grenadier:2.4.9"
 
   # Optional annotations library
-  - "net.forthecrown:grenadier-annotations:1.3.0"
+  - "net.forthecrown:grenadier-annotations:1.3.3"
 ```
 ### Paper plugins
 You'll need to create an implementation of `PluginLoader`, example: 
@@ -94,12 +97,12 @@ public class LoaderExample implements PluginLoader {
     MavenLibraryResolver resolver = new MavenLibraryResolver();
 
     resolver.addDependency(
-      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:2.2.0"), null)
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:2.4.1"), null)
     );
     
     // Optional annotations library
     resolver.addDependency(
-      new Dependency(new DefaultArtifact("net.forthecrown:grenadier-annotations:1.3.0"), null)
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier-annotations:1.3.3"), null)
     );
 
     // Add Maven central repository

@@ -1,6 +1,8 @@
+import io.papermc.paperweight.userdev.ReobfArtifactConfiguration
+
 plugins {
   `java-library`
-  id("io.papermc.paperweight.userdev") version "1.5.5"
+  id("io.papermc.paperweight.userdev") version "1.7.1"
 
   // Maven publishing
   id("maven-publish")
@@ -8,13 +10,14 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.3.0"
+version = "2.4.1"
 
 repositories {
   mavenCentral()
 
   maven("https://repo.papermc.io/repository/maven-public/")
   maven("https://libraries.minecraft.net")
+  maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 }
 
 dependencies {
@@ -22,25 +25,23 @@ dependencies {
 
   // As a general rule, lombok is only used in implementation
   // classes, not in the API.
-  compileOnly("org.projectlombok:lombok:1.18.22")
-  annotationProcessor("org.projectlombok:lombok:1.18.22")
+  compileOnly("org.projectlombok:lombok:1.18.32")
+  annotationProcessor("org.projectlombok:lombok:1.18.32")
 
-  compileOnly("com.mojang:brigadier:1.0.18")
+  compileOnly("com.mojang:brigadier:1.2.9")
 
   api("net.forthecrown:nbt:1.5.1")
-  api("net.forthecrown:paper-nbt:1.6.0")
+  api("net.forthecrown:paper-nbt:1.7.1")
 
-  paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
+  paperweight.paperDevBundle("1.20.6-R0.1-SNAPSHOT")
 }
 
-tasks {
-  assemble {
-    dependsOn(reobfJar)
-  }
+paperweight.reobfArtifactConfiguration = ReobfArtifactConfiguration.MOJANG_PRODUCTION
 
+tasks {
   compileJava {
     options.encoding = Charsets.UTF_8.name()
-    options.release.set(17)
+    options.release = 21
   }
 
   java {
@@ -61,7 +62,7 @@ tasks {
     val links = docOptions.links!!
     links.add("https://jd.papermc.io/paper/1.19/")
     links.add("https://jd.advntr.dev/api/4.13.0/")
-    links.add("https://repo.karuslabs.com/repository/brigadier/")
+    //links.add("https://repo.karuslabs.com/repository/brigadier/")
     links.add("https://javadoc.io/doc/net.forthecrown/paper-nbt/latest/")
     links.add("https://javadoc.io/doc/net.forthecrown/nbt/latest/")
 
@@ -70,7 +71,7 @@ tasks {
 }
 
 java {
-  toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+  toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
 publishing {
@@ -78,27 +79,15 @@ publishing {
     create<MavenPublication>("maven") {
       from(components["java"])
 
-      // Apparently, the output of the reobfJar task is the `-dev` jar, not the remapped jar
-      // So do this hack to include 2 extra jar files, the remapped jar itself with no extension
-      // and a '-reobf' jar that can be shaded without the '-dev' jar interfering
-      //
-      // Man, I wish I wasn't this dumb
-      //
-      artifact("build/libs/${project.name}-$version.jar")
-      artifact("build/libs/${project.name}-$version.jar") {
-        classifier = "reobf"
-        extension = "jar"
-      }
-
       pom {
         name.set("grenadier")
         description.set("Command engine made with Mojang's Brigadier for PaperMC")
-        url.set("https://github.com/ForTheCrown/Grenadier")
+        url.set("https://github.com/ArcadiusMC/Grenadier")
 
         licenses {
           license {
             name.set("MIT License")
-            url.set("https://raw.githubusercontent.com/ForTheCrown/Grenadier/main/LICENSE")
+            url.set("https://raw.githubusercontent.com/ArcadiusMC/Grenadier/main/LICENSE")
           }
         }
 
@@ -110,9 +99,9 @@ publishing {
         }
 
         scm {
-          connection.set("scm:git:git:github.com/ForTheCrown/Grenadier/.git")
-          developerConnection.set("scm:git:ssh://github.com/ForTheCrown/Grenadier/.git")
-          url.set("https://github.com/ForTheCrown/Grenadier")
+          connection.set("scm:git:git:github.com/ArcadiusMC/Grenadier/.git")
+          developerConnection.set("scm:git:ssh://github.com/ArcadiusMC/Grenadier/.git")
+          url.set("https://github.com/ArcadiusMC/Grenadier")
         }
       }
     }

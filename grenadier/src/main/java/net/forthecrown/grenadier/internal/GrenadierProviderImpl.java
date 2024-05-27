@@ -3,7 +3,7 @@ package net.forthecrown.grenadier.internal;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import io.papermc.paper.brigadier.PaperBrigadier;
+import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
@@ -16,7 +16,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_20_R3.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -36,8 +36,6 @@ public class GrenadierProviderImpl implements GrenadierProvider {
 
   private final ExceptionProviderImpl exceptionProvider
       = new ExceptionProviderImpl();
-
-  private CommandSyncListener syncListener;
 
   public GrenadierProviderImpl() {
     this.dispatcher = new CommandDispatcher<>(new GrenadierRootNode(this));
@@ -65,21 +63,16 @@ public class GrenadierProviderImpl implements GrenadierProvider {
   public void setPlugin(@NotNull Plugin plugin) {
     Objects.requireNonNull(plugin);
     this.plugin = plugin;
-
-    if (syncListener == null) {
-      syncListener = new CommandSyncListener(this);
-      Bukkit.getPluginManager().registerEvents(syncListener, plugin);
-    }
   }
 
   @Override
   public Component fromMessage(Message message) {
-    return PaperBrigadier.componentFromMessage(message);
+    return MessageComponentSerializer.message().deserialize(message);
   }
 
   @Override
   public Message toMessage(Component component) {
-    return PaperBrigadier.message(component);
+    return MessageComponentSerializer.message().serialize(component);
   }
 
   @Override

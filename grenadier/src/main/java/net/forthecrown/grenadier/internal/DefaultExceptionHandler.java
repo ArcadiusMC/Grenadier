@@ -19,9 +19,10 @@ class DefaultExceptionHandler implements CommandExceptionHandler {
   private static final Logger LOGGER = Grenadier.getLogger();
 
   @Override
-  public void onCommandException(StringReader input,
-                                 Throwable throwable,
-                                 CommandSource source
+  public void onCommandException(
+      StringReader input,
+      Throwable throwable,
+      CommandSource source
   ) {
     LOGGER.error("Error running command '{}'", input.getString(), throwable);
 
@@ -50,9 +51,10 @@ class DefaultExceptionHandler implements CommandExceptionHandler {
   }
 
   @Override
-  public void onSuggestionException(String input,
-                                    Throwable throwable,
-                                    CommandSource source
+  public void onSuggestionException(
+      String input,
+      Throwable throwable,
+      CommandSource source
   ) {
     LOGGER.error("Error getting suggestions for '{}'", input, throwable);
   }

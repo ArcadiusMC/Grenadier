@@ -4,30 +4,35 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.1.0"
+version = "2.2.0"
 
 repositories {
   mavenCentral()
   maven("https://repo.papermc.io/repository/maven-public/")
   maven("https://libraries.minecraft.net")
+  maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 }
 
 dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
 
-  compileOnly("com.mojang:brigadier:1.0.18")
-  implementation(project(":grenadier", "reobf"))
+  compileOnly("com.mojang:brigadier:1.2.9")
+  implementation(project(":grenadier"))
   implementation(project(":grenadier-annotations"))
 
-  compileOnly("net.forthecrown:nbt:1.4.0")
-  compileOnly("net.forthecrown:paper-nbt:1.4.0")
+  compileOnly("net.forthecrown:nbt:1.5.1")
+  compileOnly("net.forthecrown:paper-nbt:1.7.1")
 
-  compileOnly("io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT")
+  compileOnly("io.papermc.paper:paper-api:1.20.5-R0.1-SNAPSHOT")
 }
 
 tasks {
   test {
     useJUnitPlatform()
+  }
+
+  compileJava {
+    options.release = 21
   }
 
   processResources {
@@ -40,5 +45,5 @@ tasks {
 }
 
 java {
-  toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+  toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }

@@ -12,8 +12,9 @@ import net.forthecrown.grenadier.internal.VanillaMappedArgument;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.storage.loot.LootDataType;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.loot.LootTable;
@@ -44,10 +45,11 @@ class LootTableArgumentImpl
       CommandContext<S> context,
       SuggestionsBuilder builder
   ) {
-    MinecraftServer server = MinecraftServer.getServer();
-    var idSet = server.getLootData().getKeys(LootDataType.TABLE);
-
-    return SharedSuggestionProvider.suggestResource(idSet, builder);
+    return MinecraftServer.getServer().registryAccess()
+        .registry(Registries.LOOT_TABLE)
+        .map(Registry::keySet)
+        .map(keys -> SharedSuggestionProvider.suggestResource(keys, builder))
+        .orElseGet(builder::buildFuture);
   }
 
   @Override

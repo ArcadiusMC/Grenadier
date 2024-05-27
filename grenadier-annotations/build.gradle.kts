@@ -7,13 +7,14 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "1.3.1"
+version = "1.3.3"
 
 repositories {
   mavenCentral()
 
   maven("https://repo.papermc.io/repository/maven-public/")
   maven("https://libraries.minecraft.net")
+  maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 }
 
 dependencies {
@@ -22,11 +23,11 @@ dependencies {
 
   compileOnly(project(":grenadier"))
 
-  compileOnly("com.mojang:brigadier:1.0.18")
-  compileOnly("io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT")
+  compileOnly("com.mojang:brigadier:1.2.9")
+  compileOnly("io.papermc.paper:paper-api:1.20.5-R0.1-SNAPSHOT")
 
-  compileOnly("org.projectlombok:lombok:1.18.22")
-  annotationProcessor("org.projectlombok:lombok:1.18.22")
+  compileOnly("org.projectlombok:lombok:1.18.32")
+  annotationProcessor("org.projectlombok:lombok:1.18.32")
 }
 
 tasks {
@@ -34,11 +35,14 @@ tasks {
     useJUnitPlatform()
   }
 
+  compileJava {
+    options.release = 21
+  }
+
   java {
     withSourcesJar()
     withJavadocJar()
-
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
   }
 
   javadoc {
@@ -50,7 +54,7 @@ tasks {
     val links = docOptions.links!!
     links.add("https://jd.papermc.io/paper/1.19/")
     links.add("https://jd.advntr.dev/api/4.13.0/")
-    links.add("https://repo.karuslabs.com/repository/brigadier/")
+    //links.add("https://repo.karuslabs.com/repository/brigadier/")
     links.add("https://javadoc.io/doc/net.forthecrown/paper-nbt/latest/")
     links.add("https://javadoc.io/doc/net.forthecrown/nbt/latest/")
     links.add("https://javadoc.io/doc/net.forthecrown/grenadier/latest/")
@@ -67,12 +71,12 @@ publishing {
       pom {
         name.set("grenadier-annotations")
         description.set("Annotation-based command support for Grenadier")
-        url.set("https://github.com/ForTheCrown/Grenadier")
+        url.set("https://github.com/ArcadiusMC/Grenadier")
 
         licenses {
           license {
             name.set("MIT License")
-            url.set("https://raw.githubusercontent.com/ForTheCrown/Grenadier/main/LICENSE")
+            url.set("https://raw.githubusercontent.com/ArcadiusMC/Grenadier/main/LICENSE")
           }
         }
 
@@ -84,9 +88,9 @@ publishing {
         }
 
         scm {
-          connection.set("scm:git:git:github.com/ForTheCrown/Grenadier/.git")
-          developerConnection.set("scm:git:ssh://github.com/ForTheCrown/Grenadier/.git")
-          url.set("https://github.com/ForTheCrown/Grenadier")
+          connection.set("scm:git:git:github.com/ArcadiusMC/Grenadier/.git")
+          developerConnection.set("scm:git:ssh://github.com/ArcadiusMC/Grenadier/.git")
+          url.set("https://github.com/ArcadiusMC/Grenadier")
         }
       }
     }

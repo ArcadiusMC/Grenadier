@@ -6,23 +6,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.mojang.datafixers.util.Either;
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import net.forthecrown.nbt.BinaryTag;
-import net.forthecrown.nbt.BinaryTags;
-import net.forthecrown.nbt.paper.PaperNbt;
+import net.forthecrown.grenadier.internal.InternalUtil;
 import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.arguments.item.ItemParser;
-import net.minecraft.commands.arguments.item.ItemParser.ItemResult;
-import net.minecraft.commands.arguments.item.ItemParser.TagResult;
 import net.minecraft.commands.arguments.item.ItemPredicateArgument;
-import net.minecraft.core.HolderSet;
-import net.minecraft.world.item.Item;
-import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_20_R3.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 
 class ItemFilterArgumentImpl
@@ -32,24 +20,22 @@ class ItemFilterArgumentImpl
 
   static final ItemFilterArgument INSTANCE = new ItemFilterArgumentImpl();
 
+  private final ItemPredicateArgument argument;
+
+  public ItemFilterArgumentImpl() {
+    this.argument = new ItemPredicateArgument(InternalUtil.CONTEXT);
+  }
+
   @Override
   public Result parse(StringReader reader) throws CommandSyntaxException {
-    Either<ItemResult, TagResult> either 
-        = ItemParser.parseForTesting(holderLookup, reader);
-
-    return either.map(itemResult -> {
-      var set = HolderSet.direct(itemResult.item());
-      return new ResultImpl(set, itemResult.nbt());
-    }, tagResult -> {
-      return new ResultImpl(tagResult.tag(), tagResult.nbt());
-    });
+    return new ResultImpl(argument.parse(reader));
   }
 
   @Override
   public <S> CompletableFuture<Suggestions> listSuggestions(
       CommandContext<S> context, SuggestionsBuilder builder
   ) {
-    return ItemParser.fillSuggestions(holderLookup, builder, true);
+    return argument.listSuggestions(context, builder);
   }
 
   @Override
@@ -57,39 +43,22 @@ class ItemFilterArgumentImpl
     return ItemPredicateArgument.itemPredicate(context);
   }
 
-  public static class ResultImpl extends AbstractItemResult implements Result {
-    private final Set<Material> materials;
+  public static class ResultImpl implements Result {
+    final ItemPredicateArgument.Result result;
 
-    public ResultImpl(HolderSet<Item> holders,
-                      net.minecraft.nbt.CompoundTag tag
-    ) {
-      super(tag);
-      this.materials = holders.stream()
-          .map(holder -> CraftMagicNumbers.getMaterial(holder.value()))
-          .collect(Collectors.toSet());
-    }
-
-    @Override
-    public Set<Material> getMaterials() {
-      return Collections.unmodifiableSet(materials);
+    public ResultImpl(ItemPredicateArgument.Result result) {
+      this.result = result;
     }
 
     @Override
     public boolean test(ItemStack itemStack) {
-      if (!materials.contains(itemStack.getType())) {
-        return false;
-      }
-
-      BinaryTag itemTag = PaperNbt.saveItem(itemStack).get("tag");
-      return BinaryTags.compareTags(this.tag, itemTag, true);
+      var nms = CraftItemStack.asNMSCopy(itemStack);
+      return result.test(nms);
     }
 
     @Override
     public String toString() {
-      return "Result{" +
-          "materials=" + materials +
-          ", tag=" + tag +
-          '}';
+      return "Result{}";
     }
   }
 }

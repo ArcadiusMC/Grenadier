@@ -1,6 +1,5 @@
 package net.forthecrown.grenadier;
 
-import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -8,6 +7,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import net.forthecrown.grenadier.types.ArgumentTypes;
@@ -17,6 +17,7 @@ import net.forthecrown.grenadier.types.BlockFilterArgument;
 import net.forthecrown.grenadier.types.CoordinateSuggestions;
 import net.forthecrown.grenadier.types.ItemArgument;
 import net.forthecrown.grenadier.types.ItemFilterArgument;
+import net.forthecrown.grenadier.types.TimeArgument;
 import net.forthecrown.grenadier.types.options.ArgumentOption;
 import net.forthecrown.grenadier.types.options.FlagOption;
 import net.forthecrown.grenadier.types.options.Options;
@@ -277,13 +278,6 @@ public class TestCommand extends AbstractCommand {
                   var builder = text();
 
                   builder.append(text("material=" + item.getMaterial()));
-                  var tag = item.getTag();
-
-                  if (tag != null) {
-                    builder.append(newline())
-                        .append(text("tag="))
-                        .append(PaperNbt.asComponent(tag));
-                  }
 
                   c.getSource().sendSuccess(builder.build());
                   return 0;
@@ -336,8 +330,11 @@ public class TestCommand extends AbstractCommand {
         .then(literal("time")
             .then(argument("time_v", ArgumentTypes.time())
                 .executes(c -> {
-                  var duration = ArgumentTypes.getDuration(c, "time_v");
+                  Duration duration = ArgumentTypes.getDuration(c, "time_v");
+                  String remade = TimeArgument.toString(duration);
+
                   c.getSource().sendSuccess(text(duration.toString()));
+                  c.getSource().sendSuccess(text("Remade duration: " + remade));
                   return 0;
                 })
             )
@@ -404,6 +401,18 @@ public class TestCommand extends AbstractCommand {
                       = c.getArgument("ench", Enchantment.class);
 
                   c.getSource().sendSuccess(enchantment.displayName(1));
+                  return 0;
+                })
+            )
+        )
+
+        .then(literal("entity-suggestions")
+            .then(argument("greedy", StringArgumentType.greedyString())
+                .suggests((c, b) -> ArgumentTypes.entities().listSuggestions(c, b))
+                .executes(c -> {
+                  String str = c.getArgument("greedy", String.class);
+                  c.getSource().sendMessage(str);
+
                   return 0;
                 })
             )

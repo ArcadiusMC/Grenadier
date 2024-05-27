@@ -6,6 +6,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.HashMap;
 import java.util.Map;
 import net.forthecrown.grenadier.annotations.AnnotatedCommandContext;
+import net.forthecrown.grenadier.annotations.CommandDataLoader;
 import net.forthecrown.grenadier.types.ArgumentTypes;
 import net.forthecrown.grenadier.types.SuffixedNumberArgument;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,6 +19,7 @@ public class GrenadierTestPlugin extends JavaPlugin {
     new CommandListTests();
 
     AnnotatedCommandContext ctx = AnnotatedCommandContext.create();
+    ctx.addLoader(CommandDataLoader.resources(getClassLoader()));
 
     SuggestionProvider<CommandSource> int_suggestions = (context, builder) -> {
       return Completions.suggest(builder, "1", "2", "3", "4", "5");
@@ -39,8 +41,8 @@ public class GrenadierTestPlugin extends JavaPlugin {
     vars.put("int_arg_name", "integer_arg");
 
     Map<String, Double> units = new HashMap<>();
-    units.put("unit_1", 10.0);
-    units.put("unit_2", 100.0);
+    units.put("ten", 10.0);
+    units.put("hundred", 100.0);
 
     SuffixedNumberArgument<Double> suffixed = ArgumentTypes.suffixedDouble(units, 1, 10000);
     vars.put("suffixed", suffixed);

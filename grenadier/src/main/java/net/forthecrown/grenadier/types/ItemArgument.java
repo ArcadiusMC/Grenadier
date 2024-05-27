@@ -8,10 +8,8 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.types.ItemArgument.Result;
-import net.forthecrown.nbt.CompoundTag;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Argument type that parses item data like an the material the item is made of
@@ -19,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Input examples: <pre>
  * minecraft:stone
- * minecraft:stone{tagKey:1b}
- * minecraft:stone{display:{Name:"{\"italic\":false,\"text\":\"Item name\"}"}}
+ * minecraft:stone[custom_data={tagKey:1b}]
  * </pre>
  */
 public interface ItemArgument extends ArgumentType<Result> {
@@ -47,20 +44,15 @@ public interface ItemArgument extends ArgumentType<Result> {
     Material getMaterial();
 
     /**
-     * Gets the NBT tag of the item that was parsed.
-     * @return Item NBT, {@code null}, if not NBT data was given in the input
-     */
-    @Nullable
-    CompoundTag getTag();
-
-    /**
      * Creates a new {@link ItemStack} from this parsed data
      *
-     * @param amount Item quantity
+     * @param amount         Item quantity
      * @param validateAmount {@code true} to ensure the {@code amount} doesn't
      *                       exceed the max stack size of the
      *                       {@link #getMaterial()}
+     *
      * @return Created item stack
+     *
      * @throws CommandSyntaxException If {@code validateAmount == true} and the
      *                                {@code amount} parameter exceeded the max
      *                                stack size

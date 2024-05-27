@@ -16,6 +16,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.papermc.paper.command.brigadier.argument.VanillaArgumentProviderImpl.NativeWrapperArgumentType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -221,6 +222,10 @@ class TreeTranslator {
   /* --------------------- ARGUMENT TYPE TRANSLATION ---------------------- */
 
   private static boolean useVanillaSuggestions(ArgumentType<?> type) {
+    if (type instanceof NativeWrapperArgumentType<?,?>) {
+      return true;
+    }
+
     if (type instanceof VanillaMappedArgument vanilla) {
       return vanilla.useVanillaSuggestions();
     }
@@ -239,12 +244,20 @@ class TreeTranslator {
 
     ArgumentType<?> vanillaType;
 
-    if (type instanceof VanillaMappedArgument vanilla) {
-      vanillaType = vanilla.getVanillaType(InternalUtil.CONTEXT);
-    } else if (type instanceof SimpleVanillaMapped simple) {
-      vanillaType = simple.getVanillaType();
-    } else {
-      return ScoreHolderArgument.scoreHolders();
+    switch (type) {
+      case NativeWrapperArgumentType<?, ?> nativeType -> {
+        return nativeType.nativeNmsArgumentType();
+      }
+
+      case VanillaMappedArgument vanilla ->
+          vanillaType = vanilla.getVanillaType(InternalUtil.CONTEXT);
+
+      case SimpleVanillaMapped simple ->
+          vanillaType = simple.getVanillaType();
+
+      default -> {
+        return ScoreHolderArgument.scoreHolders();
+      }
     }
 
     Objects.requireNonNull(vanillaType, "getVanillaType returned null");
