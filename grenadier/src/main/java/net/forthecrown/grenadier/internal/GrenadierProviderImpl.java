@@ -14,7 +14,6 @@ import net.kyori.adventure.text.Component;
 import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
 import org.bukkit.plugin.Plugin;
