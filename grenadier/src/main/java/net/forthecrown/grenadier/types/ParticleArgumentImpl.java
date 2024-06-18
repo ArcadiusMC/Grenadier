@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import net.forthecrown.grenadier.internal.InternalUtil;
 import net.forthecrown.grenadier.internal.VanillaMappedArgument;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.core.particles.ParticleOptions;
 import org.bukkit.Particle;
 import org.bukkit.craftbukkit.CraftParticle;
 
@@ -21,10 +22,7 @@ class ParticleArgumentImpl
 
   @Override
   public Particle parse(StringReader reader) throws CommandSyntaxException {
-    var nms
-        = net.minecraft.commands.arguments.ParticleArgument.particle(InternalUtil.CONTEXT)
-        .parse(reader);
-
+    ParticleOptions nms = net.minecraft.commands.arguments.ParticleArgument.readParticle(reader, InternalUtil.CONTEXT);
     return CraftParticle.minecraftToBukkit(nms.getType());
   }
 
