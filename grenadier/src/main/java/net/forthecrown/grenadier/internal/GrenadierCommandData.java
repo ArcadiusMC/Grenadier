@@ -6,8 +6,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import net.forthecrown.grenadier.Grenadier;
@@ -17,9 +15,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
-import org.bukkit.craftbukkit.help.SimpleHelpMap;
 import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
@@ -112,12 +108,12 @@ class GrenadierCommandData {
       HelpTopic topic;
 
       if (helpMap.getHelpTopic(s) == null) {
-        topic = new GrenadierHelpTopic(s, bukkitWrapper);
+        topic = new GrenadierHelpTopic(s, bukkitWrapper, node);
         helpMap.addTopic(topic);
       }
 
       if (helpMap.getHelpTopic(fallback + ":" + s) == null) {
-        topic = new GrenadierHelpTopic(fallback + ":" + s, bukkitWrapper);
+        topic = new GrenadierHelpTopic(fallback + ":" + s, bukkitWrapper, node);
         helpMap.addTopic(topic);
       }
     });
