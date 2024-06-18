@@ -58,7 +58,7 @@ class ItemArgumentImpl
 
     public ItemResult(ItemParser.ItemResult result) {
       this.result = result;
-      this.input = new ItemInput(result.item(), result.components(), result.patch());
+      this.input = new ItemInput(result.item(), result.components());
       this.material = CraftMagicNumbers.getMaterial(result.item().value());
     }
 
@@ -72,8 +72,7 @@ class ItemArgumentImpl
 
     @Override
     public String toString() {
-      String itemName = material.key().toString();
-      return itemName + input.serialize(InternalUtil.CONTEXT);
+      return input.serialize(InternalUtil.CONTEXT);
     }
   }
 }
