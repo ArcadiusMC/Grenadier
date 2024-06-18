@@ -2,20 +2,23 @@ package net.forthecrown.grenadier.internal;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Message;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import net.forthecrown.grenadier.CommandExceptionHandler;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierProvider;
+import net.forthecrown.grenadier.SyntaxExceptions;
 import net.kyori.adventure.text.Component;
-import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -95,18 +98,33 @@ public class GrenadierProviderImpl implements GrenadierProvider {
 
     AsyncCatcher.catchOp("Command execution");
 
+    ServerCommandEvent event = new ServerCommandEvent(source.asBukkit(), command);
+    if (!event.callEvent()) {
+      return 0;
+    }
+
     CommandSourceStack stack = InternalUtil.unwrap(source);
-    AtomicInteger integer = new AtomicInteger();
+    MinecraftServer server = DedicatedServer.getServer();
+    CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
 
-    stack = stack.withCallback((successful, returnValue) -> {
-      if (!successful) {
-        return;
-      }
+    try {
+      return dispatcher.execute(command, stack);
+    } catch (CommandSyntaxException exc) {
+      SyntaxExceptions.handle(exc, source);
+    } catch (Throwable t) {
+      StringReader reader = new StringReader(command);
+      exceptionHandler.onCommandException(reader, t, source);
+    }
 
-      integer.set(returnValue);
-    }, CommandResultCallback::chain);
+    return 0;
+  }
 
-    MinecraftServer.getServer().getCommands().dispatchServerCommand(stack, command);
-    return integer.get();
+  @Override
+  public void enqueueCommand(CommandSource source, String command) {
+    Objects.requireNonNull(source, "Null source");
+    Objects.requireNonNull(command, "Null command");
+
+    CommandSourceStack stack = InternalUtil.unwrap(source);
+    DedicatedServer.getServer().getCommands().dispatchServerCommand(stack, command);
   }
 }

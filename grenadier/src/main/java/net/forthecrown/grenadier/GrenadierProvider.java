@@ -34,4 +34,6 @@ public interface GrenadierProvider {
   SuggestionProvider<CommandSource> suggestAllCommands();
 
   int dispatch(CommandSource source, String command);
+
+  void enqueueCommand(CommandSource source, String command);
 }

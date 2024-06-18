@@ -66,15 +66,45 @@ public final class Grenadier {
    * which changes the location of the sender, but by using a {@link CommandSender} those modified
    * values are lost.
    *
+   * <p>
+   * <b>Note:</b> With {@code 1.21} command execution calls are no longer performed instantly,
+   * this function however, retains the old behaviour and executes the command in the function call.
+   * <br>
+   * For a function that follows vanilla command execution queueing, use
+   * {@link #enqueueCommand(CommandSource, String)}
+   * <br>
+   * If you need to programmatically call commands and do NOT need to worry about their affects
+   * being instant, use the enqueue function. If you need the execution affects of a command to
+   * happen within the function call, use this.
+   *
    * @param source Source executing the command
    * @param command Command to execute
    *
    * @throws NullPointerException If either {@code source} or {@code command} are null
    *
    * @return Execution result, defined by {@link CommandDispatcher#execute(String, Object)}
+   *
+   * @see #enqueueCommand(CommandSource, String)
    */
   public static int dispatch(@NotNull CommandSource source, @NotNull String command) {
     return getProvider().dispatch(source, command);
+  }
+
+  /**
+   * Enqueues a command for execution
+   * <p>
+   * Minecraft executes command by placing all the commands that need execution during a tick into a
+   * queue and at the end of the tick, the commands are all executed. This function places a command
+   * into that execution queue, rather than running the command instantly.
+   * <p>
+   * If you need a command to be executed instantly, use {@link #dispatch(CommandSource, String)}
+   *
+   * @param source
+   * @param command
+   * @see #dispatch(CommandSource, String)
+   */
+  public static void enqueueCommand(@NotNull CommandSource source, @NotNull String command) {
+    getProvider().enqueueCommand(source, command);
   }
 
   /**
@@ -130,6 +160,14 @@ public final class Grenadier {
    */
   public static ExceptionProvider exceptions() {
     return getProvider().getExceptionProvider();
+  }
+
+  /**
+   * Creates a command source for the server console.
+   * @return Console command source
+   */
+  public static CommandSource consoleSource() {
+    return createSource(Bukkit.getConsoleSender());
   }
 
   /**
