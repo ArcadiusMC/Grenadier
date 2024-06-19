@@ -21,7 +21,7 @@ in the grenadier javadoc, located [here](https://www.javadoc.io/doc/net.forthecr
 | 2.0.x (Latest 2.0.9) | 1.19.3            |
 
 ## Dependency info
-Kotlin: 
+Kotlin Gradle: 
 ```kotlin
 repositories {
   mavenCentral()
