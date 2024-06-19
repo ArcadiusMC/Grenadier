@@ -20,10 +20,12 @@ dependencies {
   implementation(project(":grenadier"))
   implementation(project(":grenadier-annotations"))
 
-  compileOnly("net.forthecrown:nbt:1.5.1")
-  compileOnly("net.forthecrown:paper-nbt:1.7.1")
+  //compileOnly("net.forthecrown:grenadier:2.3.2:")
 
-  compileOnly("io.papermc.paper:paper-api:1.20.5-R0.1-SNAPSHOT")
+  compileOnly("net.forthecrown:nbt:1.5.2")
+  compileOnly("net.forthecrown:paper-nbt:1.7.4")
+
+  compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
 }
 
 tasks {

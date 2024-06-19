@@ -24,7 +24,7 @@ dependencies {
   compileOnly(project(":grenadier"))
 
   compileOnly("com.mojang:brigadier:1.2.9")
-  compileOnly("io.papermc.paper:paper-api:1.20.5-R0.1-SNAPSHOT")
+  compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
 
   compileOnly("org.projectlombok:lombok:1.18.32")
   annotationProcessor("org.projectlombok:lombok:1.18.32")
