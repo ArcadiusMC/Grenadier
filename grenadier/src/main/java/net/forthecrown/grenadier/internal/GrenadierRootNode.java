@@ -2,23 +2,16 @@ package net.forthecrown.grenadier.internal;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import net.forthecrown.grenadier.CommandSource;
 import net.forthecrown.grenadier.GrenadierCommandNode;
-import net.minecraft.server.MinecraftServer;
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.CraftServer;
-import org.bukkit.craftbukkit.help.MultipleCommandAliasHelpTopic;
-import org.bukkit.help.GenericCommandHelpTopic;
-import org.bukkit.help.HelpMap;
-import org.bukkit.help.HelpTopic;
+import net.minecraft.commands.CommandSourceStack;
 
 class GrenadierRootNode extends RootCommandNode<CommandSource> {
 
@@ -75,9 +68,12 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
       );
     }
 
+    LiteralCommandNode<CommandSourceStack> translated
+        = TreeTranslator.translateLiteral(grenadierNode, grenadierNode);
+
     super.addChild(node);
 
-    GrenadierCommandData data = new GrenadierCommandData(grenadierNode);
+    GrenadierCommandData data = new GrenadierCommandData(grenadierNode, translated);
     grenadierNode.forEachLabel(s -> dataMap.putIfAbsent(s, data));
 
     data.register();

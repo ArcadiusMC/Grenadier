@@ -36,11 +36,14 @@ class GrenadierCommandData {
 
   private final Set<String> registeredVanillaLabels;
 
-  public GrenadierCommandData(GrenadierCommandNode node) {
+  public GrenadierCommandData(
+      GrenadierCommandNode node,
+      LiteralCommandNode<CommandSourceStack> vanillaTree
+  ) {
     this.node = node;
     this.plugin = node.getPlugin();
     this.bukkitWrapper = new GrenadierBukkitWrapper(this);
-    this.vanillaTree = TreeTranslator.translateLiteral(node, node);
+    this.vanillaTree = vanillaTree;
     this.fallback = plugin == null ? Grenadier.fallbackPrefix() : plugin.getName();
     this.registeredVanillaLabels = new HashSet<>();
     this.helpTopic = new GenericCommandHelpTopic(bukkitWrapper);
