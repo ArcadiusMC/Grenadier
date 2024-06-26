@@ -25,8 +25,8 @@ public class TestPluginLoader implements PluginLoader {
             .build()
     );
 
-    resolver.addDependency(new Dependency(new DefaultArtifact("net.forthecrown:nbt:1.5.1"), null));
-    resolver.addDependency(new Dependency(new DefaultArtifact("net.forthecrown:paper-nbt:1.7.1"), null));
+    resolver.addDependency(new Dependency(new DefaultArtifact("net.forthecrown:nbt:1.5.2"), null));
+    resolver.addDependency(new Dependency(new DefaultArtifact("net.forthecrown:paper-nbt:1.7.4"), null));
 
     builder.addLibrary(resolver);
   }

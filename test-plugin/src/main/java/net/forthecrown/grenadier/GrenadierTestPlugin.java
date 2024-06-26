@@ -17,6 +17,15 @@ public class GrenadierTestPlugin extends JavaPlugin {
   public void onEnable() {
     new TestCommand();
     new CommandListTests();
+    new VanillaOverrideTest();
+
+    new PluginOverrideTest();
+
+    try {
+      new CustomTypeFailTest();
+    } catch (RuntimeException exc) {
+      getSLF4JLogger().warn("Expected error, registration failed", exc);
+    }
 
     AnnotatedCommandContext ctx = AnnotatedCommandContext.create();
     ctx.addLoader(CommandDataLoader.resources(getClassLoader()));
