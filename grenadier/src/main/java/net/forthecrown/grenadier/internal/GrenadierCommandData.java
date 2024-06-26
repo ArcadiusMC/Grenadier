@@ -4,7 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
@@ -67,15 +69,18 @@ class GrenadierCommandData {
   }
 
   private boolean registerNodeInto(CommandDispatcher<CommandSourceStack> dispatcher, String label) {
-    var root = dispatcher.getRoot();
-    var child = root.getChild(label);
+    RootCommandNode<CommandSourceStack> root = dispatcher.getRoot();
+    CommandNode<CommandSourceStack> child = root.getChild(label);
 
-    if (child != null) {
-      return false;
+    // unwrappedCache being null means the node does NOT represent a bukkit command. I think?
+    if (child == null || child.unwrappedCached == null) {
+      root.removeCommand(label);
+      root.addChild(getVanillaTree(label, false));
+
+      return true;
     }
 
-    root.addChild(getVanillaTree(label, false));
-    return true;
+    return false;
   }
 
   public void unregister() {
