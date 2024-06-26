@@ -242,25 +242,36 @@ class TreeTranslator {
       return type;
     }
 
-    ArgumentType<?> vanillaType;
+    ArgumentType<?> vanillaType = null;
 
-    switch (type) {
-      case NativeWrapperArgumentType<?, ?> nativeType -> {
-        return nativeType.nativeNmsArgumentType();
+    while (true) {
+      ArgumentType<?> comparisonType = vanillaType == null ? type : vanillaType;
+
+      switch (comparisonType) {
+        case NativeWrapperArgumentType<?, ?> nativeType -> {
+          vanillaType = nativeType.nativeNmsArgumentType();
+          continue;
+        }
+        case VanillaMappedArgument mapped -> {
+          vanillaType = mapped.getVanillaType(InternalUtil.CONTEXT);
+          Objects.requireNonNull(vanillaType, "getVanillaType returned null");
+          continue;
+        }
+        case SimpleVanillaMapped mapped -> {
+          vanillaType = mapped.getVanillaType();
+          Objects.requireNonNull(vanillaType, "getVanillaType returned null");
+          continue;
+        }
+        default -> {
+
+        }
       }
 
-      case VanillaMappedArgument vanilla ->
-          vanillaType = vanilla.getVanillaType(InternalUtil.CONTEXT);
-
-      case SimpleVanillaMapped simple ->
-          vanillaType = simple.getVanillaType();
-
-      default -> {
-        return ScoreHolderArgument.scoreHolders();
+      if (vanillaType == null) {
+        vanillaType = ScoreHolderArgument.scoreHolders();
       }
+      break;
     }
-
-    Objects.requireNonNull(vanillaType, "getVanillaType returned null");
 
     if (!ArgumentTypeInfos.isClassRecognized(vanillaType.getClass())) {
       throw new IllegalArgumentException(
