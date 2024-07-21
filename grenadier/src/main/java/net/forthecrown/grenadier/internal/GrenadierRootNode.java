@@ -85,6 +85,14 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
 
   @Override
   public Collection<? extends CommandNode<CommandSource>> getRelevantNodes(
+      StringReader input,
+      Object source
+  ) {
+    return getRelevantNodes(input);
+  }
+
+  @Override
+  public Collection<? extends CommandNode<CommandSource>> getRelevantNodes(
       StringReader input
   ) {
     List<GrenadierCommandNode> nodes = new ArrayList<>();
