@@ -31,7 +31,7 @@ dependencies {
   compileOnly("com.mojang:brigadier:1.2.9")
 
   api("net.forthecrown:nbt:1.5.2")
-  api("net.forthecrown:paper-nbt:1.7.4")
+  api("net.forthecrown:paper-nbt:1.7.5")
 
   paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
 }
