@@ -5,6 +5,8 @@ import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.context.CommandContextBuilder;
+import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.List;
@@ -30,10 +32,13 @@ import org.apache.logging.log4j.util.StackLocatorUtil;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.slf4j.Logger;
 
 @Internal
 public final class InternalUtil {
   private InternalUtil() {}
+
+  private static final Logger LOGGER = Grenadier.getLogger();
 
   public static final CommandBuildContext CONTEXT
       = CommandBuildContext.simple(
@@ -96,8 +101,17 @@ public final class InternalUtil {
   public static int execute(CommandSource source, StringReader reader) {
     final StringReader startReader = Readers.copy(reader);
 
+    CommandSyntaxException.ENABLE_COMMAND_STACK_TRACES = true;
+
+    CommandDispatcher<CommandSource> dispatcher = Grenadier.dispatcher();
+    ParseResults<CommandSource> results = dispatcher.parse(reader, source);
+
+    if (LOGGER.isDebugEnabled() && false) {
+      printDebugInfo(dispatcher, results, reader);
+    }
+
     try {
-      return Grenadier.dispatcher().execute(reader, source);
+      return dispatcher.execute(results);
     } catch (CommandSyntaxException exc) {
       SyntaxExceptions.handle(exc, source);
       return 0;
@@ -108,6 +122,45 @@ public final class InternalUtil {
 
       return 0;
     }
+  }
+
+  private static void printDebugInfo(
+      CommandDispatcher<CommandSource> dispatcher,
+      ParseResults<CommandSource> results,
+      StringReader reader
+  ) {
+    LOGGER.debug("exceptions:");
+    results.getExceptions().forEach((node, exc) -> {
+      LOGGER.debug("  - node=\"{}\" exception:", dispatcher.getPath(node), exc);
+    });
+
+    CommandContextBuilder<CommandSource> ctx = results.getContext().getLastChild();
+
+    LOGGER.debug("ctx:");
+    LOGGER.debug("  range={}", ctx.getRange());
+    LOGGER.debug("  input={}", get(ctx.getRange(), reader));
+
+    LOGGER.debug("arguments:");
+    ctx.getArguments().forEach((s, arg) -> {
+      StringRange range = arg.getRange();
+      String inp = get(range, reader);
+
+      LOGGER.debug("  - {}: range={} input=\"{}\" result={}", s, range, inp, arg.getResult());
+    });
+
+    LOGGER.debug("nodes:");
+    ctx.getNodes().forEach(node -> {
+      StringRange range = node.getRange();
+      String inp = get(range, reader);
+
+      LOGGER.debug("  - {}: range={}, input=\"{}\"", node.getNode().getName(), range, inp);
+    });
+  }
+
+  private static String get(StringRange range, StringReader reader) {
+    int start = Math.clamp(range.getStart(), 0, reader.getTotalLength());
+    int end = Math.clamp(range.getEnd(), 0, reader.getTotalLength());
+    return reader.getString().substring(start, end);
   }
 
   public static Plugin getCallingPlugin() {

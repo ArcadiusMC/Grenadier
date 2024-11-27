@@ -3,7 +3,7 @@ package net.forthecrown.grenadier;
 public class PluginOverrideTest extends AbstractCommand {
 
   public PluginOverrideTest() {
-    super("abandonclaim");
+    super("waypoints");
     register();
   }
 

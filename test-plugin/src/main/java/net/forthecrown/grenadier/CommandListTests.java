@@ -2,9 +2,8 @@ package net.forthecrown.grenadier;
 
 import static net.kyori.adventure.text.Component.text;
 
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import java.util.List;
-import net.forthecrown.grenadier.types.options.ArgumentOption;
+import net.forthecrown.grenadier.types.options.FlagOption;
 import net.forthecrown.grenadier.types.options.Options;
 import net.forthecrown.grenadier.types.options.OptionsArgument;
 import net.forthecrown.grenadier.types.options.ParsedOptions;
@@ -51,7 +50,7 @@ public class CommandListTests extends AbstractCommand {
       "grenadier_test tag_path element1.element2[0].elem[]",
       "grenadier_test nbt_value 1b",
       "grenadier_test nbt_value {text:'Hello, world!'}",
-      "grenadier_test item_array stone,stone{randomTag:1b}",
+      "grenadier_test item_array stone,stone[custom_data={a_tag:1b}]",
       "grenadier_test item stone{a_tag:1b}",
       "grenadier_test item stone[custom_data={a_tag:1b}]",
       "grenadier_test item_filter stone",
@@ -68,11 +67,10 @@ public class CommandListTests extends AbstractCommand {
       "transformer-test literal another-literal"
   );
 
-  private static final ArgumentOption<Boolean> SILENT
-      = Options.argument(BoolArgumentType.bool(), "silent");
+  private static final FlagOption SILENT = Options.flag("silent");
 
   private static final OptionsArgument OPTIONS = OptionsArgument.builder()
-      .addRequired(SILENT)
+      .addFlag(SILENT)
       .build();
 
   public CommandListTests() {
@@ -83,6 +81,8 @@ public class CommandListTests extends AbstractCommand {
   @Override
   public void createCommand(GrenadierCommand command) {
     command
+        .executes(c -> execute(c.getSource()))
+
         .then(argument("options", OPTIONS)
             .executes(c -> {
 
@@ -91,29 +91,33 @@ public class CommandListTests extends AbstractCommand {
 
               var parsedOptions = c.getArgument("options", ParsedOptions.class);
 
-              if (parsedOptions.getValueOptional(SILENT).orElse(false)) {
+              if (parsedOptions.has(SILENT)) {
                 cmdExecutor = source.silent();
               } else {
                 cmdExecutor = source;
               }
 
-              GrenadierProvider provider = Grenadier.getProvider();
-
-              for (String s : COMMANDS) {
-                source.sendMessage(
-                    text()
-                        .color(NamedTextColor.GRAY)
-                        .append(text(">> Executing >> '", NamedTextColor.DARK_GRAY))
-                        .append(text(s))
-                        .append(text("'", NamedTextColor.DARK_GRAY))
-                        .build()
-                );
-
-                provider.dispatch(cmdExecutor, s);
-              }
-
-              return 0;
+              return execute(cmdExecutor);
             })
         );
+  }
+
+  private int execute(CommandSource source) {
+    GrenadierProvider provider = Grenadier.getProvider();
+
+    for (String s : COMMANDS) {
+      source.sendMessage(
+          text()
+              .color(NamedTextColor.GRAY)
+              .append(text(">> Executing >> '", NamedTextColor.DARK_GRAY))
+              .append(text(s))
+              .append(text("'", NamedTextColor.DARK_GRAY))
+              .build()
+      );
+
+      provider.dispatch(source, s);
+    }
+
+    return 0;
   }
 }

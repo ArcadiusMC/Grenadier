@@ -3,3 +3,10 @@ main: "net.forthecrown.grenadier.GrenadierTestPlugin"
 version: "${version}"
 api-version: "1.20.5"
 loader: "net.forthecrown.grenadier.TestPluginLoader"
+
+dependencies:
+  server:
+    Citizens:
+      load: BEFORE
+      required: false
+      join-classpath: false

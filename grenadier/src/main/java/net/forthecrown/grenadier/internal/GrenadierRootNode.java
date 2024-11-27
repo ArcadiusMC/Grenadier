@@ -4,16 +4,23 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import net.forthecrown.grenadier.CommandSource;
+import net.forthecrown.grenadier.Grenadier;
 import net.forthecrown.grenadier.GrenadierCommandNode;
 import net.minecraft.commands.CommandSourceStack;
+import org.slf4j.Logger;
 
 class GrenadierRootNode extends RootCommandNode<CommandSource> {
+
+  static final Logger LOGGER = Grenadier.getLogger();
 
   private final GrenadierProviderImpl provider;
 
@@ -112,5 +119,20 @@ class GrenadierRootNode extends RootCommandNode<CommandSource> {
     }
 
     return nodes;
+  }
+
+  public void reregisterAll() {
+    Set<GrenadierCommandData> dataSet = new ObjectOpenHashSet<>();
+
+    for (Entry<String, GrenadierCommandData> entry : dataMap.entrySet()) {
+      GrenadierCommandData data = entry.getValue();
+
+      if (!dataSet.add(data)) {
+        continue;
+      }
+
+      data.registerVanilla();
+      data.registerHelpTopic();
+    }
   }
 }

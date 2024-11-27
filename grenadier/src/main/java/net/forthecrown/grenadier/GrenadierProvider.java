@@ -36,4 +36,6 @@ public interface GrenadierProvider {
   int dispatch(CommandSource source, String command);
 
   void enqueueCommand(CommandSource source, String command);
+
+  void reregisterAll();
 }

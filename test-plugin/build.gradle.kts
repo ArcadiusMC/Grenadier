@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.2.0"
+version = "2.3.0"
 
 repositories {
   mavenCentral()
@@ -23,9 +23,9 @@ dependencies {
   //compileOnly("net.forthecrown:grenadier:2.3.2:")
 
   compileOnly("net.forthecrown:nbt:1.5.2")
-  compileOnly("net.forthecrown:paper-nbt:1.7.4")
+  compileOnly("net.forthecrown:paper-nbt:1.8.0")
 
-  compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
+  compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
 }
 
 tasks {

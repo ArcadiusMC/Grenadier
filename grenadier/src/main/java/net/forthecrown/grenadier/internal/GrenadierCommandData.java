@@ -110,6 +110,10 @@ class GrenadierCommandData {
     CommandMap map = Bukkit.getCommandMap();
     bukkitWrapper.register(map);
 
+    registerHelpTopic();
+  }
+
+  public void registerHelpTopic() {
     HelpMap helpMap = Bukkit.getHelpMap();
 
     node.labels().forEachRemaining(s -> {

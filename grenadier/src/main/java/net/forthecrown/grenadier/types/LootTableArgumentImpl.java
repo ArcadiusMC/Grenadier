@@ -46,7 +46,7 @@ class LootTableArgumentImpl
       SuggestionsBuilder builder
   ) {
     return MinecraftServer.getServer().registryAccess()
-        .registry(Registries.LOOT_TABLE)
+        .lookup(Registries.LOOT_TABLE)
         .map(Registry::keySet)
         .map(keys -> SharedSuggestionProvider.suggestResource(keys, builder))
         .orElseGet(builder::buildFuture);

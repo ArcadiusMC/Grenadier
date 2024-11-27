@@ -291,4 +291,11 @@ public final class Grenadier {
         "Command label cannot be blank"
     );
   }
+
+  /**
+   * Causes all Grenadier commands to be re registered.
+   */
+  public static void reregisterAll() {
+    getProvider().reregisterAll();
+  }
 }

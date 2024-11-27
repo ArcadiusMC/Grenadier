@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "net.forthecrown"
-version = "2.5.2"
+version = "2.6.0"
 
 repositories {
   mavenCentral()
@@ -31,9 +31,9 @@ dependencies {
   compileOnly("com.mojang:brigadier:1.2.9")
 
   api("net.forthecrown:nbt:1.5.2")
-  api("net.forthecrown:paper-nbt:1.7.5")
+  api("net.forthecrown:paper-nbt:1.8.0")
 
-  paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
+  paperweight.paperDevBundle("1.21.3-R0.1-SNAPSHOT")
 }
 
 paperweight.reobfArtifactConfiguration = ReobfArtifactConfiguration.MOJANG_PRODUCTION

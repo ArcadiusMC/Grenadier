@@ -13,6 +13,7 @@ in the grenadier javadoc, located [here](https://www.javadoc.io/doc/net.forthecr
 ## Version compatibility
 | Grenadier Version    | Minecraft Version |
 |----------------------|-------------------|
+| 2.6.x (Latest 2.6.0) | 1.21.3            |
 | 2.5.x (Latest 2.5.2) | 1.21              |
 | 2.4.x (Latest 2.4.1) | 1.20.5 and 1.20.6 |
 | 2.3.x (Latest 2.3.2) | 1.20.4            |
@@ -32,7 +33,7 @@ repositories {
 
 dependencies {
   // Grenadier itself
-  implementation("net.forthecrown:grenadier:2.5.2")
+  implementation("net.forthecrown:grenadier:2.6.0")
   
   // Get the annotation library with
   implementation("net.forthecrown:grenadier-annotations:1.3.3")
@@ -55,7 +56,7 @@ Maven:
   <dependency>
     <groupId>net.forthecrown</groupId>
     <artifactId>grenadier</artifactId>
-    <version>2.5.2</version>
+    <version>2.6.0</version>
   </dependency>
 
   <!-- Optional annotation library -->
@@ -81,7 +82,7 @@ If you're intending on shading Grenadier into your plugin, then you can ignore t
 Simply add this line to your `plugin.yml`
 ```yml
 libraries:
-  - "net.forthecrown:grenadier:2.5.2"
+  - "net.forthecrown:grenadier:2.6.0"
 
   # Optional annotations library
   - "net.forthecrown:grenadier-annotations:1.3.3"
@@ -98,7 +99,7 @@ public class LoaderExample implements PluginLoader {
     MavenLibraryResolver resolver = new MavenLibraryResolver();
 
     resolver.addDependency(
-      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:2.5.2"), null)
+      new Dependency(new DefaultArtifact("net.forthecrown:grenadier:2.6.0"), null)
     );
     
     // Optional annotations library

@@ -16,6 +16,7 @@ import net.kyori.adventure.text.Component;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
 import org.bukkit.event.server.ServerCommandEvent;
@@ -38,6 +39,8 @@ public class GrenadierProviderImpl implements GrenadierProvider {
 
   private final ExceptionProviderImpl exceptionProvider
       = new ExceptionProviderImpl();
+
+  private GrenadierListener listener;
 
   public GrenadierProviderImpl() {
     this.dispatcher = new CommandDispatcher<>(new GrenadierRootNode(this));
@@ -65,6 +68,11 @@ public class GrenadierProviderImpl implements GrenadierProvider {
   public void setPlugin(@NotNull Plugin plugin) {
     Objects.requireNonNull(plugin);
     this.plugin = plugin;
+
+    if (listener == null) {
+      listener = new GrenadierListener(this);
+      Bukkit.getPluginManager().registerEvents(listener, plugin);
+    }
   }
 
   @Override
@@ -126,5 +134,11 @@ public class GrenadierProviderImpl implements GrenadierProvider {
 
     CommandSourceStack stack = InternalUtil.unwrap(source);
     DedicatedServer.getServer().getCommands().dispatchServerCommand(stack, command);
+  }
+
+  @Override
+  public void reregisterAll() {
+    GrenadierRootNode root = (GrenadierRootNode) dispatcher.getRoot();
+    root.reregisterAll();
   }
 }

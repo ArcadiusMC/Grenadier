@@ -45,7 +45,7 @@ class EntityArgumentImpl implements EntityArgument, VanillaMappedArgument {
   {
     final int start = reader.getCursor();
 
-    EntitySelectorParser parser = new EntitySelectorParser(reader);
+    EntitySelectorParser parser = new EntitySelectorParser(reader, true);
 
     var nms = parser.parse(overridePermissions);
     var exceptions = Grenadier.exceptions();
